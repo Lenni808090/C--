@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 class VM
 {
     Value[] regs;
@@ -44,6 +46,13 @@ class VM
                         int intB = (int)regs[c].RawData;
                         int res = intA + intB;
                         regs[a] = new Value(ValueType.Int, res);
+                        break;
+                    }
+                case OpCode.JUMP:
+                    {
+                        int offset = BitConverter.ToInt32(bytecode, instructionPointer);
+                        instructionPointer += 4;
+                        instructionPointer += offset;
                         break;
                     }
                 default:

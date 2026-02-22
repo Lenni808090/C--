@@ -4,4 +4,7 @@ enum OpCode : byte
     RETURN,
 
     ADD_INT,
+    JUMP,
+
+    JUMP_IF_FALSE,
 }
