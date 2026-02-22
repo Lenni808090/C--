@@ -35,6 +35,17 @@ class VM
                         Value returnValue = regs[a];
                         return returnValue;
                     }
+                case OpCode.ADD_INT:
+                    {
+                        byte a = bytecode[instructionPointer++];
+                        byte b = bytecode[instructionPointer++];
+                        byte c = bytecode[instructionPointer++];
+                        int intA = (int)regs[b].RawData;
+                        int intB = (int)regs[c].RawData;
+                        int res = intA + intB;
+                        regs[a] = new Value(ValueType.Int, res);
+                        break;
+                    }
                 default:
                     throw new InvalidOperationException("Unknown opcode at position " + (instructionPointer - 1));
 

@@ -7,6 +7,13 @@ enum ValueType
 
 struct Value
 {
-    public ValueType valueType;
+    public ValueType ValueType;
     public long RawData;
+
+    public Value(ValueType valueType, long rawData)
+    {
+        ValueType = valueType;
+        RawData = rawData;
+    }
 }
+
