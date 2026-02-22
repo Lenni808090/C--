@@ -4,9 +4,16 @@ class VM
     Value[] constants;
     byte[] bytecode;
 
+    public VM(Value[] regs, Value[] constants, byte[] bytecode)
+    {
+        this.regs = regs;
+        this.constants = constants;
+        this.bytecode = bytecode;
+    }
+
     int instructionPointer;
 
-    public void Run()
+    public Value Run()
     {
         while (true)
         {
@@ -25,7 +32,8 @@ class VM
                 case OpCode.RETURN:
                     {
                         byte a = bytecode[instructionPointer++];
-                        break;
+                        Value returnValue = regs[a];
+                        return returnValue;
                     }
                 default:
                     throw new InvalidOperationException("Unknown opcode at position " + (instructionPointer - 1));

@@ -1,11 +1,12 @@
-enum ValueType{
+enum ValueType
+{
     Int,
-    Bool, 
+    Bool,
 }
 
 
 struct Value
 {
-    ValueType valueType;
-    long RawData;
+    public ValueType valueType;
+    public long RawData;
 }
