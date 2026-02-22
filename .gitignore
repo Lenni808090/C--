@@ -1,1 +1,32 @@
-/.vscode
+# Build outputs
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# .NET artifacts
+*.user
+*.rsuser
+*.suo
+*.userprefs
+*.cache
+
+# Visual Studio / Rider / VS Code local files
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+*.pid
+*.seed
+
+# OS files
+.DS_Store
+Thumbs.db
