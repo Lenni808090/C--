@@ -9,6 +9,8 @@ enum OpCode : byte {
     JUMP_IF_TRUE,
 
 
-    CMP_EQUAL_INT,
+    CMP_EQ_INT,
+    CMP_LT_INT,
+    CMP_MT_INT,
 
 }

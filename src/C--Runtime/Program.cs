@@ -1,7 +1,5 @@
-﻿class Program
-{
-    static void Main()
-    {
+﻿class Program {
+    static void Main() {
         Value[] regs = new Value[3];
         Value[] constants = new Value[2];
         byte[] bytecode = new byte[12];

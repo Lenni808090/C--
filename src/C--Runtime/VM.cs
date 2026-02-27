@@ -67,11 +67,27 @@ class VM {
                         }
                         break;
                     }
-                case OpCode.CMP_EQUAL_INT: {
+                case OpCode.CMP_EQ_INT: {
                         byte a = bytecode[instructionPointer++];
                         byte b = bytecode[instructionPointer++];
                         byte c = bytecode[instructionPointer++];
                         int boolValue = ((int)regs[b].RawData == (int)regs[c].RawData) ? 1 : 0;
+                        regs[a] = new Value(ValueType.Bool, boolValue);
+                        break;
+                    }
+                case OpCode.CMP_LT_INT: {
+                        byte a = bytecode[instructionPointer++];
+                        byte b = bytecode[instructionPointer++];
+                        byte c = bytecode[instructionPointer++];
+                        int boolValue = ((int)regs[b].RawData < (int)regs[c].RawData) ? 1 : 0;
+                        regs[a] = new Value(ValueType.Bool, boolValue);
+                        break;
+                    }
+                case OpCode.CMP_MT_INT: {
+                        byte a = bytecode[instructionPointer++];
+                        byte b = bytecode[instructionPointer++];
+                        byte c = bytecode[instructionPointer++];
+                        int boolValue = ((int)regs[b].RawData > (int)regs[c].RawData) ? 1 : 0;
                         regs[a] = new Value(ValueType.Bool, boolValue);
                         break;
                     }
