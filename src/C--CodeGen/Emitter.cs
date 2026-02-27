@@ -50,16 +50,20 @@ class Emitter {
         emittedBytecode.Add((byte)opCode);
     }
 
-    public void patchAll() {
+    public void PatchAll() {
         foreach (Fixup fixup in fixups) {
             if (labelPos.TryGetValue(fixup.LableName, out int foundPos)) {
                 // plus 4 because the jump starts after the 4 bytes for offset are read
-                int offset = foundPos - fixup.PatchPos + 4;
+                int offset = foundPos - (fixup.PatchPos + 4);
                 var bytes = BitConverter.GetBytes(offset);
                 for (int i = 0; i < 4; i++) {
                     emittedBytecode[i + fixup.PatchPos] = bytes[i];
                 }
             }
         }
+    }
+
+    public byte[] ToArray() {
+        return emittedBytecode.ToArray();
     }
 }
