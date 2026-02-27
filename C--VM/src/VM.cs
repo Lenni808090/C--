@@ -14,6 +14,7 @@ class VM {
     int instructionPointer;
 
     public Value Run() {
+        instructionPointer = 0;
         while (true) {
             OpCode currentByteCode = (OpCode)bytecode[instructionPointer++];
 
@@ -54,6 +55,24 @@ class VM {
                         if (!boolA) {
                             instructionPointer += offset;
                         }
+                        break;
+                    }
+                case OpCode.JUMP_IF_TRUE: {
+                        byte a = bytecode[instructionPointer++];
+                        bool boolA = regs[a].AsBool();
+                        int offset = BitConverter.ToInt32(bytecode, instructionPointer);
+                        instructionPointer += 4;
+                        if (boolA) {
+                            instructionPointer += offset;
+                        }
+                        break;
+                    }
+                case OpCode.CMP_EQUAL_INT: {
+                        byte a = bytecode[instructionPointer++];
+                        byte b = bytecode[instructionPointer++];
+                        byte c = bytecode[instructionPointer++];
+                        int boolValue = ((int)regs[b].RawData == (int)regs[c].RawData) ? 1 : 0;
+                        regs[a] = new Value(ValueType.Bool, boolValue);
                         break;
                     }
                 default:
