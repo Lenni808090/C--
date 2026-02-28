@@ -44,11 +44,15 @@ class Binder {
         var boundReturnedExpr = BindExpr(returnStmt.returnExpr);
         return new BoundReturnStmt(boundReturnedExpr);
     }
+
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
         int index = nextLocalIndex++;
         LocalSymbol localSymbol = new LocalSymbol(name, InferTypeInTypedDecl(typeToken), index);
+        if (localsByName.ContainsKey(varDeclarationStmt.name.Text)) {
+            throw new Exception("var already declared in this scope");
+        }
         localsByName.Add(varDeclarationStmt.name.Text, localSymbol);
         BoundExpr boundExpr = BindExpr(varDeclarationStmt.declarementExpr);
         return new BoundVarDeclarationStmt(localSymbol, boundExpr);
@@ -59,7 +63,7 @@ class Binder {
             NameExpr n => BindNameExpr(n),
             LiteralExpr l => BindLiteralExpr(l),
             BinaryExpr b => BindBinaryExpr(b),
-            _ => throw new Exception($"Unexpected stmt: {expr.syntaxKind}"),
+            _ => throw new Exception($"Unexpected expr: {expr.syntaxKind}"),
         };
     }
 
@@ -101,7 +105,7 @@ class Binder {
         if (boundLeftExpr.type != boundRightExpr.type) {
             throw new Exception("both expressions need too have the same type");
         }
-        var op = binaryExpr.Operator.Text;
+        var op = binaryExpr.Operator.TokenType;
         BoundBinaryOperatorKind boundBinaryOperatorKind = InferBinaryOperatorKind(op, boundLeftExpr.type);
         return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperatorKind, boundLeftExpr.type);
     }
@@ -124,13 +128,13 @@ class Binder {
         }
     }
 
-    BoundBinaryOperatorKind InferBinaryOperatorKind(string op, SymbolType mainBinaryType) {
+    BoundBinaryOperatorKind InferBinaryOperatorKind(TokenType op, SymbolType mainBinaryType) {
         if (mainBinaryType == SymbolType.Int) {
             return op switch {
-                "+" => BoundBinaryOperatorKind.AddInt,
-                "-" => BoundBinaryOperatorKind.SubtractInt,
-                "*" => BoundBinaryOperatorKind.MultiplyInt,
-                "/" => BoundBinaryOperatorKind.DivideInt,
+                TokenType.Plus => BoundBinaryOperatorKind.AddInt,
+                TokenType.Minus => BoundBinaryOperatorKind.SubtractInt,
+                TokenType.Multiply => BoundBinaryOperatorKind.MultiplyInt,
+                TokenType.Divide => BoundBinaryOperatorKind.DivideInt,
                 _ => throw new Exception("unkown int binary operator" + op),
             };
         }
