@@ -1,7 +1,16 @@
 enum TokenType {
+    Return,
+    Var,
+
+    Identifier,
     Number,
+
     Equals,
+    SemiColoun,
+
     BinaryOperator,
+
+    EoF,
 }
 
 

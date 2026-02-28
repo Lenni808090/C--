@@ -4,6 +4,12 @@ class Lexer {
 
     char[] data;
     int position;
+    private static readonly Dictionary<string, TokenType> keywords =
+    new()
+    {
+        { "return", TokenType.Return },
+        { "var", TokenType.Var}
+    };
     public Lexer(string data) {
         this.data = data.ToArray();
     }
@@ -39,6 +45,7 @@ class Lexer {
             char c = At();
 
             if (c == '\0') {
+                tokens.Add(newToken(TokenType.EoF, "EoF"));
                 break;
             }
 
@@ -58,18 +65,40 @@ class Lexer {
                         tokens.Add(newToken(TokenType.Equals, "="));
                         break;
                     }
+                case ';': {
+                        Next();
+                        tokens.Add(newToken(TokenType.SemiColoun, ";"));
+                        break;
+                    }
                 default: {
                         if (char.IsNumber(c)) {
                             int start = position;
 
-                            while (char.IsNumber(At())) {
+                            Next();
 
+                            while (char.IsNumber(At())) {
                                 Next();
                             }
                             int length = position - start;
                             string number = new string(data, start, length);
 
                             tokens.Add(newToken(TokenType.Number, number));
+                        }
+                        else if (char.IsLetter(c)) {
+                            int start = position;
+
+                            Next();
+
+                            while (char.IsLetterOrDigit(At()) || At() == '_') {
+                                Next();
+                            }
+                            int length = position - start;
+                            string text = new string(data, start, length);
+                            if (keywords.TryGetValue(text, out TokenType keywordType)) {
+                                tokens.Add(newToken(keywordType, text));
+                                continue;
+                            }
+                            tokens.Add(newToken(TokenType.Identifier, text));
                         }
 
                         break;
