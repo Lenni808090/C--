@@ -6,7 +6,7 @@ enum TokenType {
     Number,
 
     Equals,
-    SemiColoun,
+    Semicolon,
 
     BinaryOperator,
 

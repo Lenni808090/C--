@@ -16,6 +16,26 @@ sealed class IdentifierTypeSyntax : TypeSyntax {
         Identifier = identifier;
     }
 }
+
+
+sealed class CompilationUnit : SyntaxNode {
+    public Stmt[] stmts;
+
+
+    public override SyntaxKind syntaxKind => SyntaxKind.CompilationUnit;
+    public CompilationUnit(Stmt[] stmts) {
+        this.stmts = stmts;
+    }
+}
+
+sealed class ExpressionStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.ExpressionStmt;
+    public Expr Expression;
+
+    public ExpressionStmt(Expr expression) {
+        Expression = expression;
+    }
+}
 sealed class ReturnStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ReturnStmt;
     public Expr returnExpr;
@@ -68,7 +88,7 @@ sealed class BinaryExpr : Expr {
     public Token Operator;
     public override SyntaxKind syntaxKind => SyntaxKind.BinaryExpr;
 
-    public BinaryExpr(Expr leftExpr, Expr rightExpr, Token Operator) {
+    public BinaryExpr(Expr leftExpr, Token Operator, Expr rightExpr) {
         this.leftExpr = leftExpr;
         //grr operator keyword;
         this.Operator = Operator;
@@ -80,10 +100,12 @@ sealed class BinaryExpr : Expr {
 enum SyntaxKind {
     ReturnStmt,
     VarDeclarationStmt,
+    CompilationUnit,
 
     LiteralExpr,
     NameExpr,
     BinaryExpr,
+    ExpressionStmt,
 
 
     IdentifierType,

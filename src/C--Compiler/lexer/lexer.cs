@@ -67,7 +67,7 @@ class Lexer {
                     }
                 case ';': {
                         Next();
-                        tokens.Add(newToken(TokenType.SemiColoun, ";"));
+                        tokens.Add(newToken(TokenType.Semicolon, ";"));
                         break;
                     }
                 default: {
