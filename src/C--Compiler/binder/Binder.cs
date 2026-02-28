@@ -1,4 +1,5 @@
-using System.Runtime.CompilerServices;
+
+using System.ComponentModel;
 
 class Binder {
     List<BoundStmt> boundStmts;
@@ -48,14 +49,23 @@ class Binder {
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
+
         int index = nextLocalIndex++;
-        LocalSymbol localSymbol = new LocalSymbol(name, InferTypeInTypedDecl(typeToken), index);
+
+        SymbolType declared = InferTypeInTypedDecl(typeToken);
+        LocalSymbol localSymbol = new LocalSymbol(name, declared, index);
+        BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
+
+        if (declared != initBoundExpr.type) {
+            throw new Exception("declared and assigned type are not the same");
+        }
+
         if (localsByName.ContainsKey(varDeclarationStmt.name.Text)) {
             throw new Exception("var already declared in this scope");
         }
+
         localsByName.Add(varDeclarationStmt.name.Text, localSymbol);
-        BoundExpr boundExpr = BindExpr(varDeclarationStmt.declarementExpr);
-        return new BoundVarDeclarationStmt(localSymbol, boundExpr);
+        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
     }
 
     BoundExpr BindExpr(Expr expr) {
@@ -120,12 +130,19 @@ class Binder {
     }
 
     SymbolType InferType(TokenType tokenType) {
-        if (tokenType == TokenType.True || tokenType == TokenType.False) {
-            return SymbolType.Bool;
+        switch (tokenType) {
+            case TokenType.True:
+            case TokenType.False: {
+                    return SymbolType.Bool;
+                }
+            case TokenType.Number: {
+                    return SymbolType.Int;
+                }
+            default: {
+                    throw new Exception("unkown type " + tokenType);
+                }
         }
-        else {
-            return SymbolType.Int;
-        }
+
     }
 
     BoundBinaryOperatorKind InferBinaryOperatorKind(TokenType op, SymbolType mainBinaryType) {

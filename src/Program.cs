@@ -2,10 +2,11 @@
 
 class Program {
     static void Main() {
-        string code = @"var x = 100;
-                        var y = 200;
-                        var z = (x + y) * 2;
-                        return z + x * 3;";
+        string code = @"int x = 100;
+                        int y = 200;
+                        int z = (x + y) * 2;
+                        return true;";
+
         Lexer lexer = new Lexer(code);
         Token[] tokens = lexer.Lex();
         Parser parser = new Parser(tokens);
@@ -13,10 +14,77 @@ class Program {
             Console.WriteLine(token.TokenType + " " + token.Text);
         }
         CompilationUnit compilationUnit = parser.ParseUnit();
-        Print(compilationUnit);
+
+        Binder binder = new Binder(compilationUnit);
+        BoundCompiledUnit bound = binder.BindCompiledUnit();
+        PrintBoundUnit(bound);
 
     }
+    static void PrintBoundUnit(BoundCompiledUnit unit) {
+        Console.WriteLine("=== BOUND TREE ===");
+        for (int i = 0; i < unit.boundStmts.Length; i++) {
+            PrintBoundStmt(unit.boundStmts[i], "", i == unit.boundStmts.Length - 1);
+        }
+    }
 
+    static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine(stmt.GetType().Name);
+
+        indent += isLast ? "   " : "│  ";
+
+        switch (stmt) {
+            case BoundVarDeclarationStmt v: {
+                    Console.Write(indent);
+                    Console.WriteLine($"local: {v.localSymbol.name} : {v.localSymbol.symbolType} (index {v.localSymbol.index})");
+                    PrintBoundExpr(v.initializer, indent, true);
+                    break;
+                }
+            case BoundReturnStmt r: {
+                    PrintBoundExpr(r.boundReturnedExpr, indent, true);
+                    break;
+                }
+            case BoundExpressionStmt e: {
+                    PrintBoundExpr(e.boundExpr, indent, true);
+                    break;
+                }
+            default: {
+                    Console.Write(indent);
+                    Console.WriteLine("Unhandled bound stmt");
+                    break;
+                }
+        }
+    }
+
+    static void PrintBoundExpr(BoundExpr expr, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+        Console.Write(indent);
+        Console.Write(marker);
+
+        switch (expr) {
+            case BoundLiteralExpr lit: {
+                    Console.WriteLine($"BoundLiteralExpr : {lit.type}  value={lit.value}");
+                    break;
+                }
+            case BoundNameExpr name: {
+                    Console.WriteLine($"BoundNameExpr : {name.type}  name={name.localSymbol.name} (index {name.localSymbol.index})");
+                    break;
+                }
+            case BoundBinaryExpr bin: {
+                    Console.WriteLine($"BoundBinaryExpr : {bin.type}  op={bin.boundBinaryOperatorKind}");
+                    indent += isLast ? "   " : "│  ";
+                    PrintBoundExpr(bin.leftBoundExpr, indent, false);
+                    PrintBoundExpr(bin.rightBoundExpr, indent, true);
+                    break;
+                }
+            default: {
+                    Console.WriteLine($"{expr.GetType().Name} : {expr.type}");
+                    break;
+                }
+        }
+    }
     static void Print(SyntaxNode node, string indent = "", bool isLast = true) {
         string marker = isLast ? "└──" : "├──";
         Console.Write(indent);
