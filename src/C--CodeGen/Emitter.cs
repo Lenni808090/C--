@@ -38,6 +38,9 @@ class Emitter {
         fixups.Add(new Fixup(patchPos, labelName));
     }
     public void DefineLabel(string name) {
+        if (labelPos.TryGetValue(name, out var _)) {
+            throw new Exception("label already existing");
+        }
         labelPos.Add(name, pos);
     }
     public void EmitI32(int value) {
@@ -92,10 +95,13 @@ class Emitter {
                     emittedBytecode[i + fixup.PatchPos] = bytes[i];
                 }
             }
+            else {
+                throw new Exception("label does not exist");
+            }
         }
     }
 
-    public byte[] ToArray() {
+    public byte[] BytecodeToArray() {
         return emittedBytecode.ToArray();
     }
 }
