@@ -4,7 +4,8 @@ class Program {
     static void Main() {
         string code = @"var x = 100;
                         var y = 200;
-                        return x + y;";
+                        var z = (x + y) * 2;
+                        return z + x * 3;";
         Lexer lexer = new Lexer(code);
         Token[] tokens = lexer.Lex();
         Parser parser = new Parser(tokens);

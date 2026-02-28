@@ -93,7 +93,7 @@ class Parser {
     Expr ParseBinaryExpr() {
         Expr left = ParseMultiplyExpr();
 
-        while (Current.TokenType == TokenType.Plus && Current.TokenType == TokenType.Minus) {
+        while (Current.TokenType == TokenType.Plus || Current.TokenType == TokenType.Minus) {
             Token op = NextToken();
             Expr right = ParseMultiplyExpr();
             left = new BinaryExpr(left, op, right);
@@ -104,9 +104,9 @@ class Parser {
 
     Expr ParseMultiplyExpr() {
         Expr left = ParsePrimary();
-        while (Current.TokenType == TokenType.Multiply && Current.TokenType == TokenType.Divide) {
+        while (Current.TokenType == TokenType.Multiply || Current.TokenType == TokenType.Divide) {
             Token op = NextToken();
-            Expr right = ParseMultiplyExpr();
+            Expr right = ParsePrimary();
             left = new BinaryExpr(left, op, right);
         }
 

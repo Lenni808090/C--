@@ -80,6 +80,11 @@ class Lexer {
                         tokens.Add(newToken(TokenType.Semicolon, ";"));
                         break;
                     }
+                case '=': {
+                        Next();
+                        tokens.Add(newToken(TokenType.Equals, "="));
+                        break;
+                    }
                 case '(': {
                         Next();
                         tokens.Add(newToken(TokenType.OpenParentheses, "("));
@@ -120,7 +125,9 @@ class Lexer {
                             }
                             tokens.Add(newToken(TokenType.Identifier, text));
                         }
-
+                        else {
+                            throw new Exception("unknown data");
+                        }
                         break;
                     }
 
