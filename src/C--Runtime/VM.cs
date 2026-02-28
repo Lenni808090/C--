@@ -36,7 +36,6 @@ class VM {
                         locals[localIndex] = regs[srcReg];
                         break;
                     }
-
                 case OpCode.LOAD_LOCAL: {
                         byte dstReg = bytecode[instructionPointer++];
                         byte localIndex = bytecode[instructionPointer++];
@@ -44,10 +43,12 @@ class VM {
                         break;
                     }
 
+
                 case OpCode.RETURN: {
                         byte returnReg = bytecode[instructionPointer++];
                         return regs[returnReg];
                     }
+
 
                 case OpCode.ADD_INT: {
                         byte dstReg = bytecode[instructionPointer++];
@@ -58,6 +59,34 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Int, left + right);
                         break;
                     }
+                case OpCode.SUBTRACT_INT: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte leftReg = bytecode[instructionPointer++];
+                        byte rightReg = bytecode[instructionPointer++];
+                        int left = (int)regs[leftReg].RawData;
+                        int right = (int)regs[rightReg].RawData;
+                        regs[dstReg] = new Value(ValueType.Int, left - right);
+                        break;
+                    }
+                case OpCode.MULTIPLY_INT: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte leftReg = bytecode[instructionPointer++];
+                        byte rightReg = bytecode[instructionPointer++];
+                        int left = (int)regs[leftReg].RawData;
+                        int right = (int)regs[rightReg].RawData;
+                        regs[dstReg] = new Value(ValueType.Int, left * right);
+                        break;
+                    }
+                case OpCode.DIVIDE_INT: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte leftReg = bytecode[instructionPointer++];
+                        byte rightReg = bytecode[instructionPointer++];
+                        int left = (int)regs[leftReg].RawData;
+                        int right = (int)regs[rightReg].RawData;
+                        regs[dstReg] = new Value(ValueType.Int, left / right);
+                        break;
+                    }
+
 
                 case OpCode.JUMP: {
                         int offset = BitConverter.ToInt32(bytecode, instructionPointer);
@@ -65,7 +94,6 @@ class VM {
                         instructionPointer += offset;
                         break;
                     }
-
                 case OpCode.JUMP_IF_FALSE: {
                         byte condReg = bytecode[instructionPointer++];
                         bool cond = regs[condReg].AsBool();
@@ -76,7 +104,6 @@ class VM {
                         }
                         break;
                     }
-
                 case OpCode.JUMP_IF_TRUE: {
                         byte condReg = bytecode[instructionPointer++];
                         bool cond = regs[condReg].AsBool();
@@ -88,6 +115,8 @@ class VM {
                         break;
                     }
 
+
+
                 case OpCode.CMP_EQ_INT: {
                         byte dstReg = bytecode[instructionPointer++];
                         byte leftReg = bytecode[instructionPointer++];
@@ -96,7 +125,6 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
-
                 case OpCode.CMP_LT_INT: {
                         byte dstReg = bytecode[instructionPointer++];
                         byte leftReg = bytecode[instructionPointer++];
@@ -105,7 +133,6 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
-
                 case OpCode.CMP_MT_INT: {
                         byte dstReg = bytecode[instructionPointer++];
                         byte leftReg = bytecode[instructionPointer++];
@@ -114,6 +141,8 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
+
+
                 default:
                     throw new InvalidOperationException("Unknown opcode at position " + (instructionPointer - 1));
 

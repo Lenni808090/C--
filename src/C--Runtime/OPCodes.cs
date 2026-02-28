@@ -7,8 +7,11 @@ enum OpCode : byte {
     RETURN,
 
     ADD_INT,
-    JUMP,
+    SUBTRACT_INT,
+    MULTIPLY_INT,
+    DIVIDE_INT,
 
+    JUMP,
     JUMP_IF_FALSE,
     JUMP_IF_TRUE,
 
