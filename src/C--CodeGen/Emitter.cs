@@ -12,14 +12,16 @@ class Emitter {
         emittedBytecode = new();
     }
 
-    public void Jump(string labelName) {
+
+
+    public void EmitJump(string labelName) {
         emittedBytecode.Add((byte)OpCode.JUMP);
         int patchPos = pos;
         EmitI32(0);
         fixups.Add(new Fixup(patchPos, labelName));
     }
 
-    public void JumpIfFalse(byte firstIndex, string labelName) {
+    public void EmitJumpIfFalse(byte firstIndex, string labelName) {
         emittedBytecode.Add((byte)OpCode.JUMP_IF_FALSE);
         emittedBytecode.Add((byte)firstIndex);
         int patchPos = pos;
@@ -28,7 +30,7 @@ class Emitter {
     }
 
 
-    public void JumpIfTrue(byte firstIndex, string labelName) {
+    public void EmitJumpIfTrue(byte firstIndex, string labelName) {
         emittedBytecode.Add((byte)OpCode.JUMP_IF_TRUE);
         emittedBytecode.Add((byte)firstIndex);
         int patchPos = pos;
@@ -44,6 +46,36 @@ class Emitter {
     }
     public void EmitU8(byte value) {
         emittedBytecode.Add((byte)value);
+    }
+
+    public void EmitLoadConstant(byte dstReg, byte constIndex) {
+        EmitOp(OpCode.LOAD_CONST);
+        EmitU8(dstReg);
+        EmitU8(constIndex);
+    }
+
+    public void EmitStoreLocal(byte srcReg, byte localIndex) {
+        EmitOp(OpCode.STORE_LOCAL);
+        EmitU8(srcReg);
+        EmitU8(localIndex);
+    }
+
+    public void EmitLoadLocal(byte dstReg, byte localIndex) {
+        EmitOp(OpCode.LOAD_LOCAL);
+        EmitU8(dstReg);
+        EmitU8(localIndex);
+    }
+
+    public void EmitReturn(byte returnReg) {
+        EmitOp(OpCode.RETURN);
+        EmitU8(returnReg);
+    }
+
+    public void EmitAddInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitOp(OpCode.ADD_INT);
+        EmitU8(dstReg);
+        EmitU8(leftReg);
+        EmitU8(rightReg);
     }
 
     public void EmitOp(OpCode opCode) {

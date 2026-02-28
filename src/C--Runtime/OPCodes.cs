@@ -1,5 +1,9 @@
 enum OpCode : byte {
     LOAD_CONST,
+
+    LOAD_LOCAL,
+    STORE_LOCAL,
+
     RETURN,
 
     ADD_INT,
