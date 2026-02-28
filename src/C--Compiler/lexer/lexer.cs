@@ -57,17 +57,37 @@ class Lexer {
             switch (c) {
                 case '+': {
                         Next();
-                        tokens.Add(newToken(TokenType.BinaryOperator, "+"));
+                        tokens.Add(newToken(TokenType.Plus, "+"));
                         break;
                     }
-                case '=': {
+                case '-': {
                         Next();
-                        tokens.Add(newToken(TokenType.Equals, "="));
+                        tokens.Add(newToken(TokenType.Minus, "-"));
+                        break;
+                    }
+                case '*': {
+                        Next();
+                        tokens.Add(newToken(TokenType.Multiply, "*"));
+                        break;
+                    }
+                case '/': {
+                        Next();
+                        tokens.Add(newToken(TokenType.Divide, "/"));
                         break;
                     }
                 case ';': {
                         Next();
                         tokens.Add(newToken(TokenType.Semicolon, ";"));
+                        break;
+                    }
+                case '(': {
+                        Next();
+                        tokens.Add(newToken(TokenType.OpenParentheses, "("));
+                        break;
+                    }
+                case ')': {
+                        Next();
+                        tokens.Add(newToken(TokenType.CloseParentheses, ")"));
                         break;
                     }
                 default: {

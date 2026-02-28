@@ -6,9 +6,18 @@ enum TokenType {
     Number,
 
     Equals,
+
+    OpenParentheses,
+    CloseParentheses,
+
     Semicolon,
 
-    BinaryOperator,
+
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+
 
     EoF,
 }

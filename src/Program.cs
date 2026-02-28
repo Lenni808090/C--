@@ -52,8 +52,12 @@ class Program {
 
             case BinaryExpr bin: {
                     Print(bin.leftExpr, indent, false);
+
+                    PrintOperator(bin.Operator, indent, false);
+
                     Print(bin.rightExpr, indent, true);
                     break;
+
                 }
 
             case LiteralExpr lit: {
@@ -74,6 +78,18 @@ class Program {
                     break;
                 }
         }
+    }
+    static void PrintOperator(Token op, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine("Operator");
+
+        indent += isLast ? "   " : "│     ";
+
+        Console.Write(indent);
+        Console.WriteLine("symbol: " + op.Text);
     }
 }
 

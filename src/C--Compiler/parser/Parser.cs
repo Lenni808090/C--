@@ -91,18 +91,28 @@ class Parser {
     }
 
     Expr ParseBinaryExpr() {
-        Expr left = ParsePrimary();
+        Expr left = ParseMultiplyExpr();
 
-        while (Current.TokenType == TokenType.BinaryOperator) {
+        while (Current.TokenType == TokenType.Plus && Current.TokenType == TokenType.Minus) {
             Token op = NextToken();
-            Expr right = ParsePrimary();
+            Expr right = ParseMultiplyExpr();
             left = new BinaryExpr(left, op, right);
         }
 
         return left;
     }
 
+    Expr ParseMultiplyExpr() {
+        Expr left = ParsePrimary();
+        while (Current.TokenType == TokenType.Multiply && Current.TokenType == TokenType.Divide) {
+            Token op = NextToken();
+            Expr right = ParseMultiplyExpr();
+            left = new BinaryExpr(left, op, right);
+        }
 
+        return left;
+
+    }
     Expr ParsePrimary() {
         Token token = Current;
         switch (token.TokenType) {
@@ -113,10 +123,15 @@ class Parser {
             case TokenType.Identifier: {
                     NextToken();
                     return new NameExpr(token);
-
+                }
+            case TokenType.OpenParentheses: {
+                    NextToken();
+                    Expr expr = ParseExpr();
+                    Expect(TokenType.CloseParentheses, "Closing ')' expected after '('");
+                    return expr;
                 }
             default: {
-                    throw new Exception("unkwown primary" + " " + token.Text);
+                    throw new Exception($"Expected primary expression, got {token.TokenType} '{token.Text}'");
                 }
         }
     }
