@@ -62,6 +62,9 @@ class Parser {
                     Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
                     return new VarDeclarationStmt(type, identifier, assignedExpr);
                 }
+            case TokenType.Return: {
+                    return ParseReturmStmt();
+                }
 
             default: {
                     Expr expr = ParseExpr();
@@ -69,6 +72,13 @@ class Parser {
                     return new ExpressionStmt(expr);
                 }
         }
+    }
+
+    Stmt ParseReturmStmt() {
+        NextToken();
+        Expr returnExpr = ParseExpr();
+        Expect(TokenType.Semicolon, "Missing ';' after return");
+        return new ReturnStmt(returnExpr);
     }
     TypeSyntax ParseType() {
         Token typeToken = Current;
@@ -78,7 +88,6 @@ class Parser {
 
     Expr ParseExpr() {
         return ParseBinaryExpr();
-
     }
 
     Expr ParseBinaryExpr() {
@@ -104,9 +113,10 @@ class Parser {
             case TokenType.Identifier: {
                     NextToken();
                     return new NameExpr(token);
+
                 }
             default: {
-                    throw new Exception("unkwown primary");
+                    throw new Exception("unkwown primary" + " " + token.Text);
                 }
         }
     }
