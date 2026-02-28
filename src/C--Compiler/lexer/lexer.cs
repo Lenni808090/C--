@@ -8,7 +8,8 @@ class Lexer {
     new()
     {
         { "return", TokenType.Return },
-        { "var", TokenType.Var}
+        { "true", TokenType.True},
+        { "false", TokenType.False}
     };
     public Lexer(string data) {
         this.data = data.ToArray();
@@ -106,8 +107,8 @@ class Lexer {
                             }
                             int length = position - start;
                             string number = new string(data, start, length);
-
-                            tokens.Add(newToken(TokenType.Number, number));
+                            long parsedLong = long.Parse(number);
+                            tokens.Add(newToken(TokenType.Number, number, parsedLong));
                         }
                         else if (char.IsLetter(c)) {
                             int start = position;
@@ -138,7 +139,11 @@ class Lexer {
         return tokens.ToArray();
     }
 
-    public Token newToken(TokenType tokenType, string text) {
+    public Token newToken(TokenType tokenType, string text, long? value = null) {
+        if (value is long v) {
+            return new Token(text, tokenType, v);
+        }
+
         return new Token(text, tokenType);
     }
 }

@@ -75,7 +75,7 @@ class Program {
 
             case IdentifierTypeSyntax type: {
                     Console.Write(indent);
-                    Console.WriteLine("   type: " + type.Identifier.Text);
+                    Console.WriteLine("   type: " + type.identifier.Text);
                     break;
                 }
         }

@@ -40,6 +40,20 @@ class Parser {
         return false;
     }
 
+    //int x = 100;
+    bool matchesDeclarationStmt() {
+        bool matches = true;
+        if (Current.TokenType != TokenType.Identifier) {
+            matches = false;
+        }
+        if (Peek(1).TokenType != TokenType.Identifier) {
+            matches = false;
+        }
+        if (Peek(2).TokenType != TokenType.Equals) {
+            matches = false;
+        }
+        return matches;
+    }
 
     public CompilationUnit ParseUnit() {
         List<Stmt> stmts = new();
@@ -53,15 +67,17 @@ class Parser {
 
 
     Stmt ParseStmt() {
+
+        if (matchesDeclarationStmt()) {
+            TypeSyntax type = ParseType();
+            Token identifier = Expect(TokenType.Identifier, "After type declaration an identifier is expected");
+            Expect(TokenType.Equals, "After identifier '=' expected in var declaration");
+            Expr assignedExpr = ParseExpr();
+            Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
+            return new VarDeclarationStmt(type, identifier, assignedExpr);
+        }
+
         switch (Current.TokenType) {
-            case TokenType.Var: {
-                    TypeSyntax type = ParseType();
-                    Token identifier = Expect(TokenType.Identifier, "After type declaration an identifier is expected");
-                    Expect(TokenType.Equals, "After identifier '=' expected in var declaration");
-                    Expr assignedExpr = ParseExpr();
-                    Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
-                    return new VarDeclarationStmt(type, identifier, assignedExpr);
-                }
             case TokenType.Return: {
                     return ParseReturmStmt();
                 }
@@ -116,7 +132,9 @@ class Parser {
     Expr ParsePrimary() {
         Token token = Current;
         switch (token.TokenType) {
-            case TokenType.Number: {
+            case TokenType.Number:
+            case TokenType.True:
+            case TokenType.False: {
                     NextToken();
                     return new LiteralExpr(token);
                 }

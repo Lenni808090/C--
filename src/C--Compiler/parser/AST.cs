@@ -10,10 +10,10 @@ abstract class Expr : SyntaxNode { };
 sealed class IdentifierTypeSyntax : TypeSyntax {
     public override SyntaxKind syntaxKind => SyntaxKind.IdentifierType;
 
-    public Token Identifier;
+    public Token identifier;
 
     public IdentifierTypeSyntax(Token identifier) {
-        Identifier = identifier;
+        this.identifier = identifier;
     }
 }
 
