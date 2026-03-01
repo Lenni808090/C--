@@ -36,11 +36,14 @@ class Parser {
             return NextToken();
         }
 
-        ReportError(DiagnosticDescriptors.ParserUnexpectedToken, Current.TextSpan, message, Current.TokenType);
-        if (Current.TokenType != TokenType.EoF) {
+        Token unexpected = Current;
+        ReportError(DiagnosticDescriptors.ParserUnexpectedToken, unexpected.TextSpan, message, unexpected.TokenType);
+
+        if (ShouldConsumeUnexpectedToken(type, unexpected.TokenType)) {
             NextToken();
         }
-        return new Token(string.Empty, type, new TextSpan(Current.TextSpan.Start, 0));
+
+        return new Token(string.Empty, type, new TextSpan(unexpected.TextSpan.Start, 0));
     }
 
     bool Match(TokenType type) {
@@ -50,6 +53,35 @@ class Parser {
         }
 
         return false;
+    }
+
+    bool ShouldConsumeUnexpectedToken(TokenType expected, TokenType actual) {
+        if (actual == TokenType.EoF) {
+            return false;
+        }
+
+        if (expected == TokenType.Semicolon && IsStmtBoundaryToken(actual)) {
+            return false;
+        }
+
+        if (expected == TokenType.CloseParentheses &&
+            (actual == TokenType.OpenBrace || actual == TokenType.Semicolon || actual == TokenType.CloseBrace)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool IsStmtBoundaryToken(TokenType tokenType) {
+        return tokenType == TokenType.Return ||
+               tokenType == TokenType.If ||
+               tokenType == TokenType.OpenBrace ||
+               tokenType == TokenType.CloseBrace ||
+               tokenType == TokenType.Identifier ||
+               tokenType == TokenType.Number ||
+               tokenType == TokenType.True ||
+               tokenType == TokenType.False ||
+               tokenType == TokenType.OpenParentheses;
     }
 
     //int x = 100;

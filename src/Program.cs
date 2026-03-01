@@ -15,7 +15,7 @@ class Program {
         string code = @"int x = 0;
                         if(x + 1 == 2){
                             int y = 200;
-                            int z = (x + y) * 2;
+                            int z = (x + y) * 2
                             return (z + x) * 3;
                         }";
         CompilerContext compilerContext = new();
