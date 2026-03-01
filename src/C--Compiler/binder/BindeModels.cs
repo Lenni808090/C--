@@ -89,6 +89,10 @@ sealed class BoundBinaryExpr : BoundExpr {
     }
 }
 
+sealed class BoundErrorExpr : BoundExpr {
+    public BoundErrorExpr() : base(SymbolType.DiagnosticsError) { }
+}
+
 
 sealed class LocalSymbol {
     public string name;
@@ -108,4 +112,6 @@ sealed class LocalSymbol {
 enum SymbolType {
     Int,
     Bool,
+
+    DiagnosticsError,
 }

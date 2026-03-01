@@ -1,4 +1,5 @@
 using CMinus.Compiler;
+using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
 
 namespace CMinus.Compiler.Binding;
@@ -7,7 +8,7 @@ class Binder {
     List<BoundStmt> boundStmts;
     Stack<Dictionary<string, LocalSymbol>> scopes;
 
-
+    DiagnosticBag diagnostics;
 
     int nextLocalIndex;
     Stmt[] stmtsToBind;
@@ -19,8 +20,9 @@ class Binder {
     };
 
 
-    public Binder(CompilationUnit compilationUnit) {
+    public Binder(CompilationUnit compilationUnit, CompilerContext compilerContext) {
         scopes = new();
+        diagnostics = compilerContext.diagnostics;
         boundStmts = new();
         stmtsToBind = compilationUnit.stmts;
     }
@@ -68,8 +70,8 @@ class Binder {
     BoundStmt BindIfStmt(IfStmt ifStmt) {
         BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
 
-        if (boundConditionExpr.type != SymbolType.Bool) {
-            throw new Exception("condition must be of type bool");
+        if (boundConditionExpr.type != SymbolType.Bool && boundConditionExpr.type != SymbolType.DiagnosticsError) {
+            ReportError("condition must be of type bool");
         }
 
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
@@ -92,22 +94,26 @@ class Binder {
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
+        bool isAlreadyInScope = scopes.Peek().ContainsKey(varDeclarationStmt.name.Text);
+        if (isAlreadyInScope) {
+            ReportError("var already declared in this scope: " + name);
+        }
 
-        if (scopes.Peek().ContainsKey(varDeclarationStmt.name.Text)) {
-            throw new Exception("var already declared in this scope");
+        SymbolType declared = InferTypeInTypedDecl(typeToken);
+        BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
+
+        if (declared != initBoundExpr.type &&
+            declared != SymbolType.DiagnosticsError &&
+            initBoundExpr.type != SymbolType.DiagnosticsError) {
+            ReportError("declared and assigned type are not the same");
         }
 
         int index = nextLocalIndex++;
-
-        SymbolType declared = InferTypeInTypedDecl(typeToken);
         LocalSymbol localSymbol = new LocalSymbol(name, declared, index);
-        BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
-
-        if (declared != initBoundExpr.type) {
-            throw new Exception("declared and assigned type are not the same");
+        if (!isAlreadyInScope) {
+            scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
         }
 
-        scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
         return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
     }
 
@@ -127,7 +133,8 @@ class Binder {
         if (localSymbol is not null) {
             return new BoundNameExpr(localSymbol);
         }
-        throw new Exception("this var is not declared" + name);
+        ReportError("this var is not declared: " + name);
+        return new BoundErrorExpr();
 
     }
 
@@ -137,7 +144,8 @@ class Binder {
 
         if (type == SymbolType.Int) {
             if (!literalExpr.value.hasValue) {
-                throw new Exception("Number literal needs to have a value");
+                ReportError("number literal needs to have a value");
+                return new BoundErrorExpr();
             }
 
             long v = literalExpr.value.Value;
@@ -149,7 +157,8 @@ class Binder {
             return new BoundLiteralExpr(v, type);
         }
 
-        throw new Exception("Unexpected literal type: " + type);
+        ReportError("unexpected literal type: " + type);
+        return new BoundErrorExpr();
     }
 
     BoundExpr BindBinaryExpr(BinaryExpr binaryExpr) {
@@ -161,9 +170,13 @@ class Binder {
         if (boundBinaryOperator is not null) {
             return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundBinaryOperator.resultType);
         }
-        else {
-            throw new Exception("type mismatch in binary operation");
+
+        if (boundLeftExpr.type == SymbolType.DiagnosticsError || boundRightExpr.type == SymbolType.DiagnosticsError) {
+            return new BoundErrorExpr();
         }
+
+        ReportError("type mismatch in binary operation");
+        return new BoundErrorExpr();
 
     }
 
@@ -187,9 +200,9 @@ class Binder {
         if (standartTypes.TryGetValue(typeToken.Text, out SymbolType type)) {
             return type;
         }
-        else {
-            throw new Exception("Unknown Type " + typeToken.Text);
-        }
+
+        ReportError("unknown type " + typeToken.Text);
+        return SymbolType.DiagnosticsError;
     }
 
     SymbolType InferType(TokenType tokenType) {
@@ -202,10 +215,15 @@ class Binder {
                     return SymbolType.Int;
                 }
             default: {
-                    throw new Exception("unkown type " + tokenType);
+                    ReportError("unkown type " + tokenType);
+                    return SymbolType.DiagnosticsError;
                 }
         }
 
+    }
+
+    void ReportError(string message) {
+        diagnostics.Report(new Diagnostic(message, Severity.Error));
     }
 }
 

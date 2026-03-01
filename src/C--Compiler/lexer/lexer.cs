@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using CMinus.Compiler;
+using CMinus.Compiler.Diagnostics;
 
 namespace CMinus.Compiler.Lexing;
 
@@ -7,6 +8,8 @@ class Lexer {
 
     char[] data;
     int position;
+
+    DiagnosticBag diagnostics;
     private static readonly Dictionary<string, TokenType> keywords =
     new()
     {
@@ -15,8 +18,9 @@ class Lexer {
         { "false", TokenType.False},
         {"if", TokenType.If},
     };
-    public Lexer(string data) {
+    public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
+        diagnostics = context.diagnostics;
     }
 
     public char Peek() {
@@ -87,7 +91,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.Or, "||"));
                         }
                         else {
-                            throw new Exception("Unexpected single '|'");
+                            ReportError("Unexpected single '|'. Did you mean '||'?");
                         }
                         break;
                     }
@@ -98,7 +102,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.And, "&&"));
                         }
                         else {
-                            throw new Exception("Unexpected single '&'" + c);
+                            ReportError("Unexpected single '&'. Did you mean '&&'?");
                         }
                         break;
                     }
@@ -202,7 +206,8 @@ class Lexer {
                             tokens.Add(newToken(TokenType.Identifier, text));
                         }
                         else {
-                            throw new Exception("unknown data");
+                            ReportError("Unknown character in input: '" + c + "'");
+                            Next();
                         }
                         break;
                     }
@@ -220,5 +225,9 @@ class Lexer {
         }
 
         return new Token(text, tokenType);
+    }
+
+    void ReportError(string message) {
+        diagnostics.Report(new Diagnostic(message, Severity.Error));
     }
 }

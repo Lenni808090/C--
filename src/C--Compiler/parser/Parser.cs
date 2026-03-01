@@ -1,4 +1,5 @@
 using CMinus.Compiler;
+using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
 
 namespace CMinus.Compiler.Parsing;
@@ -7,8 +8,10 @@ class Parser {
     private readonly Token[] tokens;
     private int position;
 
-    public Parser(Token[] tokens) {
+    DiagnosticBag diagnostics;
+    public Parser(Token[] tokens, CompilerContext context) {
         this.tokens = tokens;
+        diagnostics = context.diagnostics;
     }
 
     Token Current => Peek(0);
@@ -33,7 +36,11 @@ class Parser {
             return NextToken();
         }
 
-        throw new Exception(message + " got " + Current.TokenType);
+        ReportError(message + " got " + Current.TokenType);
+        if (Current.TokenType != TokenType.EoF) {
+            NextToken();
+        }
+        return new Token(string.Empty, type);
     }
 
     bool Match(TokenType type) {
@@ -104,11 +111,16 @@ class Parser {
         NextToken();
 
         List<Stmt> body = new();
-        while (Current.TokenType != TokenType.CloseBrace) {
+        while (Current.TokenType != TokenType.CloseBrace && Current.TokenType != TokenType.EoF) {
             body.Add(ParseStmt());
         }
 
-        Expect(TokenType.CloseBrace, "closing brace expected after body");
+        if (Current.TokenType == TokenType.CloseBrace) {
+            NextToken();
+        }
+        else {
+            ReportError("closing brace expected after body");
+        }
 
         return new BlockStmt(body.ToArray());
     }
@@ -235,10 +247,17 @@ class Parser {
                     return expr;
                 }
             default: {
-                    throw new Exception($"Expected primary expression, got {token.TokenType} '{token.Text}'");
+                    ReportError($"Expected primary expression, got {token.TokenType} '{token.Text}'");
+                    if (Current.TokenType != TokenType.EoF) {
+                        NextToken();
+                    }
+                    return new LiteralExpr(new Token("0", TokenType.Number, 0));
                 }
         }
     }
 
+    void ReportError(string message) {
+        diagnostics.Report(new Diagnostic(message, Severity.Error));
+    }
 
 }

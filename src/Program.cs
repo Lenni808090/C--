@@ -2,6 +2,7 @@ using System;
 using CMinus.CodeGen;
 using CMinus.Compiler;
 using CMinus.Compiler.Binding;
+using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Lexing;
 using CMinus.Compiler.Parsing;
 using CMinus.Compiler.Syntax;
@@ -17,18 +18,31 @@ class Program {
                             int z = (x + y) * 2;
                             return (z + x) * 3;
                         }";
-
-        Lexer lexer = new Lexer(code);
+        CompilerContext compilerContext = new();
+        var diagnostics = compilerContext.diagnostics;
+        Lexer lexer = new Lexer(code, compilerContext);
         Token[] tokens = lexer.Lex();
-        Parser parser = new Parser(tokens);
+        if (diagnostics.CheckForErrors()) {
+            diagnostics.PrintAllErrors();
+            return;
+        }
         foreach (Token token in tokens) {
             Console.WriteLine(token.TokenType + " " + token.Text);
         }
+        Parser parser = new Parser(tokens, compilerContext);
         CompilationUnit compilationUnit = parser.ParseUnit();
+        if (diagnostics.CheckForErrors()) {
+            diagnostics.PrintAllErrors();
+            return;
+        }
         PrintSyntaxUnit(compilationUnit);
 
-        Binder binder = new Binder(compilationUnit);
+        Binder binder = new Binder(compilationUnit, compilerContext);
         BoundCompiledUnit bound = binder.BindCompiledUnit();
+        if (diagnostics.CheckForErrors()) {
+            diagnostics.PrintAllErrors();
+            return;
+        }
         PrintBoundUnit(bound);
 
         CodeGenerator codeGenerator = new CodeGenerator(bound);
