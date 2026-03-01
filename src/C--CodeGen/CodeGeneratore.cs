@@ -4,6 +4,7 @@ class CodeGenerator {
 
     readonly Dictionary<BoundBinaryOperatorKind, Action<byte, byte, byte>> binaryEmitters;
     byte nextReg;
+    byte maxReg;
     public CodeGenerator(BoundCompiledUnit boundCompiledUnit) {
         functionBuilder = new();
         binaryEmitters = new() {
@@ -20,7 +21,7 @@ class CodeGenerator {
             EmitStmt(boundStmt);
         }
         int localCount = boundCompiledUnit.localCount;
-        return functionBuilder.Build(localCount);
+        return functionBuilder.Build(localCount, maxReg);
     }
 
 
@@ -111,7 +112,11 @@ class CodeGenerator {
     }
 
     byte AllocReg() {
-        return nextReg++;
+        byte reg = nextReg++;
+        if (reg > maxReg) {
+            maxReg = reg;
+        }
+        return reg;
     }
 
 }

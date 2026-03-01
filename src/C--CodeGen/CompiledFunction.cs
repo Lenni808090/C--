@@ -1,11 +1,14 @@
 class CompiledFunction {
     public byte[] bytecode;
     public Value[] constants;
-    public int LocalCount;
+    public int localCount;
 
-    public CompiledFunction(byte[] bytecode, Value[] constants, int localCount) {
+    public int maxRegCount;
+
+    public CompiledFunction(byte[] bytecode, Value[] constants, int localCount, int maxRegCount) {
         this.bytecode = bytecode;
         this.constants = constants;
-        LocalCount = localCount;
+        this.localCount = localCount;
+        this.maxRegCount = maxRegCount;
     }
 }

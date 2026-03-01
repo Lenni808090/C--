@@ -18,7 +18,7 @@ sealed class FunctionBuilder {
         return index;
     }
 
-    public CompiledFunction Build(int localCount) {
+    public CompiledFunction Build(int localCount, int maxRegCount) {
         if (localCount < 0) {
             throw new ArgumentOutOfRangeException(nameof(localCount));
         }
@@ -28,7 +28,8 @@ sealed class FunctionBuilder {
         return new CompiledFunction(
             Emitter.BytecodeToArray(),
             constants.ToArray(),
-            localCount
+            localCount,
+            maxRegCount
         );
     }
 }

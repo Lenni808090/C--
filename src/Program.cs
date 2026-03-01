@@ -24,11 +24,11 @@ class Program {
         Console.WriteLine();
         PrintBytecode(compiledFunction);
 
-        Value[] regs = new Value[256];
+        Value[] regs = new Value[compiledFunction.maxRegCount];
         VM vm = new VM(
             regs,
             compiledFunction.constants,
-            compiledFunction.LocalCount,
+            compiledFunction.localCount,
             compiledFunction.bytecode
         );
 
@@ -120,7 +120,7 @@ class Program {
         }
 
         Console.WriteLine();
-        Console.WriteLine($"LocalCount = {fn.LocalCount}");
+        Console.WriteLine($"LocalCount = {fn.localCount}");
     }
     static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
         string marker = isLast ? "└──" : "├──";
