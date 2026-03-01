@@ -4,6 +4,9 @@ using System.ComponentModel;
 class Binder {
     List<BoundStmt> boundStmts;
     Dictionary<string, LocalSymbol> localsByName;
+
+    //!!!!!!!!!!!!!!! temporary return will expand later!!!!!!!!!!!!!!!!!!
+    bool hasReturn;
     int nextLocalIndex;
     Stmt[] stmtsToBind;
     private static readonly Dictionary<string, SymbolType> standartTypes =
@@ -21,9 +24,18 @@ class Binder {
     public BoundCompiledUnit BindCompiledUnit() {
         foreach (Stmt stmt in stmtsToBind) {
             var boundStmt = BindStmt(stmt);
+            if (boundStmt is BoundReturnStmt) {
+                hasReturn = true;
+            }
             boundStmts.Add(boundStmt);
         }
-
+        if (!hasReturn) {
+            boundStmts.Add(
+                new BoundReturnStmt(
+                    new BoundLiteralExpr(0, SymbolType.Int)
+                )
+            );
+        }
         int localCount = localsByName.Count;
         return new BoundCompiledUnit(boundStmts.ToArray(), localCount);
     }
