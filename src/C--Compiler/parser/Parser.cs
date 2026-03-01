@@ -36,7 +36,7 @@ class Parser {
             return NextToken();
         }
 
-        ReportError(message + " got " + Current.TokenType);
+        ReportError(DiagnosticDescriptors.ParserUnexpectedToken, Current.TextSpan, message, Current.TokenType);
         if (Current.TokenType != TokenType.EoF) {
             NextToken();
         }
@@ -119,7 +119,7 @@ class Parser {
             NextToken();
         }
         else {
-            ReportError("closing brace expected after body");
+            ReportError(DiagnosticDescriptors.ParserMissingClosingBrace, Current.TextSpan);
         }
 
         return new BlockStmt(body.ToArray());
@@ -247,7 +247,7 @@ class Parser {
                     return expr;
                 }
             default: {
-                    ReportError($"Expected primary expression, got {token.TokenType} '{token.Text}'");
+                    ReportError(DiagnosticDescriptors.ParserExpectedPrimaryExpression, token.TextSpan, token.TokenType, token.Text);
                     if (Current.TokenType != TokenType.EoF) {
                         NextToken();
                     }
@@ -256,8 +256,8 @@ class Parser {
         }
     }
 
-    void ReportError(string message) {
-        diagnostics.Report(new Diagnostic(message, Severity.Error));
+    void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {
+        diagnostics.Report(descriptor, textSpan, args);
     }
 
 }

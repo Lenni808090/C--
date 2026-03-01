@@ -21,6 +21,7 @@ class Lexer {
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
         diagnostics = context.diagnostics;
+        diagnostics.SourceText = data;
     }
 
     public char Peek() {
@@ -91,7 +92,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.Or, "||"));
                         }
                         else {
-                            ReportError("Unexpected single '|'. Did you mean '||'?");
+                            ReportError(DiagnosticDescriptors.LexerUnexpectedSinglePipe, new TextSpan(position - 1, 1));
                         }
                         break;
                     }
@@ -102,7 +103,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.And, "&&"));
                         }
                         else {
-                            ReportError("Unexpected single '&'. Did you mean '&&'?");
+                            ReportError(DiagnosticDescriptors.LexerUnexpectedSingleAmpersand, new TextSpan(position - 1, 1));
                         }
                         break;
                     }
@@ -206,7 +207,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.Identifier, text));
                         }
                         else {
-                            ReportError("Unknown character in input: '" + c + "'");
+                            ReportError(DiagnosticDescriptors.LexerUnknownCharacter, new TextSpan(position, 1), c);
                             Next();
                         }
                         break;
@@ -228,7 +229,7 @@ class Lexer {
         return new Token(text, tokenType, span);
     }
 
-    void ReportError(string message) {
-        diagnostics.Report(new Diagnostic(message, Severity.Error));
+    void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {
+        diagnostics.Report(descriptor, textSpan, args);
     }
 }

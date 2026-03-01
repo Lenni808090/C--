@@ -71,7 +71,7 @@ class Binder {
         BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
 
         if (boundConditionExpr.type != SymbolType.Bool && boundConditionExpr.type != SymbolType.DiagnosticsError) {
-            ReportError("condition must be of type bool");
+            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool, GetExprSpan(ifStmt.condition));
         }
 
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
@@ -96,7 +96,7 @@ class Binder {
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
         bool isAlreadyInScope = scopes.Peek().ContainsKey(varDeclarationStmt.name.Text);
         if (isAlreadyInScope) {
-            ReportError("var already declared in this scope: " + name);
+            ReportError(DiagnosticDescriptors.BinderVarAlreadyDeclared, varDeclarationStmt.name.TextSpan, name);
         }
 
         SymbolType declared = InferTypeInTypedDecl(typeToken);
@@ -105,7 +105,7 @@ class Binder {
         if (declared != initBoundExpr.type &&
             declared != SymbolType.DiagnosticsError &&
             initBoundExpr.type != SymbolType.DiagnosticsError) {
-            ReportError("declared and assigned type are not the same");
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch, varDeclarationStmt.name.TextSpan);
         }
 
         int index = nextLocalIndex++;
@@ -133,18 +133,19 @@ class Binder {
         if (localSymbol is not null) {
             return new BoundNameExpr(localSymbol);
         }
-        ReportError("this var is not declared: " + name);
+        ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, nameExpr.name.TextSpan, name);
         return new BoundErrorExpr();
 
     }
 
     BoundExpr BindLiteralExpr(LiteralExpr literalExpr) {
-        TokenType tokenType = literalExpr.value.TokenType;
-        SymbolType type = InferType(tokenType);
+        Token literalToken = literalExpr.value;
+        TokenType tokenType = literalToken.TokenType;
+        SymbolType type = InferType(literalToken);
 
         if (type == SymbolType.Int) {
             if (!literalExpr.value.hasValue) {
-                ReportError("number literal needs to have a value");
+                ReportError(DiagnosticDescriptors.BinderNumberLiteralMissingValue, literalToken.TextSpan);
                 return new BoundErrorExpr();
             }
 
@@ -157,7 +158,7 @@ class Binder {
             return new BoundLiteralExpr(v, type);
         }
 
-        ReportError("unexpected literal type: " + type);
+        ReportError(DiagnosticDescriptors.BinderUnexpectedLiteralType, literalToken.TextSpan, type);
         return new BoundErrorExpr();
     }
 
@@ -175,7 +176,7 @@ class Binder {
             return new BoundErrorExpr();
         }
 
-        ReportError("type mismatch in binary operation");
+        ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch, binaryExpr.Operator.TextSpan);
         return new BoundErrorExpr();
 
     }
@@ -201,11 +202,12 @@ class Binder {
             return type;
         }
 
-        ReportError("unknown type " + typeToken.Text);
+        ReportError(DiagnosticDescriptors.BinderUnknownTypeToken, typeToken.TextSpan, typeToken.Text);
         return SymbolType.DiagnosticsError;
     }
 
-    SymbolType InferType(TokenType tokenType) {
+    SymbolType InferType(Token token) {
+        TokenType tokenType = token.TokenType;
         switch (tokenType) {
             case TokenType.True:
             case TokenType.False: {
@@ -215,15 +217,24 @@ class Binder {
                     return SymbolType.Int;
                 }
             default: {
-                    ReportError("unkown type " + tokenType);
+                    ReportError(DiagnosticDescriptors.BinderUnknownTokenType, token.TextSpan, tokenType);
                     return SymbolType.DiagnosticsError;
                 }
         }
 
     }
 
-    void ReportError(string message) {
-        diagnostics.Report(new Diagnostic(message, Severity.Error));
+    TextSpan GetExprSpan(Expr expr) {
+        return expr switch {
+            LiteralExpr l => l.value.TextSpan,
+            NameExpr n => n.name.TextSpan,
+            BinaryExpr b => b.Operator.TextSpan,
+            _ => TextSpan.None,
+        };
+    }
+
+    void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {
+        diagnostics.Report(descriptor, textSpan, args);
     }
 }
 
