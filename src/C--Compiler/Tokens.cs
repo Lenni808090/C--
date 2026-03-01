@@ -1,3 +1,5 @@
+using CMinus.Compiler.Diagnostics;
+
 namespace CMinus.Compiler;
 
 enum TokenType {
@@ -45,19 +47,23 @@ enum TokenType {
 
 class Token {
     public string Text;
+
+    public TextSpan TextSpan;
     public TokenType TokenType;
     public long Value;
     public bool hasValue;
-    public Token(string text, TokenType tokenType) {
+    public Token(string text, TokenType tokenType, TextSpan textSpan) {
         Text = text;
         TokenType = tokenType;
         hasValue = false;
+        TextSpan = textSpan;
     }
 
-    public Token(string text, TokenType tokenType, long value) {
+    public Token(string text, TokenType tokenType, long value, TextSpan textSpan) {
         Text = text;
         TokenType = tokenType;
         Value = value;
         hasValue = true;
+        TextSpan = textSpan;
     }
 }

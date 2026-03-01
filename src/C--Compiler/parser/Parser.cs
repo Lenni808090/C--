@@ -40,7 +40,7 @@ class Parser {
         if (Current.TokenType != TokenType.EoF) {
             NextToken();
         }
-        return new Token(string.Empty, type);
+        return new Token(string.Empty, type, new TextSpan(Current.TextSpan.Start, 0));
     }
 
     bool Match(TokenType type) {
@@ -251,7 +251,7 @@ class Parser {
                     if (Current.TokenType != TokenType.EoF) {
                         NextToken();
                     }
-                    return new LiteralExpr(new Token("0", TokenType.Number, 0));
+                    return new LiteralExpr(new Token("0", TokenType.Number, 0, token.TextSpan));
                 }
         }
     }

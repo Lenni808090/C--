@@ -54,7 +54,7 @@ class Lexer {
             char c = At();
 
             if (c == '\0') {
-                tokens.Add(newToken(TokenType.EoF, "EoF"));
+                tokens.Add(newToken(TokenType.EoF, "EoF", null, new TextSpan(position, 0)));
                 break;
             }
 
@@ -219,12 +219,13 @@ class Lexer {
         return tokens.ToArray();
     }
 
-    public Token newToken(TokenType tokenType, string text, long? value = null) {
+    public Token newToken(TokenType tokenType, string text, long? value = null, TextSpan? textSpan = null) {
+        TextSpan span = textSpan ?? new TextSpan(position - text.Length, text.Length);
         if (value is long v) {
-            return new Token(text, tokenType, v);
+            return new Token(text, tokenType, v, span);
         }
 
-        return new Token(text, tokenType);
+        return new Token(text, tokenType, span);
     }
 
     void ReportError(string message) {
