@@ -25,6 +25,8 @@ class CodeGenerator {
 
 
     void EmitStmt(BoundStmt boundStmt) {
+        nextReg = 0;
+
         switch (boundStmt) {
             case BoundVarDeclarationStmt declarationStmt: {
                     EmitVarDeclaration(declarationStmt);
@@ -42,7 +44,6 @@ class CodeGenerator {
                     throw new Exception("unkown stmt in codegen: " + boundStmt);
                 }
         }
-        nextReg = 0;
     }
 
     void EmitVarDeclaration(BoundVarDeclarationStmt boundVarDeclarationStmt) {

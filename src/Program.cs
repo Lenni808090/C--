@@ -19,6 +19,22 @@ class Program {
         BoundCompiledUnit bound = binder.BindCompiledUnit();
         PrintBoundUnit(bound);
 
+        CodeGenerator codeGenerator = new CodeGenerator(bound);
+        CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
+        Console.WriteLine();
+        PrintBytecode(compiledFunction);
+
+        Value[] regs = new Value[256];
+        VM vm = new VM(
+            regs,
+            compiledFunction.constants,
+            compiledFunction.LocalCount,
+            compiledFunction.bytecode
+        );
+
+        Value result = vm.Run();
+        Console.WriteLine("RESULT: " + result);
+
     }
     static void PrintBoundUnit(BoundCompiledUnit unit) {
         Console.WriteLine("=== BOUND TREE ===");
@@ -27,6 +43,85 @@ class Program {
         }
     }
 
+    static void PrintBytecode(CompiledFunction fn) {
+        Console.WriteLine("=== CONSTANT POOL ===");
+        for (int i = 0; i < fn.constants.Length; i++) {
+            Console.WriteLine($"[{i}] {fn.constants[i]}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("=== BYTECODE ===");
+
+        byte[] code = fn.bytecode;
+        int ip = 0;
+
+        while (ip < code.Length) {
+            int start = ip;
+            OpCode op = (OpCode)code[ip++];
+
+            Console.Write($"{start:D4}: {op}");
+
+            switch (op) {
+                case OpCode.LOAD_CONST: {
+                        byte dst = code[ip++];
+                        byte ci = code[ip++];
+                        Console.WriteLine($" r{dst}, const[{ci}]");
+                        break;
+                    }
+                case OpCode.LOAD_LOCAL: {
+                        byte dst = code[ip++];
+                        byte li = code[ip++];
+                        Console.WriteLine($" r{dst}, local[{li}]");
+                        break;
+                    }
+                case OpCode.STORE_LOCAL: {
+                        byte src = code[ip++];
+                        byte li = code[ip++];
+                        Console.WriteLine($" r{src}, local[{li}]");
+                        break;
+                    }
+                case OpCode.RETURN: {
+                        byte r = code[ip++];
+                        Console.WriteLine($" r{r}");
+                        break;
+                    }
+                case OpCode.ADD_INT:
+                case OpCode.SUBTRACT_INT:
+                case OpCode.MULTIPLY_INT:
+                case OpCode.DIVIDE_INT:
+                case OpCode.CMP_EQ_INT:
+                case OpCode.CMP_LT_INT:
+                case OpCode.CMP_MT_INT: {
+                        byte dst = code[ip++];
+                        byte left = code[ip++];
+                        byte right = code[ip++];
+                        Console.WriteLine($" r{dst}, r{left}, r{right}");
+                        break;
+                    }
+                case OpCode.JUMP: {
+                        int offset = BitConverter.ToInt32(code, ip);
+                        ip += 4;
+                        Console.WriteLine($" {offset}");
+                        break;
+                    }
+                case OpCode.JUMP_IF_FALSE:
+                case OpCode.JUMP_IF_TRUE: {
+                        byte cond = code[ip++];
+                        int offset = BitConverter.ToInt32(code, ip);
+                        ip += 4;
+                        Console.WriteLine($" r{cond}, {offset}");
+                        break;
+                    }
+                default: {
+                        Console.WriteLine();
+                        break;
+                    }
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"LocalCount = {fn.LocalCount}");
+    }
     static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
         string marker = isLast ? "└──" : "├──";
         Console.Write(indent);
@@ -85,81 +180,7 @@ class Program {
                 }
         }
     }
-    static void Print(SyntaxNode node, string indent = "", bool isLast = true) {
-        string marker = isLast ? "└──" : "├──";
-        Console.Write(indent);
-        Console.Write(marker);
-        Console.WriteLine(node.syntaxKind);
 
-        indent += isLast ? "   " : "│  ";
-
-        switch (node) {
-            case CompilationUnit unit: {
-                    for (int i = 0; i < unit.stmts.Length; i++) {
-                        Print(unit.stmts[i], indent, i == unit.stmts.Length - 1);
-                    }
-                    break;
-                }
-
-            case VarDeclarationStmt varDecl: {
-                    Print(varDecl.type, indent, false);
-                    Print(new NameExpr(varDecl.name), indent, false);
-                    Print(varDecl.declarementExpr, indent, true);
-                    break;
-
-                }
-
-            case ReturnStmt ret: {
-                    Print(ret.returnExpr, indent, true);
-                    break;
-                }
-
-            case ExpressionStmt exprStmt: {
-                    Print(exprStmt.Expression, indent, true);
-                    break;
-                }
-
-            case BinaryExpr bin: {
-                    Print(bin.leftExpr, indent, false);
-
-                    PrintOperator(bin.Operator, indent, false);
-
-                    Print(bin.rightExpr, indent, true);
-                    break;
-
-                }
-
-            case LiteralExpr lit: {
-                    Console.Write(indent);
-                    Console.WriteLine("   value: " + lit.value.Text);
-                    break;
-                }
-
-            case NameExpr name: {
-                    Console.Write(indent);
-                    Console.WriteLine("   name: " + name.name.Text);
-                    break;
-                }
-
-            case IdentifierTypeSyntax type: {
-                    Console.Write(indent);
-                    Console.WriteLine("   type: " + type.identifier.Text);
-                    break;
-                }
-        }
-    }
-    static void PrintOperator(Token op, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
-
-        Console.Write(indent);
-        Console.Write(marker);
-        Console.WriteLine("Operator");
-
-        indent += isLast ? "   " : "│     ";
-
-        Console.Write(indent);
-        Console.WriteLine("symbol: " + op.Text);
-    }
 }
 
 

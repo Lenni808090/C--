@@ -16,5 +16,18 @@ struct Value {
     public bool AsBool() {
         return RawData == 1;
     }
-}
 
+    public override string ToString() {
+        switch (ValueType) {
+            case ValueType.Int: {
+                    return $"Int({RawData})";
+                }
+            case ValueType.Bool: {
+                    return $"Bool({(RawData == 1 ? "true" : "false")})";
+                }
+            default: {
+                    throw new InvalidOperationException("Unknown ValueType: " + ValueType);
+                }
+        }
+    }
+}
