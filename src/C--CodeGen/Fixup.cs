@@ -1,3 +1,5 @@
+namespace CMinus.CodeGen;
+
 readonly struct Fixup {
     public readonly int PatchPos;
     public readonly string LableName;

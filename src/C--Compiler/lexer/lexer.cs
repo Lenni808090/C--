@@ -1,4 +1,7 @@
 using System.Runtime.CompilerServices;
+using CMinus.Compiler;
+
+namespace CMinus.Compiler.Lexing;
 
 class Lexer {
 

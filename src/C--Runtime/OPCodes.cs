@@ -1,3 +1,5 @@
+namespace CMinus.Runtime;
+
 enum OpCode : byte {
     LOAD_CONST,
 

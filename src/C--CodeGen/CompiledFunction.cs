@@ -1,3 +1,7 @@
+using CMinus.Runtime;
+
+namespace CMinus.CodeGen;
+
 class CompiledFunction {
     public byte[] bytecode;
     public Value[] constants;

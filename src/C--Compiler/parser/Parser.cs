@@ -1,3 +1,8 @@
+using CMinus.Compiler;
+using CMinus.Compiler.Syntax;
+
+namespace CMinus.Compiler.Parsing;
+
 class Parser {
     private readonly Token[] tokens;
     private int position;

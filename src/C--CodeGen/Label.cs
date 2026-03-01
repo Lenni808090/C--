@@ -1,3 +1,5 @@
+namespace CMinus.CodeGen;
+
 struct Label {
 
     public int FirstInstructionPos;

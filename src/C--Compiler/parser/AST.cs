@@ -1,3 +1,7 @@
+using CMinus.Compiler;
+
+namespace CMinus.Compiler.Syntax;
+
 
 abstract class SyntaxNode {
     public abstract SyntaxKind syntaxKind {

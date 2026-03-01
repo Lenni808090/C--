@@ -1,3 +1,5 @@
+namespace CMinus.Compiler.Binding;
+
 abstract class BoundStmt { };
 abstract class BoundExpr {
     public SymbolType type {
@@ -39,10 +41,10 @@ sealed class BoundIfStmt : BoundStmt {
     }
 }
 
-sealed class boundBlockStmt : BoundStmt {
+sealed class BoundBlockStmt : BoundStmt {
     public BoundStmt[] boundStmts;
 
-    public boundBlockStmt(BoundStmt[] boundStmts) {
+    public BoundBlockStmt(BoundStmt[] boundStmts) {
         this.boundStmts = boundStmts;
     }
 }
@@ -79,8 +81,8 @@ sealed class BoundNameExpr : BoundExpr {
 sealed class BoundBinaryExpr : BoundExpr {
     public BoundExpr leftBoundExpr;
     public BoundExpr rightBoundExpr;
-    public BoundBinaryOperatorKind boundBinaryOperatorKind;
-    public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperatorKind boundBinaryOperatorKind, SymbolType symbolType) : base(symbolType) {
+    public BoundBinaryOperator boundBinaryOperatorKind;
+    public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperator boundBinaryOperatorKind, SymbolType symbolType) : base(symbolType) {
         this.leftBoundExpr = leftBoundExpr;
         this.rightBoundExpr = rightBoundExpr;
         this.boundBinaryOperatorKind = boundBinaryOperatorKind;
@@ -106,11 +108,4 @@ sealed class LocalSymbol {
 enum SymbolType {
     Int,
     Bool,
-}
-
-enum BoundBinaryOperatorKind {
-    AddInt,
-    SubtractInt,
-    MultiplyInt,
-    DivideInt,
 }

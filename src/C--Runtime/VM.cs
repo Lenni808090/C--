@@ -1,5 +1,7 @@
 using System.ComponentModel;
 
+namespace CMinus.Runtime;
+
 class VM {
     Value[] regs;
     Value[] constants;

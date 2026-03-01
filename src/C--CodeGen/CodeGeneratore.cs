@@ -1,3 +1,8 @@
+using CMinus.Compiler.Binding;
+using CMinus.Runtime;
+
+namespace CMinus.CodeGen;
+
 class CodeGenerator {
     FunctionBuilder functionBuilder;
     BoundCompiledUnit boundCompiledUnit;
@@ -75,7 +80,7 @@ class CodeGenerator {
     byte EmitLiteralExpr(BoundLiteralExpr literalExpr) {
         byte dstReg = AllocReg();
         long value = literalExpr.value;
-        ValueType type = getValueType(literalExpr.type);
+        CMinus.Runtime.ValueType type = getValueType(literalExpr.type);
 
         var newConst = new Value(type, value);
         int constIndex = functionBuilder.AddConstant(newConst);
@@ -103,10 +108,10 @@ class CodeGenerator {
         emit(resDstReg, leftDstReg, rightDstReg);
         return resDstReg;
     }
-    ValueType getValueType(SymbolType symbolType) {
+    CMinus.Runtime.ValueType getValueType(SymbolType symbolType) {
         return symbolType switch {
-            SymbolType.Int => ValueType.Int,
-            SymbolType.Bool => ValueType.Bool,
+            SymbolType.Int => CMinus.Runtime.ValueType.Int,
+            SymbolType.Bool => CMinus.Runtime.ValueType.Bool,
             _ => throw new Exception("Unkown symbol type in get value type" + symbolType),
         };
     }

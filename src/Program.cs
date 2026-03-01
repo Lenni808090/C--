@@ -1,4 +1,13 @@
-﻿using System;
+using System;
+using CMinus.CodeGen;
+using CMinus.Compiler;
+using CMinus.Compiler.Binding;
+using CMinus.Compiler.Lexing;
+using CMinus.Compiler.Parsing;
+using CMinus.Compiler.Syntax;
+using CMinus.Runtime;
+
+namespace CMinus;
 
 class Program {
     static void Main() {
@@ -47,12 +56,12 @@ class Program {
     }
 
     static void PrintSyntaxStmt(Stmt stmt, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
+        string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
         Console.WriteLine(stmt.syntaxKind);
 
-        indent += isLast ? "   " : "│  ";
+        indent += isLast ? "   " : "�  ";
 
         switch (stmt) {
             case VarDeclarationStmt v: {
@@ -71,11 +80,11 @@ class Program {
                 }
             case IfStmt i: {
                     Console.Write(indent);
-                    Console.WriteLine("├──Condition");
-                    PrintSyntaxExpr(i.condition, indent + "│  ", true);
+                    Console.WriteLine("+--Condition");
+                    PrintSyntaxExpr(i.condition, indent + "�  ", true);
 
                     Console.Write(indent);
-                    Console.WriteLine("└──Then");
+                    Console.WriteLine("+--Then");
                     PrintSyntaxStmt(i.thenStmt, indent + "   ", true);
 
                     break;
@@ -95,12 +104,12 @@ class Program {
     }
 
     static void PrintSyntaxExpr(Expr expr, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
+        string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
         Console.WriteLine(expr.syntaxKind);
 
-        indent += isLast ? "   " : "│  ";
+        indent += isLast ? "   " : "�  ";
 
         switch (expr) {
             case LiteralExpr lit: {
@@ -117,8 +126,8 @@ class Program {
                     PrintSyntaxExpr(bin.leftExpr, indent, false);
 
                     Console.Write(indent);
-                    Console.WriteLine("├──Operator");
-                    Console.Write(indent + "│  ");
+                    Console.WriteLine("+--Operator");
+                    Console.Write(indent + "�  ");
                     Console.WriteLine("symbol: " + bin.Operator.Text);
 
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
@@ -135,14 +144,14 @@ class Program {
     }
 
     static void PrintSyntaxType(TypeSyntax type, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
+        string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
         Console.WriteLine(type.syntaxKind);
 
         switch (type) {
             case IdentifierTypeSyntax id: {
-                    Console.Write(indent + (isLast ? "   " : "│  "));
+                    Console.Write(indent + (isLast ? "   " : "�  "));
                     Console.WriteLine("type: " + id.identifier.Text);
                     break;
                 }
@@ -150,7 +159,7 @@ class Program {
     }
 
     static void PrintNameToken(string label, Token tok, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
+        string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
         Console.WriteLine(label + ": " + tok.Text);
@@ -242,12 +251,12 @@ class Program {
         Console.WriteLine($"LocalCount = {fn.localCount}");
     }
     static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
+        string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
         Console.WriteLine(stmt.GetType().Name);
 
-        indent += isLast ? "   " : "│  ";
+        indent += isLast ? "   " : "�  ";
 
         switch (stmt) {
             case BoundVarDeclarationStmt v: {
@@ -273,7 +282,7 @@ class Program {
     }
 
     static void PrintBoundExpr(BoundExpr expr, string indent, bool isLast) {
-        string marker = isLast ? "└──" : "├──";
+        string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
 
@@ -288,7 +297,7 @@ class Program {
                 }
             case BoundBinaryExpr bin: {
                     Console.WriteLine($"BoundBinaryExpr : {bin.type}  op={bin.boundBinaryOperatorKind}");
-                    indent += isLast ? "   " : "│  ";
+                    indent += isLast ? "   " : "�  ";
                     PrintBoundExpr(bin.leftBoundExpr, indent, false);
                     PrintBoundExpr(bin.rightBoundExpr, indent, true);
                     break;
@@ -301,5 +310,6 @@ class Program {
     }
 
 }
+
 
 

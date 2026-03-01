@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using CMinus.Runtime;
+
+namespace CMinus.CodeGen;
 
 sealed class FunctionBuilder {
     public Emitter Emitter { get; } = new();

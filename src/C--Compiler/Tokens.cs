@@ -1,3 +1,5 @@
+namespace CMinus.Compiler;
+
 enum TokenType {
     Return,
 

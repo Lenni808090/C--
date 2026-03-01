@@ -1,9 +1,12 @@
+using CMinus.Compiler;
+using CMinus.Compiler.Syntax;
 
-using System.ComponentModel;
+namespace CMinus.Compiler.Binding;
 
 class Binder {
     List<BoundStmt> boundStmts;
-    Dictionary<string, LocalSymbol> localsByName;
+    Stack<Dictionary<string, LocalSymbol>> scopes;
+
 
     //!!!!!!!!!!!!!!! temporary return will expand later!!!!!!!!!!!!!!!!!!
     bool hasReturn;
@@ -15,13 +18,17 @@ class Binder {
         { "int", SymbolType.Int },
         { "bool", SymbolType.Bool },
     };
+
+
     public Binder(CompilationUnit compilationUnit) {
-        localsByName = new();
+        scopes = new();
         boundStmts = new();
         stmtsToBind = compilationUnit.stmts;
     }
 
     public BoundCompiledUnit BindCompiledUnit() {
+        PushScope();
+
         foreach (Stmt stmt in stmtsToBind) {
             var boundStmt = BindStmt(stmt);
             if (boundStmt is BoundReturnStmt) {
@@ -29,6 +36,7 @@ class Binder {
             }
             boundStmts.Add(boundStmt);
         }
+        PopScope();
         if (!hasReturn) {
             boundStmts.Add(
                 new BoundReturnStmt(
@@ -36,7 +44,8 @@ class Binder {
                 )
             );
         }
-        int localCount = localsByName.Count;
+
+        int localCount = nextLocalIndex;
         return new BoundCompiledUnit(boundStmts.ToArray(), localCount);
     }
 
@@ -45,6 +54,8 @@ class Binder {
         return stmt switch {
             VarDeclarationStmt v => BindVarDeclarationStmt(v),
             ReturnStmt r => BindReturnStmt(r),
+            IfStmt i => BindIfStmt(i),
+            BlockStmt b => BindBlockStmt(b),
             ExpressionStmt e => BindExpressionStmt(e),
             _ => throw new Exception($"Unexpected stmt: {stmt.syntaxKind}"),
         };
@@ -59,9 +70,36 @@ class Binder {
         return new BoundReturnStmt(boundReturnedExpr);
     }
 
+    BoundStmt BindIfStmt(IfStmt ifStmt) {
+        BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
+
+        if (boundConditionExpr.type != SymbolType.Bool) {
+            throw new Exception("condition must be of type bool");
+        }
+
+        BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
+
+        return new BoundIfStmt(boundConditionExpr, thenStmt);
+    }
+
+    BoundStmt BindBlockStmt(BlockStmt blockStmt) {
+        PushScope();
+        List<BoundStmt> boundStmts = new();
+
+        foreach (Stmt stmt in blockStmt.stmts) {
+            boundStmts.Add(BindStmt(stmt));
+        }
+
+        PopScope();
+        return new BoundBlockStmt(boundStmts.ToArray());
+    }
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
+
+        if (scopes.Peek().ContainsKey(varDeclarationStmt.name.Text)) {
+            throw new Exception("var already declared in this scope");
+        }
 
         int index = nextLocalIndex++;
 
@@ -73,11 +111,7 @@ class Binder {
             throw new Exception("declared and assigned type are not the same");
         }
 
-        if (localsByName.ContainsKey(varDeclarationStmt.name.Text)) {
-            throw new Exception("var already declared in this scope");
-        }
-
-        localsByName.Add(varDeclarationStmt.name.Text, localSymbol);
+        scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
         return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
     }
 
@@ -93,12 +127,12 @@ class Binder {
 
     BoundExpr BindNameExpr(NameExpr nameExpr) {
         string name = nameExpr.name.Text;
-        if (localsByName.TryGetValue(name, out LocalSymbol? local)) {
-            return new BoundNameExpr(local!);
+        LocalSymbol? localSymbol = lookUpLocal(name);
+        if (localSymbol is not null) {
+            return new BoundNameExpr(localSymbol);
         }
-        else {
-            throw new Exception("this var is not declared");
-        }
+        throw new Exception("this var is not declared" + name);
+
     }
 
     BoundExpr BindLiteralExpr(LiteralExpr literalExpr) {
@@ -125,12 +159,32 @@ class Binder {
     BoundExpr BindBinaryExpr(BinaryExpr binaryExpr) {
         BoundExpr boundLeftExpr = BindExpr(binaryExpr.leftExpr);
         BoundExpr boundRightExpr = BindExpr(binaryExpr.rightExpr);
-        if (boundLeftExpr.type != boundRightExpr.type) {
-            throw new Exception("both expressions need too have the same type");
-        }
+
         var op = binaryExpr.Operator.TokenType;
-        BoundBinaryOperatorKind boundBinaryOperatorKind = InferBinaryOperatorKind(op, boundLeftExpr.type);
-        return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperatorKind, boundLeftExpr.type);
+        BoundBinaryOperator? boundBinaryOperator = BoundBinaryOperator.GetBinaryOperator(op, boundLeftExpr.type, boundRightExpr.type);
+        if (boundBinaryOperator is not null) {
+            return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundLeftExpr.type);
+        }
+        else {
+            throw new Exception("type mismatch in binary operation");
+        }
+
+    }
+
+    LocalSymbol? lookUpLocal(string name) {
+        foreach (var scope in scopes) {
+            if (scope.TryGetValue(name, out LocalSymbol? localSymbol)) {
+                return localSymbol;
+            }
+        }
+        return null;
+    }
+    void PushScope() {
+        scopes.Push(new Dictionary<string, LocalSymbol>());
+    }
+
+    void PopScope() {
+        scopes.Pop();
     }
 
     SymbolType InferTypeInTypedDecl(Token typeToken) {
@@ -157,20 +211,5 @@ class Binder {
         }
 
     }
-
-    BoundBinaryOperatorKind InferBinaryOperatorKind(TokenType op, SymbolType mainBinaryType) {
-        if (mainBinaryType == SymbolType.Int) {
-            return op switch {
-                TokenType.Plus => BoundBinaryOperatorKind.AddInt,
-                TokenType.Minus => BoundBinaryOperatorKind.SubtractInt,
-                TokenType.Multiply => BoundBinaryOperatorKind.MultiplyInt,
-                TokenType.Divide => BoundBinaryOperatorKind.DivideInt,
-                _ => throw new Exception("unkown int binary operator" + op),
-            };
-        }
-        else {
-            throw new Exception("unkown binary operator for this type" + op);
-        }
-    }
-
 }
+
