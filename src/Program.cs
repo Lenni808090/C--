@@ -2,10 +2,12 @@
 
 class Program {
     static void Main() {
-        string code = @"int x = 100;
-                        int y = 200;
-                        int z = (x + y) * 2;
-                        return (z + x) * 3;";
+        string code = @"if(x + 1 < 1 && x - 1 > 2){
+                            int x = 100;
+                            int y = 200;
+                            int z = (x + y) * 2;
+                            return (z + x) * 3;
+                        }";
 
         Lexer lexer = new Lexer(code);
         Token[] tokens = lexer.Lex();
@@ -14,27 +16,141 @@ class Program {
             Console.WriteLine(token.TokenType + " " + token.Text);
         }
         CompilationUnit compilationUnit = parser.ParseUnit();
+        PrintSyntaxUnit(compilationUnit);
 
-        Binder binder = new Binder(compilationUnit);
-        BoundCompiledUnit bound = binder.BindCompiledUnit();
-        PrintBoundUnit(bound);
+        // Binder binder = new Binder(compilationUnit);
+        // BoundCompiledUnit bound = binder.BindCompiledUnit();
+        // PrintBoundUnit(bound);
 
-        CodeGenerator codeGenerator = new CodeGenerator(bound);
-        CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
-        Console.WriteLine();
-        PrintBytecode(compiledFunction);
+        // CodeGenerator codeGenerator = new CodeGenerator(bound);
+        // CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
+        // Console.WriteLine();
+        // PrintBytecode(compiledFunction);
 
-        Value[] regs = new Value[compiledFunction.maxRegCount];
-        VM vm = new VM(
-            regs,
-            compiledFunction.constants,
-            compiledFunction.localCount,
-            compiledFunction.bytecode
-        );
+        // Value[] regs = new Value[compiledFunction.maxRegCount];
+        // VM vm = new VM(
+        //     regs,
+        //     compiledFunction.constants,
+        //     compiledFunction.localCount,
+        //     compiledFunction.bytecode
+        // );
 
-        Value result = vm.Run();
-        Console.WriteLine("RESULT: " + result);
+        // Value result = vm.Run();
+        // Console.WriteLine("RESULT: " + result);
 
+    }
+    static void PrintSyntaxUnit(CompilationUnit unit) {
+        Console.WriteLine("=== SYNTAX TREE ===");
+        for (int i = 0; i < unit.stmts.Length; i++) {
+            PrintSyntaxStmt(unit.stmts[i], "", i == unit.stmts.Length - 1);
+        }
+    }
+
+    static void PrintSyntaxStmt(Stmt stmt, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine(stmt.syntaxKind);
+
+        indent += isLast ? "   " : "│  ";
+
+        switch (stmt) {
+            case VarDeclarationStmt v: {
+                    PrintSyntaxType(v.type, indent, false);
+                    PrintNameToken("name", v.name, indent, false);
+                    PrintSyntaxExpr(v.declarementExpr, indent, true);
+                    break;
+                }
+            case ReturnStmt r: {
+                    PrintSyntaxExpr(r.returnExpr, indent, true);
+                    break;
+                }
+            case ExpressionStmt e: {
+                    PrintSyntaxExpr(e.Expression, indent, true);
+                    break;
+                }
+            case IfStmt i: {
+                    Console.Write(indent);
+                    Console.WriteLine("├──Condition");
+                    PrintSyntaxExpr(i.condition, indent + "│  ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("└──Body");
+
+                    for (int j = 0; j < i.body.Length; j++) {
+                        PrintSyntaxStmt(i.body[j], indent + "   ", j == i.body.Length - 1);
+                    }
+
+                    break;
+                }
+            default: {
+                    Console.Write(indent);
+                    Console.WriteLine("Unhandled syntax stmt: " + stmt.GetType().Name);
+                    break;
+                }
+        }
+    }
+
+    static void PrintSyntaxExpr(Expr expr, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine(expr.syntaxKind);
+
+        indent += isLast ? "   " : "│  ";
+
+        switch (expr) {
+            case LiteralExpr lit: {
+                    Console.Write(indent);
+                    Console.WriteLine("value: " + lit.value.Text);
+                    break;
+                }
+            case NameExpr name: {
+                    Console.Write(indent);
+                    Console.WriteLine("name: " + name.name.Text);
+                    break;
+                }
+            case BinaryExpr bin: {
+                    PrintSyntaxExpr(bin.leftExpr, indent, false);
+
+                    Console.Write(indent);
+                    Console.WriteLine("├──Operator");
+                    Console.Write(indent + "│  ");
+                    Console.WriteLine("symbol: " + bin.Operator.Text);
+
+                    PrintSyntaxExpr(bin.rightExpr, indent, true);
+                    break;
+                }
+            // If you add unary:
+            // case UnaryExpr u: { ... }
+            default: {
+                    Console.Write(indent);
+                    Console.WriteLine("Unhandled syntax expr: " + expr.GetType().Name);
+                    break;
+                }
+        }
+    }
+
+    static void PrintSyntaxType(TypeSyntax type, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine(type.syntaxKind);
+
+        switch (type) {
+            case IdentifierTypeSyntax id: {
+                    Console.Write(indent + (isLast ? "   " : "│  "));
+                    Console.WriteLine("type: " + id.identifier.Text);
+                    break;
+                }
+        }
+    }
+
+    static void PrintNameToken(string label, Token tok, string indent, bool isLast) {
+        string marker = isLast ? "└──" : "├──";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine(label + ": " + tok.Text);
     }
     static void PrintBoundUnit(BoundCompiledUnit unit) {
         Console.WriteLine("=== BOUND TREE ===");

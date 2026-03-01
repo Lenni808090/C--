@@ -28,7 +28,7 @@ class Parser {
             return NextToken();
         }
 
-        throw new Exception(message);
+        throw new Exception(message + " got " + Current.TokenType);
     }
 
     bool Match(TokenType type) {
@@ -81,6 +81,9 @@ class Parser {
             case TokenType.Return: {
                     return ParseReturmStmt();
                 }
+            case TokenType.If: {
+                    return ParseIfStmt();
+                }
 
             default: {
                     Expr expr = ParseExpr();
@@ -96,6 +99,26 @@ class Parser {
         Expect(TokenType.Semicolon, "Missing ';' after return");
         return new ReturnStmt(returnExpr);
     }
+
+    Stmt ParseIfStmt() {
+        NextToken();
+
+        Expect(TokenType.OpenParentheses, "opening ( expected after if");
+        Expr condition = ParseExpr();
+        Expect(TokenType.CloseParentheses, "closing ) expected after condition");
+
+        Expect(TokenType.OpenBrace, "open brace expected after condition");
+
+        List<Stmt> body = new();
+        while (Current.TokenType != TokenType.CloseBrace) {
+            body.Add(ParseStmt());
+        }
+
+        Expect(TokenType.CloseBrace, "closing brace expected after body");
+
+        return new IfStmt(condition, body.ToArray());
+    }
+
     TypeSyntax ParseType() {
         Token typeToken = Current;
         NextToken();
@@ -103,10 +126,61 @@ class Parser {
     }
 
     Expr ParseExpr() {
-        return ParseBinaryExpr();
+        return ParseLogicalOrExpr();
     }
 
-    Expr ParseBinaryExpr() {
+    Expr ParseLogicalOrExpr() {
+        Expr left = ParseLogicalAndExpr();
+
+        while (Current.TokenType == TokenType.Or) {
+            Token op = NextToken();
+            Expr right = ParseLogicalAndExpr();
+            left = new BinaryExpr(left, op, right);
+        }
+
+        return left;
+    }
+
+    Expr ParseLogicalAndExpr() {
+        Expr left = ParseEqualityExpr();
+
+        while (Current.TokenType == TokenType.And) {
+            Token op = NextToken();
+            Expr right = ParseEqualityExpr();
+            left = new BinaryExpr(left, op, right);
+        }
+
+        return left;
+    }
+
+
+    Expr ParseEqualityExpr() {
+        Expr left = ParseRelationalExpr();
+
+        while (Current.TokenType == TokenType.EqualsEquals || Current.TokenType == TokenType.NotEquals) {
+            Token op = NextToken();
+            Expr right = ParseRelationalExpr();
+            left = new BinaryExpr(left, op, right);
+        }
+
+        return left;
+    }
+
+    Expr ParseRelationalExpr() {
+        Expr left = ParseAdditiveExpr();
+        while (Current.TokenType == TokenType.MoreThen ||
+            Current.TokenType == TokenType.MoreThenEquals ||
+            Current.TokenType == TokenType.LessThen ||
+            Current.TokenType == TokenType.LessThenEquals
+        ) {
+            Token op = NextToken();
+            Expr right = ParseAdditiveExpr();
+            left = new BinaryExpr(left, op, right);
+        }
+
+        return left;
+    }
+    Expr ParseAdditiveExpr() {
         Expr left = ParseMultiplyExpr();
 
         while (Current.TokenType == TokenType.Plus || Current.TokenType == TokenType.Minus) {

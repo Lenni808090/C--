@@ -9,7 +9,8 @@ class Lexer {
     {
         { "return", TokenType.Return },
         { "true", TokenType.True},
-        { "false", TokenType.False}
+        { "false", TokenType.False},
+        {"if", TokenType.If},
     };
     public Lexer(string data) {
         this.data = data.ToArray();
@@ -76,6 +77,28 @@ class Lexer {
                         tokens.Add(newToken(TokenType.Divide, "/"));
                         break;
                     }
+                case '|': {
+                        Next();
+                        if (At() == '|') {
+                            Next();
+                            tokens.Add(newToken(TokenType.Or, "||"));
+                        }
+                        else {
+                            throw new Exception("Unexpected single '|'");
+                        }
+                        break;
+                    }
+                case '&': {
+                        Next();
+                        if (At() == '&') {
+                            Next();
+                            tokens.Add(newToken(TokenType.And, "&&"));
+                        }
+                        else {
+                            throw new Exception("Unexpected single '&'" + c);
+                        }
+                        break;
+                    }
                 case ';': {
                         Next();
                         tokens.Add(newToken(TokenType.Semicolon, ";"));
@@ -83,7 +106,44 @@ class Lexer {
                     }
                 case '=': {
                         Next();
-                        tokens.Add(newToken(TokenType.Equals, "="));
+                        if (At() == '=') {
+                            Next();
+                            tokens.Add(newToken(TokenType.EqualsEquals, "=="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Equals, "="));
+                        }
+                        break;
+                    }
+                case '!': {
+                        Next();
+                        if (At() == '=') {
+                            Next();
+                            tokens.Add(newToken(TokenType.NotEquals, "!="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Bang, "!"));
+                        }
+                        break;
+                    }
+                case '<': {
+                        Next();
+                        if (At() == '=') {
+                            tokens.Add(newToken(TokenType.LessThenEquals, "<="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.LessThen, "<"));
+                        }
+                        break;
+                    }
+                case '>': {
+                        Next();
+                        if (At() == '=') {
+                            tokens.Add(newToken(TokenType.MoreThenEquals, ">="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.MoreThen, ">"));
+                        }
                         break;
                     }
                 case '(': {
@@ -94,6 +154,16 @@ class Lexer {
                 case ')': {
                         Next();
                         tokens.Add(newToken(TokenType.CloseParentheses, ")"));
+                        break;
+                    }
+                case '{': {
+                        Next();
+                        tokens.Add(newToken(TokenType.OpenBrace, "{"));
+                        break;
+                    }
+                case '}': {
+                        Next();
+                        tokens.Add(newToken(TokenType.CloseBrace, "}"));
                         break;
                     }
                 default: {

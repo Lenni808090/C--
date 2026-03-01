@@ -1,6 +1,8 @@
 abstract class BoundStmt { };
 abstract class BoundExpr {
-    public SymbolType type { get; }
+    public SymbolType type {
+        get;
+    }
     //nur die classe und andere inheriting ones are able to acess;
     protected BoundExpr(SymbolType type) {
         this.type = type;

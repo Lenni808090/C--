@@ -1,6 +1,8 @@
 
 abstract class SyntaxNode {
-    public abstract SyntaxKind syntaxKind { get; }
+    public abstract SyntaxKind syntaxKind {
+        get;
+    }
 }
 abstract class TypeSyntax : SyntaxNode { };
 abstract class Stmt : SyntaxNode { };
@@ -44,6 +46,21 @@ sealed class ReturnStmt : Stmt {
         this.returnExpr = returnExpr;
     }
 
+}
+
+sealed class IfStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
+    public Expr condition;
+    public Stmt[] body;
+
+    public IfStmt(Expr condition, Stmt[] body) {
+        this.condition = condition;
+        this.body = body;
+    }
+}
+
+sealed class BlockStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
 }
 
 sealed class VarDeclarationStmt : Stmt {
@@ -100,6 +117,8 @@ sealed class BinaryExpr : Expr {
 enum SyntaxKind {
     ReturnStmt,
     VarDeclarationStmt,
+    IfStmt,
+    BlockStmt,
     CompilationUnit,
 
     LiteralExpr,

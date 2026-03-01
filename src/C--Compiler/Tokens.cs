@@ -9,16 +9,32 @@ enum TokenType {
 
     Equals,
 
+    Bang,
+
     OpenParentheses,
     CloseParentheses,
 
+    OpenBrace,
+    CloseBrace,
+
     Semicolon,
 
+    If,
 
     Plus,
     Minus,
     Multiply,
     Divide,
+
+    EqualsEquals,
+    NotEquals,
+    MoreThen,
+    LessThen,
+    MoreThenEquals,
+    LessThenEquals,
+
+    Or,
+    And,
 
 
     EoF,
