@@ -20,6 +20,10 @@ enum OpCode : byte {
 
     CMP_EQ_INT,
     CMP_LT_INT,
+    CMP_LTE_INT,
     CMP_MT_INT,
+    CMP_MTE_INT,
+
+
 
 }

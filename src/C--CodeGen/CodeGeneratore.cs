@@ -1,4 +1,5 @@
 using CMinus.Compiler.Binding;
+using CMinus.Compiler.Syntax;
 using CMinus.Runtime;
 
 namespace CMinus.CodeGen;
@@ -7,21 +8,16 @@ class CodeGenerator {
     FunctionBuilder functionBuilder;
     BoundCompiledUnit boundCompiledUnit;
 
-    readonly Dictionary<BoundBinaryOperatorKind, Action<byte, byte, byte>> binaryEmitters;
+
     byte nextReg;
     byte maxReg;
     public CodeGenerator(BoundCompiledUnit boundCompiledUnit) {
         functionBuilder = new();
-        binaryEmitters = new() {
-            { BoundBinaryOperatorKind.AddInt, functionBuilder.Emitter.EmitAddInt },
-            { BoundBinaryOperatorKind.SubtractInt, functionBuilder.Emitter.EmitSubtractInt },
-            { BoundBinaryOperatorKind.MultiplyInt, functionBuilder.Emitter.EmitMultiplyInt },
-            { BoundBinaryOperatorKind.DivideInt, functionBuilder.Emitter.EmitDivideInt },
-        };
         this.boundCompiledUnit = boundCompiledUnit;
     }
 
     public CompiledFunction GenerateFunction() {
+        nextReg = 0;
         foreach (BoundStmt boundStmt in boundCompiledUnit.boundStmts) {
             EmitStmt(boundStmt);
         }
@@ -31,7 +27,6 @@ class CodeGenerator {
 
 
     void EmitStmt(BoundStmt boundStmt) {
-        nextReg = 0;
 
         switch (boundStmt) {
             case BoundVarDeclarationStmt declarationStmt: {
@@ -40,6 +35,14 @@ class CodeGenerator {
                 }
             case BoundReturnStmt returnStmt: {
                     EmitReturnStmt(returnStmt);
+                    break;
+                }
+            case BoundIfStmt boundIfStmt: {
+                    EmitIfStmt(boundIfStmt);
+                    break;
+                }
+            case BoundBlockStmt boundBlockStmt: {
+                    EmitBlockStmt(boundBlockStmt);
                     break;
                 }
             case BoundExpressionStmt stmt: {
@@ -61,6 +64,23 @@ class CodeGenerator {
     void EmitReturnStmt(BoundReturnStmt boundReturnStmt) {
         byte srcReg = EmitExpr(boundReturnStmt.boundReturnedExpr);
         functionBuilder.Emitter.EmitReturn(srcReg);
+    }
+
+    void EmitIfStmt(BoundIfStmt boundIfStmt) {
+        byte condReg = EmitExpr(boundIfStmt.boundConditionExpr);
+
+        var newLabel = functionBuilder.Emitter.NewLabel();
+        functionBuilder.Emitter.EmitJumpIfFalse(condReg, newLabel);
+
+        EmitStmt(boundIfStmt.thenStmt);
+
+        functionBuilder.Emitter.DefineLabel(newLabel);
+    }
+
+    void EmitBlockStmt(BoundBlockStmt boundBlockStmt) {
+        foreach (BoundStmt boundStmt in boundBlockStmt.boundStmts) {
+            EmitStmt(boundStmt);
+        }
     }
 
     void EmitExpresssionStmt(BoundExpressionStmt boundExpressionStmt) {
@@ -100,18 +120,21 @@ class CodeGenerator {
         byte rightDstReg = EmitExpr(binaryExpr.rightBoundExpr);
 
         byte resDstReg = AllocReg();
-        var opKind = binaryExpr.boundBinaryOperatorKind;
-        if (!binaryEmitters.TryGetValue(opKind, out var emit)) {
-            throw new Exception("unkown binary op" + opKind);
+        var opKind = binaryExpr.boundBinaryOperator.operatorKind;
+        var emit = BinaryOperatorEmitter.getEmitMethod(opKind);
+        if (emit is not null) {
+            emit(functionBuilder.Emitter, resDstReg, leftDstReg, rightDstReg);
+        }
+        else {
+            throw new Exception("unkown binary operator in codegen " + opKind);
         }
 
-        emit(resDstReg, leftDstReg, rightDstReg);
         return resDstReg;
     }
-    CMinus.Runtime.ValueType getValueType(SymbolType symbolType) {
+    Runtime.ValueType getValueType(SymbolType symbolType) {
         return symbolType switch {
-            SymbolType.Int => CMinus.Runtime.ValueType.Int,
-            SymbolType.Bool => CMinus.Runtime.ValueType.Bool,
+            SymbolType.Int => Runtime.ValueType.Int,
+            SymbolType.Bool => Runtime.ValueType.Bool,
             _ => throw new Exception("Unkown symbol type in get value type" + symbolType),
         };
     }

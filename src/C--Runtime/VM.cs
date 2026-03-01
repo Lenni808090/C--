@@ -106,6 +106,7 @@ class VM {
                         }
                         break;
                     }
+
                 case OpCode.JUMP_IF_TRUE: {
                         byte condReg = bytecode[instructionPointer++];
                         bool cond = regs[condReg].AsBool();
@@ -116,8 +117,6 @@ class VM {
                         }
                         break;
                     }
-
-
 
                 case OpCode.CMP_EQ_INT: {
                         byte dstReg = bytecode[instructionPointer++];
@@ -140,6 +139,22 @@ class VM {
                         byte leftReg = bytecode[instructionPointer++];
                         byte rightReg = bytecode[instructionPointer++];
                         int result = ((int)regs[leftReg].RawData > (int)regs[rightReg].RawData) ? 1 : 0;
+                        regs[dstReg] = new Value(ValueType.Bool, result);
+                        break;
+                    }
+                case OpCode.CMP_LTE_INT: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte leftReg = bytecode[instructionPointer++];
+                        byte rightReg = bytecode[instructionPointer++];
+                        int result = ((int)regs[leftReg].RawData <= (int)regs[rightReg].RawData) ? 1 : 0;
+                        regs[dstReg] = new Value(ValueType.Bool, result);
+                        break;
+                    }
+                case OpCode.CMP_MTE_INT: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte leftReg = bytecode[instructionPointer++];
+                        byte rightReg = bytecode[instructionPointer++];
+                        int result = ((int)regs[leftReg].RawData >= (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }

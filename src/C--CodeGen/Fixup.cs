@@ -2,10 +2,10 @@ namespace CMinus.CodeGen;
 
 readonly struct Fixup {
     public readonly int PatchPos;
-    public readonly string LableName;
+    public readonly Label Lable;
 
-    public Fixup(int PatchPos, string LableName) {
+    public Fixup(int PatchPos, Label Lable) {
         this.PatchPos = PatchPos;
-        this.LableName = LableName;
+        this.Lable = Lable;
     }
 }

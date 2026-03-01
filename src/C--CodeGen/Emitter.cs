@@ -6,7 +6,7 @@ namespace CMinus.CodeGen;
 class Emitter {
     List<byte> emittedBytecode;
     List<Fixup> fixups;
-    Dictionary<string, int> labelPos;
+    Dictionary<Label, int> labelPos;
     int pos => emittedBytecode.Count;
 
     public Emitter() {
@@ -15,36 +15,38 @@ class Emitter {
         emittedBytecode = new();
     }
 
+    public Label NewLabel() {
+        return new Label();
+    }
 
-
-    public void EmitJump(string labelName) {
+    public void EmitJump(Label label) {
         emittedBytecode.Add((byte)OpCode.JUMP);
         int patchPos = pos;
         EmitI32(0);
-        fixups.Add(new Fixup(patchPos, labelName));
+        fixups.Add(new Fixup(patchPos, label));
     }
 
-    public void EmitJumpIfFalse(byte firstIndex, string labelName) {
+    public void EmitJumpIfFalse(byte condReg, Label label) {
         emittedBytecode.Add((byte)OpCode.JUMP_IF_FALSE);
-        emittedBytecode.Add((byte)firstIndex);
+        emittedBytecode.Add(condReg);
         int patchPos = pos;
         EmitI32(0);
-        fixups.Add(new Fixup(patchPos, labelName));
+        fixups.Add(new Fixup(patchPos, label));
     }
 
 
-    public void EmitJumpIfTrue(byte firstIndex, string labelName) {
-        emittedBytecode.Add((byte)OpCode.JUMP_IF_TRUE);
-        emittedBytecode.Add((byte)firstIndex);
+    public void EmitJumpIfTrue(byte firstIndex, Label label) {
+        EmitOp(OpCode.JUMP_IF_FALSE);
+        EmitU8(firstIndex);
         int patchPos = pos;
         EmitI32(0);
-        fixups.Add(new Fixup(patchPos, labelName));
+        fixups.Add(new Fixup(patchPos, label));
     }
-    public void DefineLabel(string name) {
-        if (labelPos.TryGetValue(name, out var _)) {
+    public void DefineLabel(Label label) {
+        if (labelPos.TryGetValue(label, out var _)) {
             throw new Exception("label already existing");
         }
-        labelPos.Add(name, pos);
+        labelPos.Add(label, pos);
     }
     public void EmitI32(int value) {
         var bytes = BitConverter.GetBytes(value);
@@ -77,30 +79,43 @@ class Emitter {
         EmitU8(returnReg);
     }
 
-    public void EmitAddInt(byte dstReg, byte leftReg, byte rightReg) {
-        EmitOp(OpCode.ADD_INT);
+    private void EmitRRR(OpCode op, byte dstReg, byte leftReg, byte rightReg) {
+        EmitOp(op);
         EmitU8(dstReg);
         EmitU8(leftReg);
         EmitU8(rightReg);
     }
 
+    public void EmitAddInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.ADD_INT, dstReg, leftReg, rightReg);
+    }
+
     public void EmitSubtractInt(byte dstReg, byte leftReg, byte rightReg) {
-        EmitOp(OpCode.SUBTRACT_INT);
-        EmitU8(dstReg);
-        EmitU8(leftReg);
-        EmitU8(rightReg);
+        EmitRRR(OpCode.SUBTRACT_INT, dstReg, leftReg, rightReg);
     }
+
     public void EmitMultiplyInt(byte dstReg, byte leftReg, byte rightReg) {
-        EmitOp(OpCode.MULTIPLY_INT);
-        EmitU8(dstReg);
-        EmitU8(leftReg);
-        EmitU8(rightReg);
+        EmitRRR(OpCode.MULTIPLY_INT, dstReg, leftReg, rightReg);
     }
+
     public void EmitDivideInt(byte dstReg, byte leftReg, byte rightReg) {
-        EmitOp(OpCode.DIVIDE_INT);
-        EmitU8(dstReg);
-        EmitU8(leftReg);
-        EmitU8(rightReg);
+        EmitRRR(OpCode.DIVIDE_INT, dstReg, leftReg, rightReg);
+    }
+
+    public void EmitCmpLTInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.CMP_LT_INT, dstReg, leftReg, rightReg);
+    }
+
+    public void EmitCmpLTEInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.CMP_LTE_INT, dstReg, leftReg, rightReg);
+    }
+
+    public void EmitCmpMTInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.CMP_MT_INT, dstReg, leftReg, rightReg);
+    }
+
+    public void EmitCmpMTEInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.CMP_MTE_INT, dstReg, leftReg, rightReg);
     }
     public void EmitOp(OpCode opCode) {
         emittedBytecode.Add((byte)opCode);
@@ -108,7 +123,7 @@ class Emitter {
 
     public void PatchAll() {
         foreach (Fixup fixup in fixups) {
-            if (labelPos.TryGetValue(fixup.LableName, out int foundPos)) {
+            if (labelPos.TryGetValue(fixup.Lable, out int foundPos)) {
                 // plus 4 because the jump starts after the 4 bytes for offset are read
                 int offset = foundPos - (fixup.PatchPos + 4);
                 var bytes = BitConverter.GetBytes(offset);

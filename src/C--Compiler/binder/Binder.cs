@@ -8,8 +8,7 @@ class Binder {
     Stack<Dictionary<string, LocalSymbol>> scopes;
 
 
-    //!!!!!!!!!!!!!!! temporary return will expand later!!!!!!!!!!!!!!!!!!
-    bool hasReturn;
+
     int nextLocalIndex;
     Stmt[] stmtsToBind;
     private static readonly Dictionary<string, SymbolType> standartTypes =
@@ -31,19 +30,15 @@ class Binder {
 
         foreach (Stmt stmt in stmtsToBind) {
             var boundStmt = BindStmt(stmt);
-            if (boundStmt is BoundReturnStmt) {
-                hasReturn = true;
-            }
             boundStmts.Add(boundStmt);
         }
         PopScope();
-        if (!hasReturn) {
-            boundStmts.Add(
-                new BoundReturnStmt(
-                    new BoundLiteralExpr(0, SymbolType.Int)
-                )
-            );
-        }
+        // temporary
+        boundStmts.Add(
+            new BoundReturnStmt(
+                new BoundLiteralExpr(0, SymbolType.Int)
+            )
+        );
 
         int localCount = nextLocalIndex;
         return new BoundCompiledUnit(boundStmts.ToArray(), localCount);
@@ -78,6 +73,7 @@ class Binder {
         }
 
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
+
 
         return new BoundIfStmt(boundConditionExpr, thenStmt);
     }
