@@ -75,12 +75,15 @@ class Program {
                     PrintSyntaxExpr(i.condition, indent + "│  ", true);
 
                     Console.Write(indent);
-                    Console.WriteLine("└──Body");
+                    Console.WriteLine("└──Then");
+                    PrintSyntaxStmt(i.thenStmt, indent + "   ", true);
 
-                    for (int j = 0; j < i.body.Length; j++) {
-                        PrintSyntaxStmt(i.body[j], indent + "   ", j == i.body.Length - 1);
+                    break;
+                }
+            case BlockStmt b: {
+                    for (int j = 0; j < b.stmts.Length; j++) {
+                        PrintSyntaxStmt(b.stmts[j], indent, j == b.stmts.Length - 1);
                     }
-
                     break;
                 }
             default: {

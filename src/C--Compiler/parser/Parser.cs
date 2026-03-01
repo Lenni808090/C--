@@ -84,13 +84,28 @@ class Parser {
             case TokenType.If: {
                     return ParseIfStmt();
                 }
-
+            case TokenType.OpenBrace: {
+                    return ParseBlockStmt();
+                }
             default: {
                     Expr expr = ParseExpr();
                     Expect(TokenType.Semicolon, "Missing ';' after expression");
                     return new ExpressionStmt(expr);
                 }
         }
+    }
+
+    Stmt ParseBlockStmt() {
+        NextToken();
+
+        List<Stmt> body = new();
+        while (Current.TokenType != TokenType.CloseBrace) {
+            body.Add(ParseStmt());
+        }
+
+        Expect(TokenType.CloseBrace, "closing brace expected after body");
+
+        return new BlockStmt(body.ToArray());
     }
 
     Stmt ParseReturmStmt() {
@@ -107,16 +122,8 @@ class Parser {
         Expr condition = ParseExpr();
         Expect(TokenType.CloseParentheses, "closing ) expected after condition");
 
-        Expect(TokenType.OpenBrace, "open brace expected after condition");
-
-        List<Stmt> body = new();
-        while (Current.TokenType != TokenType.CloseBrace) {
-            body.Add(ParseStmt());
-        }
-
-        Expect(TokenType.CloseBrace, "closing brace expected after body");
-
-        return new IfStmt(condition, body.ToArray());
+        Stmt thenStmt = ParseStmt();
+        return new IfStmt(condition, thenStmt);
     }
 
     TypeSyntax ParseType() {

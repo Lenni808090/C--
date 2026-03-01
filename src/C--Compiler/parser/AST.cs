@@ -51,16 +51,21 @@ sealed class ReturnStmt : Stmt {
 sealed class IfStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
     public Expr condition;
-    public Stmt[] body;
+    public Stmt thenStmt;
 
-    public IfStmt(Expr condition, Stmt[] body) {
+    public IfStmt(Expr condition, Stmt thenStmt) {
         this.condition = condition;
-        this.body = body;
+        this.thenStmt = thenStmt;
     }
 }
 
 sealed class BlockStmt : Stmt {
-    public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
+    public override SyntaxKind syntaxKind => SyntaxKind.BlockStmt;
+    public Stmt[] stmts;
+
+    public BlockStmt(Stmt[] stmts) {
+        this.stmts = stmts;
+    }
 }
 
 sealed class VarDeclarationStmt : Stmt {
