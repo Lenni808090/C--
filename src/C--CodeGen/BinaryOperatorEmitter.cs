@@ -9,7 +9,7 @@ static class BinaryOperatorEmitter {
         { BoundBinaryOperatorKind.MultiplyInt, (e, l, r, t) => e.EmitMultiplyInt(l, r, t) },
         { BoundBinaryOperatorKind.DivideInt, (e, l, r, t) => e.EmitDivideInt(l, r, t) },
 
-
+        { BoundBinaryOperatorKind.EqualsInt, (e, l, r, t) => e.EmitCmpEQInt(l, r, t) },
         { BoundBinaryOperatorKind.LessThanInt, (e, l, r, t) => e.EmitCmpLTInt(l, r, t) },
         { BoundBinaryOperatorKind.LessThanOrEqualInt, (e, l, r, t) => e.EmitCmpLTEInt(l, r, t) },
         { BoundBinaryOperatorKind.GreaterThanInt, (e, l, r, t) => e.EmitCmpMTInt(l, r, t) },

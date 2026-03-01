@@ -132,6 +132,7 @@ class Lexer {
                 case '<': {
                         Next();
                         if (At() == '=') {
+                            Next();
                             tokens.Add(newToken(TokenType.LessThenEquals, "<="));
                         }
                         else {
@@ -142,6 +143,7 @@ class Lexer {
                 case '>': {
                         Next();
                         if (At() == '=') {
+                            Next();
                             tokens.Add(newToken(TokenType.MoreThenEquals, ">="));
                         }
                         else {

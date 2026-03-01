@@ -11,8 +11,8 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"if(x + 1 < 1 && x - 1 > 2){
-                            int x = 100;
+        string code = @"int x = 0;
+                        if(x + 1 == 2){
                             int y = 200;
                             int z = (x + y) * 2;
                             return (z + x) * 3;
@@ -27,25 +27,25 @@ class Program {
         CompilationUnit compilationUnit = parser.ParseUnit();
         PrintSyntaxUnit(compilationUnit);
 
-        // Binder binder = new Binder(compilationUnit);
-        // BoundCompiledUnit bound = binder.BindCompiledUnit();
-        // PrintBoundUnit(bound);
+        Binder binder = new Binder(compilationUnit);
+        BoundCompiledUnit bound = binder.BindCompiledUnit();
+        PrintBoundUnit(bound);
 
-        // CodeGenerator codeGenerator = new CodeGenerator(bound);
-        // CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
-        // Console.WriteLine();
-        // PrintBytecode(compiledFunction);
+        CodeGenerator codeGenerator = new CodeGenerator(bound);
+        CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
+        Console.WriteLine();
+        PrintBytecode(compiledFunction);
 
-        // Value[] regs = new Value[compiledFunction.maxRegCount];
-        // VM vm = new VM(
-        //     regs,
-        //     compiledFunction.constants,
-        //     compiledFunction.localCount,
-        //     compiledFunction.bytecode
-        // );
+        Value[] regs = new Value[compiledFunction.maxRegCount];
+        VM vm = new VM(
+             regs,
+             compiledFunction.constants,
+             compiledFunction.localCount,
+             compiledFunction.bytecode
+         );
 
-        // Value result = vm.Run();
-        // Console.WriteLine("RESULT: " + result);
+        Value result = vm.Run();
+        Console.WriteLine("RESULT: " + result);
 
     }
     static void PrintSyntaxUnit(CompilationUnit unit) {
@@ -61,7 +61,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine(stmt.syntaxKind);
 
-        indent += isLast ? "   " : "¦  ";
+        indent += isLast ? "   " : "ï¿½  ";
 
         switch (stmt) {
             case VarDeclarationStmt v: {
@@ -81,7 +81,7 @@ class Program {
             case IfStmt i: {
                     Console.Write(indent);
                     Console.WriteLine("+--Condition");
-                    PrintSyntaxExpr(i.condition, indent + "¦  ", true);
+                    PrintSyntaxExpr(i.condition, indent + "ï¿½  ", true);
 
                     Console.Write(indent);
                     Console.WriteLine("+--Then");
@@ -109,7 +109,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine(expr.syntaxKind);
 
-        indent += isLast ? "   " : "¦  ";
+        indent += isLast ? "   " : "ï¿½  ";
 
         switch (expr) {
             case LiteralExpr lit: {
@@ -127,7 +127,7 @@ class Program {
 
                     Console.Write(indent);
                     Console.WriteLine("+--Operator");
-                    Console.Write(indent + "¦  ");
+                    Console.Write(indent + "ï¿½  ");
                     Console.WriteLine("symbol: " + bin.Operator.Text);
 
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
@@ -151,7 +151,7 @@ class Program {
 
         switch (type) {
             case IdentifierTypeSyntax id: {
-                    Console.Write(indent + (isLast ? "   " : "¦  "));
+                    Console.Write(indent + (isLast ? "   " : "ï¿½  "));
                     Console.WriteLine("type: " + id.identifier.Text);
                     break;
                 }
@@ -219,7 +219,10 @@ class Program {
                 case OpCode.DIVIDE_INT:
                 case OpCode.CMP_EQ_INT:
                 case OpCode.CMP_LT_INT:
-                case OpCode.CMP_MT_INT: {
+                case OpCode.CMP_MT_INT:
+                case OpCode.CMP_LTE_INT:
+                case OpCode.CMP_MTE_INT:
+                case OpCode.CMP_NEQ_INT: {
                         byte dst = code[ip++];
                         byte left = code[ip++];
                         byte right = code[ip++];
@@ -256,7 +259,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine(stmt.GetType().Name);
 
-        indent += isLast ? "   " : "¦  ";
+        indent += isLast ? "   " : "ï¿½  ";
 
         switch (stmt) {
             case BoundVarDeclarationStmt v: {
@@ -271,6 +274,22 @@ class Program {
                 }
             case BoundExpressionStmt e: {
                     PrintBoundExpr(e.boundExpr, indent, true);
+                    break;
+                }
+            case BoundIfStmt i: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Condition");
+                    PrintBoundExpr(i.boundConditionExpr, indent + "   ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Then");
+                    PrintBoundStmt(i.thenStmt, indent + "   ", true);
+                    break;
+                }
+            case BoundBlockStmt b: {
+                    for (int j = 0; j < b.boundStmts.Length; j++) {
+                        PrintBoundStmt(b.boundStmts[j], indent, j == b.boundStmts.Length - 1);
+                    }
                     break;
                 }
             default: {
@@ -296,8 +315,8 @@ class Program {
                     break;
                 }
             case BoundBinaryExpr bin: {
-                    Console.WriteLine($"BoundBinaryExpr : {bin.type}  op={bin.boundBinaryOperatorKind}");
-                    indent += isLast ? "   " : "¦  ";
+                    Console.WriteLine($"BoundBinaryExpr : {bin.type}  op={bin.boundBinaryOperator.operatorKind}");
+                    indent += isLast ? "   " : "ï¿½  ";
                     PrintBoundExpr(bin.leftBoundExpr, indent, false);
                     PrintBoundExpr(bin.rightBoundExpr, indent, true);
                     break;

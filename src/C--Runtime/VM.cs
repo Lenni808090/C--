@@ -158,7 +158,14 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
-
+                case OpCode.CMP_NEQ_INT: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte leftReg = bytecode[instructionPointer++];
+                        byte rightReg = bytecode[instructionPointer++];
+                        int result = ((int)regs[leftReg].RawData != (int)regs[rightReg].RawData) ? 1 : 0;
+                        regs[dstReg] = new Value(ValueType.Bool, result);
+                        break;
+                    }
 
                 default:
                     throw new InvalidOperationException("Unknown opcode at position " + (instructionPointer - 1));
