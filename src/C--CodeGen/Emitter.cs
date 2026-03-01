@@ -36,7 +36,7 @@ class Emitter {
 
 
     public void EmitJumpIfTrue(byte firstIndex, Label label) {
-        EmitOp(OpCode.JUMP_IF_FALSE);
+        EmitOp(OpCode.JUMP_IF_TRUE);
         EmitU8(firstIndex);
         int patchPos = pos;
         EmitI32(0);
