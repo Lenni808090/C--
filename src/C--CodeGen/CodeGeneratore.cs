@@ -113,8 +113,8 @@ class CodeGenerator {
 
     byte AllocReg() {
         byte reg = nextReg++;
-        if (reg > maxReg) {
-            maxReg = reg;
+        if (nextReg > maxReg) {
+            maxReg = nextReg;
         }
         return reg;
     }
