@@ -24,7 +24,8 @@ class Binder {
             boundStmts.Add(boundStmt);
         }
 
-        return new BoundCompiledUnit(boundStmts.ToArray());
+        int localCount = localsByName.Count;
+        return new BoundCompiledUnit(boundStmts.ToArray(), localCount);
     }
 
 

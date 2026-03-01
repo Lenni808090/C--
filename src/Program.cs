@@ -5,7 +5,7 @@ class Program {
         string code = @"int x = 100;
                         int y = 200;
                         int z = (x + y) * 2;
-                        return true;";
+                        return (z + x) * 3;";
 
         Lexer lexer = new Lexer(code);
         Token[] tokens = lexer.Lex();

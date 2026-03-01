@@ -9,9 +9,11 @@ abstract class BoundExpr {
 
 sealed class BoundCompiledUnit : BoundStmt {
     public BoundStmt[] boundStmts;
+    public int localCount;
 
-    public BoundCompiledUnit(BoundStmt[] boundStmts) {
+    public BoundCompiledUnit(BoundStmt[] boundStmts, int localCount) {
         this.boundStmts = boundStmts;
+        this.localCount = localCount;
     }
 }
 

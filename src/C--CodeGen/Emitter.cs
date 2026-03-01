@@ -81,6 +81,24 @@ class Emitter {
         EmitU8(rightReg);
     }
 
+    public void EmitSubtractInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitOp(OpCode.SUBTRACT_INT);
+        EmitU8(dstReg);
+        EmitU8(leftReg);
+        EmitU8(rightReg);
+    }
+    public void EmitMultiplyInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitOp(OpCode.MULTIPLY_INT);
+        EmitU8(dstReg);
+        EmitU8(leftReg);
+        EmitU8(rightReg);
+    }
+    public void EmitDivideInt(byte dstReg, byte leftReg, byte rightReg) {
+        EmitOp(OpCode.DIVIDE_INT);
+        EmitU8(dstReg);
+        EmitU8(leftReg);
+        EmitU8(rightReg);
+    }
     public void EmitOp(OpCode opCode) {
         emittedBytecode.Add((byte)opCode);
     }
