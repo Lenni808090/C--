@@ -81,11 +81,11 @@ sealed class BoundNameExpr : BoundExpr {
 sealed class BoundBinaryExpr : BoundExpr {
     public BoundExpr leftBoundExpr;
     public BoundExpr rightBoundExpr;
-    public BoundBinaryOperator boundBinaryOperatorKind;
+    public BoundBinaryOperator boundBinaryOperator;
     public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperator boundBinaryOperatorKind, SymbolType symbolType) : base(symbolType) {
         this.leftBoundExpr = leftBoundExpr;
         this.rightBoundExpr = rightBoundExpr;
-        this.boundBinaryOperatorKind = boundBinaryOperatorKind;
+        this.boundBinaryOperator = boundBinaryOperatorKind;
     }
 }
 

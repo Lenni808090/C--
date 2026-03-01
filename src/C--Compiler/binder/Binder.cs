@@ -163,7 +163,7 @@ class Binder {
         var op = binaryExpr.Operator.TokenType;
         BoundBinaryOperator? boundBinaryOperator = BoundBinaryOperator.GetBinaryOperator(op, boundLeftExpr.type, boundRightExpr.type);
         if (boundBinaryOperator is not null) {
-            return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundLeftExpr.type);
+            return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundBinaryOperator.resultType);
         }
         else {
             throw new Exception("type mismatch in binary operation");
