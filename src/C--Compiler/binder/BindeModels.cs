@@ -29,6 +29,24 @@ sealed class BoundVarDeclarationStmt : BoundStmt {
     }
 }
 
+sealed class BoundIfStmt : BoundStmt {
+    public BoundExpr boundConditionExpr;
+    public BoundStmt thenStmt;
+
+    public BoundIfStmt(BoundExpr boundConditionExpr, BoundStmt thenStmt) {
+        this.boundConditionExpr = boundConditionExpr;
+        this.thenStmt = thenStmt;
+    }
+}
+
+sealed class boundBlockStmt : BoundStmt {
+    public BoundStmt[] boundStmts;
+
+    public boundBlockStmt(BoundStmt[] boundStmts) {
+        this.boundStmts = boundStmts;
+    }
+}
+
 sealed class BoundReturnStmt : BoundStmt {
     public BoundExpr boundReturnedExpr;
 
