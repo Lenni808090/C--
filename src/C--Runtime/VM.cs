@@ -167,6 +167,14 @@ class VM {
                         break;
                     }
 
+
+                case OpCode.MOVE: {
+                        byte dstReg = bytecode[instructionPointer++];
+                        byte srcReg = bytecode[instructionPointer++];
+                        regs[dstReg] = regs[srcReg];
+                        break;
+                    }
+
                 default:
                     throw new InvalidOperationException("Unknown opcode at position " + (instructionPointer - 1));
 

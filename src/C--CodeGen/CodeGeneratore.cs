@@ -100,7 +100,7 @@ class CodeGenerator {
     byte EmitLiteralExpr(BoundLiteralExpr literalExpr) {
         byte dstReg = AllocReg();
         long value = literalExpr.value;
-        CMinus.Runtime.ValueType type = getValueType(literalExpr.type);
+        Runtime.ValueType type = getValueType(literalExpr.type);
 
         var newConst = new Value(type, value);
         int constIndex = functionBuilder.AddConstant(newConst);

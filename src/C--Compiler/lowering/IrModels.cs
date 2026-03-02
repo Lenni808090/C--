@@ -6,8 +6,8 @@ abstract class Terminator { };
 class IrCompiledUnit {
     public BasicBlock[] basicBlocks;
 
-    int localCount;
-    int maxVReg;
+    public int localCount;
+    public int maxVReg;
 
     public IrCompiledUnit(BasicBlock[] basicBlocks, int localCount, int maxVReg) {
         this.basicBlocks = basicBlocks;
@@ -30,11 +30,14 @@ class BasicBlock {
 
 
 class IrLoadConst : IrInstr {
-    public int constIndex;
+
+    public Runtime.ValueType valueType;
+    public long rawValue;
     public int dstReg;
 
-    public IrLoadConst(int constIndex, int dstReg) {
-        this.constIndex = constIndex;
+    public IrLoadConst(Runtime.ValueType valueType, long rawValue, int dstReg) {
+        this.valueType = valueType;
+        this.rawValue = rawValue;
         this.dstReg = dstReg;
     }
 }
@@ -68,6 +71,15 @@ class IrReturn : Terminator {
     }
 }
 
+class IrMove : IrInstr {
+    public int dstReg;
+    public int srcReg;
+
+    public IrMove(int dstReg, int srcReg) {
+        this.dstReg = dstReg;
+        this.srcReg = srcReg;
+    }
+}
 
 class IrBinaryOp : IrInstr {
     public IrBinaryOP irBinaryOP;

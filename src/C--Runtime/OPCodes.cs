@@ -23,7 +23,9 @@ enum OpCode : byte {
     CMP_LTE_INT,
     CMP_MT_INT,
     CMP_MTE_INT,
-    CMP_NEQ_INT
+    CMP_NEQ_INT,
 
+
+    MOVE
 
 }
