@@ -111,7 +111,12 @@ class IrBuilder {
             return BuildLogicalAndExpr(binaryExpr);
         }
 
-        throw new Exception("Unhandled binary operator in IrBuilder: " + opKind);
+        int leftReg = BuildExpr(binaryExpr.leftBoundExpr);
+        int rightReg = BuildExpr(binaryExpr.rightBoundExpr);
+
+        var irOpKind = MapBinaryOp(opKind);
+
+        return EmitBinary(irOpKind, leftReg, rightReg);
     }
 
     int BuildLogicalOrExpr(BoundBinaryExpr binaryExpr) {
@@ -226,7 +231,7 @@ class IrBuilder {
         Emit(new IrMove(dstReg, srcReg));
         return dstReg;
     }
-    int EmitBinary(IrBinaryOP op, int leftReg, int rightReg) {
+    int EmitBinary(IrBinaryOPKind op, int leftReg, int rightReg) {
         int dstReg = AllocVReg();
         Emit(new IrBinaryOp(op, dstReg, leftReg, rightReg));
         return dstReg;
@@ -256,6 +261,27 @@ class IrBuilder {
         };
     }
 
+
+    IrBinaryOPKind MapBinaryOp(BoundBinaryOperatorKind kind) {
+        return kind switch {
+            BoundBinaryOperatorKind.AddInt => IrBinaryOPKind.AddInt,
+            BoundBinaryOperatorKind.SubtractInt => IrBinaryOPKind.SubtractInt,
+            BoundBinaryOperatorKind.MultiplyInt => IrBinaryOPKind.MultiplyInt,
+            BoundBinaryOperatorKind.DivideInt => IrBinaryOPKind.DivideInt,
+
+            BoundBinaryOperatorKind.EqualsInt => IrBinaryOPKind.CmpEqInt,
+            BoundBinaryOperatorKind.NotEqualsInt => IrBinaryOPKind.CmpNEqInt,
+            BoundBinaryOperatorKind.LessThanInt => IrBinaryOPKind.CmpLtInt,
+            BoundBinaryOperatorKind.LessThanOrEqualInt => IrBinaryOPKind.CmpLtEInt,
+            BoundBinaryOperatorKind.GreaterThanInt => IrBinaryOPKind.CmpMtInt,
+            BoundBinaryOperatorKind.GreaterThanOrEqualInt => IrBinaryOPKind.CmpMtEInt,
+
+            BoundBinaryOperatorKind.EqualsBool => IrBinaryOPKind.CmpEqBool,
+            BoundBinaryOperatorKind.NotEqualsBool => IrBinaryOPKind.CmpNEqBool,
+
+            _ => throw new Exception("Unsupported binary operator: " + kind),
+        };
+    }
     int AllocVReg() {
         int reg = nextVReg++;
         if (nextVReg > maxVReg) {

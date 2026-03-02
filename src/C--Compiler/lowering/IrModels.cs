@@ -82,13 +82,13 @@ class IrMove : IrInstr {
 }
 
 class IrBinaryOp : IrInstr {
-    public IrBinaryOP irBinaryOP;
+    public IrBinaryOPKind irBinaryOP;
 
     public int dstReg;
     public int leftReg;
     public int rightReg;
 
-    public IrBinaryOp(IrBinaryOP irBinaryOP, int dstReg, int leftReg, int rightReg) {
+    public IrBinaryOp(IrBinaryOPKind irBinaryOP, int dstReg, int leftReg, int rightReg) {
         this.irBinaryOP = irBinaryOP;
         this.dstReg = dstReg;
         this.leftReg = leftReg;
@@ -121,12 +121,14 @@ class IrBranch : Terminator {
 
 
 
-enum IrBinaryOP {
+enum IrBinaryOPKind {
+    // Arithmetic (int)
     AddInt,
     SubtractInt,
-    DivideInt,
     MultiplyInt,
+    DivideInt,
 
+    // Int comparisons
     CmpEqInt,
     CmpNEqInt,
     CmpLtInt,
@@ -134,4 +136,7 @@ enum IrBinaryOP {
     CmpMtInt,
     CmpMtEInt,
 
+    // Bool comparisons
+    CmpEqBool,
+    CmpNEqBool,
 }

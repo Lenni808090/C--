@@ -102,9 +102,7 @@ class Binder {
         SymbolType declared = InferTypeInTypedDecl(typeToken);
         BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
 
-        if (declared != initBoundExpr.type &&
-            declared != SymbolType.DiagnosticsError &&
-            initBoundExpr.type != SymbolType.DiagnosticsError) {
+        if (declared != initBoundExpr.type && declared != SymbolType.DiagnosticsError && initBoundExpr.type != SymbolType.DiagnosticsError) {
             ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch, varDeclarationStmt.name.TextSpan);
         }
 
