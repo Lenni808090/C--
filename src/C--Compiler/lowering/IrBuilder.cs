@@ -107,6 +107,9 @@ class IrBuilder {
         if (opKind == BoundBinaryOperatorKind.LogicalOr) {
             return BuildLogicalOrExpr(binaryExpr);
         }
+        else if (opKind == BoundBinaryOperatorKind.LogicalAnd) {
+            return BuildLogicalAndExpr(binaryExpr);
+        }
 
         throw new Exception("Unhandled binary operator in IrBuilder: " + opKind);
     }
@@ -116,9 +119,9 @@ class IrBuilder {
 
         int leftReg = BuildExpr(binaryExpr.leftBoundExpr);
 
-        var rhsBlock = MakeNewBlock();
-        var leftTrueBlock = MakeNewBlock();
-        var mergeBlock = MakeNewBlock();
+        var rhsBlock = CreateBlock();
+        var leftTrueBlock = CreateBlock();
+        var mergeBlock = CreateBlock();
 
         TerminateBranch(leftReg, leftTrueBlock.blockId, rhsBlock.blockId);
 
@@ -137,6 +140,34 @@ class IrBuilder {
 
         return resReg;
     }
+
+    int BuildLogicalAndExpr(BoundBinaryExpr binaryExpr) {
+        int tempIndex = AllocTempLocalInd();
+
+        int leftReg = BuildExpr(binaryExpr.leftBoundExpr);
+
+        var falsyBranch = CreateBlock();
+        var rhsBlock = CreateBlock();
+        var mergeBlock = CreateBlock();
+
+        TerminateBranch(leftReg, rhsBlock.blockId, falsyBranch.blockId);
+
+        SwitchCurrentBlock(falsyBranch);
+        EmitStoreLocal(leftReg, tempIndex);
+        TerminateGoto(mergeBlock.blockId);
+
+        SwitchCurrentBlock(rhsBlock);
+        int rightReg = BuildExpr(binaryExpr.rightBoundExpr);
+        EmitStoreLocal(rightReg, tempIndex);
+        TerminateGoto(mergeBlock.blockId);
+
+        SwitchCurrentBlock(mergeBlock);
+
+        int resReg = EmitLoadLocal(tempIndex);
+
+        return resReg;
+    }
+
 
     void Emit(IrInstr irInstr) {
         if (currentBlock.terminator is null) {
@@ -160,10 +191,10 @@ class IrBuilder {
         return new BasicBlock(GetBlockId());
     }
 
-    void CreateBlock() {
+    BasicBlock CreateBlock() {
         var newBlock = MakeNewBlock();
         basicBlocks.Add(newBlock);
-        currentBlock = newBlock;
+        return newBlock;
     }
 
     void SwitchCurrentBlock(BasicBlock basicBlock) {
