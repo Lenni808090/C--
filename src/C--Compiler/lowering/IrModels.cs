@@ -3,19 +3,30 @@ namespace CMinus.Compiler.Lowering;
 abstract class IrInstr { };
 abstract class Terminator { };
 
+class IrCompiledUnit {
+    public BasicBlock[] basicBlocks;
+
+    int localCount;
+    int maxVReg;
+
+    public IrCompiledUnit(BasicBlock[] basicBlocks, int localCount, int maxVReg) {
+        this.basicBlocks = basicBlocks;
+        this.localCount = localCount;
+        this.maxVReg = maxVReg;
+    }
+}
 
 class BasicBlock {
     public List<IrInstr> irInstrs;
 
+    public Terminator? terminator;
     public int blockId;
 
-    public BasicBlock(List<IrInstr> irInstrs, int blockId) {
-        this.irInstrs = irInstrs;
+    public BasicBlock(int blockId) {
+        irInstrs = new();
         this.blockId = blockId;
     }
 }
-
-
 
 
 class IrLoadConst : IrInstr {
