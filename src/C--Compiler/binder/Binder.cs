@@ -108,7 +108,7 @@ class Binder {
             ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch, varDeclarationStmt.name.TextSpan);
         }
 
-        int index = nextLocalIndex++;
+        int index = AllocateLocalIndex();
         LocalSymbol localSymbol = new LocalSymbol(name, declared, index);
         if (!isAlreadyInScope) {
             scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
@@ -195,6 +195,10 @@ class Binder {
 
     void PopScope() {
         scopes.Pop();
+    }
+
+    int AllocateLocalIndex() {
+        return nextLocalIndex++;
     }
 
     SymbolType InferTypeInTypedDecl(Token typeToken) {

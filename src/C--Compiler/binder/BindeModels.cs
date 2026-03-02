@@ -97,12 +97,21 @@ sealed class BoundErrorExpr : BoundExpr {
 sealed class LocalSymbol {
     public string name;
     public SymbolType symbolType;
+
+    public bool isCompilerGenerated;
     public int index;
 
-    public LocalSymbol(string name, SymbolType symbolType, int index) {
+    public LocalSymbol(string name, SymbolType symbolType, int index, bool isCompilerGenerated = false) {
         this.name = name;
         this.symbolType = symbolType;
         this.index = index;
+        this.isCompilerGenerated = isCompilerGenerated;
+    }
+
+    public static LocalSymbol generateTempLocal(SymbolType symbolType, int index) {
+        string name = "&temp" + index;
+
+        return new LocalSymbol(name, symbolType, index, true);
     }
 }
 
