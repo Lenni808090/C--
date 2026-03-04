@@ -122,7 +122,10 @@ class IrBuilder {
 
         SwitchCurrentBlock(whileBlock);
         BuildStmt(whileStmt.body);
-        TerminateGoto(condBlock.blockId);
+
+        if (currentBlock.terminator is null) {
+            TerminateGoto(condBlock.blockId);
+        }
 
         SwitchCurrentBlock(endBlock);
     }

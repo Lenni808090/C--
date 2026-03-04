@@ -17,6 +17,7 @@ class Program {
                         int isTrue = 0;
                         while(isTrue < 5){
                             isTrue = isTrue + 1;
+                            return isTrue;
                         }
                         return isTrue;
                         ";
