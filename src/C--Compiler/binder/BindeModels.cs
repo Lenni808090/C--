@@ -35,9 +35,11 @@ sealed class BoundIfStmt : BoundStmt {
     public BoundExpr boundConditionExpr;
     public BoundStmt thenStmt;
 
-    public BoundIfStmt(BoundExpr boundConditionExpr, BoundStmt thenStmt) {
+    public BoundStmt? elseStmt;
+    public BoundIfStmt(BoundExpr boundConditionExpr, BoundStmt thenStmt, BoundStmt? elseStmt = null) {
         this.boundConditionExpr = boundConditionExpr;
         this.thenStmt = thenStmt;
+        this.elseStmt = elseStmt;
     }
 }
 

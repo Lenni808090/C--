@@ -76,8 +76,13 @@ class Binder {
 
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
 
+        if (ifStmt.elseStmt is null) {
+            return new BoundIfStmt(boundConditionExpr, thenStmt);
+        }
 
-        return new BoundIfStmt(boundConditionExpr, thenStmt);
+        BoundStmt elseStmt = BindStmt(ifStmt.elseStmt);
+
+        return new BoundIfStmt(boundConditionExpr, thenStmt, elseStmt);
     }
 
     BoundStmt BindBlockStmt(BlockStmt blockStmt) {

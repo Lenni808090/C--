@@ -72,7 +72,7 @@ class IrBuilder {
     }
 
     void BuildIfStmt(BoundIfStmt ifStmt) {
-        //TODO if stmts;
+        ifStmt.
     }
 
     void BuildBlockStmt(BoundBlockStmt blockStmt) {
