@@ -17,6 +17,7 @@ class Program {
                         if(3 == 2){
                             int y = 200;
                             return y;
+                            int z = 2;
                         }else {
                             int y = 500;
                             return y;
@@ -50,6 +51,12 @@ class Program {
 
         IrBuilder irBuilder = new IrBuilder(bound);
         IrCompiledUnit irCompiledUnit = irBuilder.BuildCompiledUnit();
+        ControlFlowAnalyser controlFlowAnalyser = new ControlFlowAnalyser(irCompiledUnit, compilerContext);
+        irCompiledUnit = controlFlowAnalyser.Analyse();
+        if (diagnostics.CheckForErrors()) {
+            diagnostics.PrintAllErrors();
+            return;
+        }
 
         CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
         CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
@@ -158,8 +165,7 @@ class Program {
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
                     break;
                 }
-            // If you add unary:
-            // case UnaryExpr u: { ... }
+
             default: {
                     Console.Write(indent);
                     Console.WriteLine("Unhandled syntax expr: " + expr.GetType().Name);

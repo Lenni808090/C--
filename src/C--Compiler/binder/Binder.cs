@@ -38,7 +38,8 @@ class Binder {
         // temporary
         boundStmts.Add(
             new BoundReturnStmt(
-                new BoundLiteralExpr(0, SymbolType.Int)
+                new BoundLiteralExpr(0, SymbolType.Int),
+                TextSpan.None
             )
         );
 
@@ -59,12 +60,12 @@ class Binder {
     }
 
     BoundStmt BindExpressionStmt(ExpressionStmt expressionStmt) {
-        return new BoundExpressionStmt(BindExpr(expressionStmt.Expression));
+        return new BoundExpressionStmt(BindExpr(expressionStmt.Expression), GetStmtSpan(expressionStmt));
     }
 
     BoundStmt BindReturnStmt(ReturnStmt returnStmt) {
         var boundReturnedExpr = BindExpr(returnStmt.returnExpr);
-        return new BoundReturnStmt(boundReturnedExpr);
+        return new BoundReturnStmt(boundReturnedExpr, GetStmtSpan(returnStmt));
     }
 
     BoundStmt BindIfStmt(IfStmt ifStmt) {
@@ -77,12 +78,12 @@ class Binder {
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
 
         if (ifStmt.elseStmt is null) {
-            return new BoundIfStmt(boundConditionExpr, thenStmt);
+            return new BoundIfStmt(boundConditionExpr, thenStmt, GetStmtSpan(ifStmt));
         }
 
         BoundStmt elseStmt = BindStmt(ifStmt.elseStmt);
 
-        return new BoundIfStmt(boundConditionExpr, thenStmt, elseStmt);
+        return new BoundIfStmt(boundConditionExpr, thenStmt, GetStmtSpan(ifStmt), elseStmt);
     }
 
     BoundStmt BindBlockStmt(BlockStmt blockStmt) {
@@ -94,7 +95,7 @@ class Binder {
         }
 
         PopScope();
-        return new BoundBlockStmt(boundStmts.ToArray());
+        return new BoundBlockStmt(boundStmts.ToArray(), GetStmtSpan(blockStmt));
     }
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
@@ -117,7 +118,7 @@ class Binder {
             scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
         }
 
-        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
+        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr, GetStmtSpan(varDeclarationStmt));
     }
 
     BoundExpr BindExpr(Expr expr) {
@@ -238,6 +239,43 @@ class Binder {
             BinaryExpr b => b.Operator.TextSpan,
             _ => TextSpan.None,
         };
+    }
+
+    TextSpan GetStmtSpan(Stmt stmt) {
+        return stmt switch {
+            VarDeclarationStmt v => CombineSpans(v.name.TextSpan, GetExprSpan(v.declarementExpr)),
+            ReturnStmt r => GetExprSpan(r.returnExpr),
+            IfStmt i => i.elseStmt is null
+                ? CombineSpans(GetExprSpan(i.condition), GetStmtSpan(i.thenStmt))
+                : CombineSpans(GetExprSpan(i.condition), GetStmtSpan(i.elseStmt!)),
+            BlockStmt b => GetBlockSpan(b),
+            ExpressionStmt e => GetExprSpan(e.Expression),
+            _ => TextSpan.None,
+        };
+    }
+
+    TextSpan GetBlockSpan(BlockStmt blockStmt) {
+        if (blockStmt.stmts.Length == 0) {
+            return TextSpan.None;
+        }
+
+        TextSpan first = GetStmtSpan(blockStmt.stmts[0]);
+        TextSpan last = GetStmtSpan(blockStmt.stmts[blockStmt.stmts.Length - 1]);
+        return CombineSpans(first, last);
+    }
+
+    TextSpan CombineSpans(TextSpan first, TextSpan second) {
+        if (first.Length == 0) {
+            return second;
+        }
+
+        if (second.Length == 0) {
+            return first;
+        }
+
+        int start = Math.Min(first.Start, second.Start);
+        int end = Math.Max(first.Start + first.Length, second.Start + second.Length);
+        return new TextSpan(start, end - start);
     }
 
     void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {

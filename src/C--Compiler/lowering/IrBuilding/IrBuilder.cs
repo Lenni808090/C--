@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using CMinus.Compiler.Binding;
+using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
 
 namespace CMinus.Compiler.Lowering;
@@ -13,11 +14,13 @@ class IrBuilder {
     int nextTempLocalInd;
     int nextVReg;
     int maxVReg;
+    TextSpan currentStmtSpan;
 
     public IrBuilder(BoundCompiledUnit boundCompiledUnit) {
         basicBlocks = new();
         this.boundCompiledUnit = boundCompiledUnit;
         nextTempLocalInd = boundCompiledUnit.localCount;
+        currentStmtSpan = TextSpan.None;
 
         currentBlock = MakeNewBlock();
         basicBlocks.Add(currentBlock);
@@ -38,6 +41,9 @@ class IrBuilder {
     }
 
     void BuildStmt(BoundStmt boundStmt) {
+        TextSpan previousStmtSpan = currentStmtSpan;
+        currentStmtSpan = boundStmt.span;
+
         switch (boundStmt) {
             case BoundVarDeclarationStmt v: {
                     BuildVarDeclarationStmt(v);
@@ -59,6 +65,8 @@ class IrBuilder {
                     throw new Exception("Unkown Stmt in Build Stmt Ir");
                 }
         }
+
+        currentStmtSpan = previousStmtSpan;
     }
 
     void BuildVarDeclarationStmt(BoundVarDeclarationStmt v) {
@@ -207,8 +215,11 @@ class IrBuilder {
 
     void Emit(IrInstr irInstr) {
         if (currentBlock.terminator is not null) {
-            throw new Exception("Block already closed");
+            Console.Write("unreachable block created at " + basicBlocks.Count);
+            var unreachable = CreateUnreachableBlock();
+            SwitchCurrentBlock(unreachable);
         }
+        EnsureCurrentBlockSourceSpan();
         currentBlock.irInstrs.Add(irInstr);
     }
 
@@ -216,7 +227,14 @@ class IrBuilder {
         if (currentBlock.terminator is not null) {
             throw new Exception("onyl one terminator allowed");
         }
+        EnsureCurrentBlockSourceSpan();
         currentBlock.terminator = terminator;
+    }
+
+    void EnsureCurrentBlockSourceSpan() {
+        if (currentBlock.sourceSpan.Length == 0 && currentStmtSpan.Length > 0) {
+            currentBlock.sourceSpan = currentStmtSpan;
+        }
     }
 
     int GetBlockId() {
@@ -230,6 +248,12 @@ class IrBuilder {
 
     BasicBlock CreateBlock() {
         var newBlock = MakeNewBlock();
+        basicBlocks.Add(newBlock);
+        return newBlock;
+    }
+
+    BasicBlock CreateUnreachableBlock() {
+        var newBlock = new BasicBlock(GetBlockId(), true);
         basicBlocks.Add(newBlock);
         return newBlock;
     }

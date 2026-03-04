@@ -1,6 +1,14 @@
+using CMinus.Compiler.Diagnostics;
+
 namespace CMinus.Compiler.Binding;
 
-abstract class BoundStmt { };
+abstract class BoundStmt {
+    public TextSpan span;
+
+    protected BoundStmt(TextSpan span) {
+        this.span = span;
+    }
+};
 abstract class BoundExpr {
     public SymbolType type {
         get;
@@ -15,7 +23,7 @@ sealed class BoundCompiledUnit : BoundStmt {
     public BoundStmt[] boundStmts;
     public int localCount;
 
-    public BoundCompiledUnit(BoundStmt[] boundStmts, int localCount) {
+    public BoundCompiledUnit(BoundStmt[] boundStmts, int localCount) : base(TextSpan.None) {
         this.boundStmts = boundStmts;
         this.localCount = localCount;
     }
@@ -25,7 +33,7 @@ sealed class BoundVarDeclarationStmt : BoundStmt {
     public LocalSymbol localSymbol;
     public BoundExpr initializer;
 
-    public BoundVarDeclarationStmt(LocalSymbol localSymbol, BoundExpr initializer) {
+    public BoundVarDeclarationStmt(LocalSymbol localSymbol, BoundExpr initializer, TextSpan span) : base(span) {
         this.localSymbol = localSymbol;
         this.initializer = initializer;
     }
@@ -36,7 +44,7 @@ sealed class BoundIfStmt : BoundStmt {
     public BoundStmt thenStmt;
 
     public BoundStmt? elseStmt;
-    public BoundIfStmt(BoundExpr boundConditionExpr, BoundStmt thenStmt, BoundStmt? elseStmt = null) {
+    public BoundIfStmt(BoundExpr boundConditionExpr, BoundStmt thenStmt, TextSpan span, BoundStmt? elseStmt = null) : base(span) {
         this.boundConditionExpr = boundConditionExpr;
         this.thenStmt = thenStmt;
         this.elseStmt = elseStmt;
@@ -46,7 +54,7 @@ sealed class BoundIfStmt : BoundStmt {
 sealed class BoundBlockStmt : BoundStmt {
     public BoundStmt[] boundStmts;
 
-    public BoundBlockStmt(BoundStmt[] boundStmts) {
+    public BoundBlockStmt(BoundStmt[] boundStmts, TextSpan span) : base(span) {
         this.boundStmts = boundStmts;
     }
 }
@@ -54,13 +62,13 @@ sealed class BoundBlockStmt : BoundStmt {
 sealed class BoundReturnStmt : BoundStmt {
     public BoundExpr boundReturnedExpr;
 
-    public BoundReturnStmt(BoundExpr boundReturnedExpr) {
+    public BoundReturnStmt(BoundExpr boundReturnedExpr, TextSpan span) : base(span) {
         this.boundReturnedExpr = boundReturnedExpr;
     }
 }
 sealed class BoundExpressionStmt : BoundStmt {
     public BoundExpr boundExpr;
-    public BoundExpressionStmt(BoundExpr boundExpr) {
+    public BoundExpressionStmt(BoundExpr boundExpr, TextSpan span) : base(span) {
         this.boundExpr = boundExpr;
     }
 }

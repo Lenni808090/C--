@@ -1,3 +1,5 @@
+using CMinus.Compiler.Diagnostics;
+
 namespace CMinus.Compiler.Lowering;
 
 abstract class IrInstr { };
@@ -18,13 +20,16 @@ class IrCompiledUnit {
 
 class BasicBlock {
     public List<IrInstr> irInstrs;
-
+    public bool isUnreachable;
     public Terminator? terminator;
     public int blockId;
+    public TextSpan sourceSpan;
 
-    public BasicBlock(int blockId) {
+    public BasicBlock(int blockId, bool isUnreachable = false) {
         irInstrs = new();
         this.blockId = blockId;
+        this.isUnreachable = isUnreachable;
+        sourceSpan = TextSpan.None;
     }
 }
 
