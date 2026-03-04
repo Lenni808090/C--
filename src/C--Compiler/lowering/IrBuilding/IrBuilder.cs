@@ -1,7 +1,4 @@
-using System.Reflection.Emit;
 using CMinus.Compiler.Binding;
-using CMinus.Compiler.Diagnostics;
-using CMinus.Compiler.Syntax;
 
 namespace CMinus.Compiler.Lowering;
 
@@ -14,13 +11,11 @@ class IrBuilder {
     int nextTempLocalInd;
     int nextVReg;
     int maxVReg;
-    TextSpan currentStmtSpan;
 
     public IrBuilder(BoundCompiledUnit boundCompiledUnit) {
         basicBlocks = new();
         this.boundCompiledUnit = boundCompiledUnit;
         nextTempLocalInd = boundCompiledUnit.localCount;
-        currentStmtSpan = TextSpan.None;
 
         currentBlock = MakeNewBlock();
         basicBlocks.Add(currentBlock);
@@ -37,9 +32,6 @@ class IrBuilder {
     }
 
     void BuildStmt(BoundStmt boundStmt) {
-        TextSpan previousStmtSpan = currentStmtSpan;
-        currentStmtSpan = boundStmt.span;
-
         switch (boundStmt) {
             case BoundVarDeclarationStmt v: {
                     BuildVarDeclarationStmt(v);
@@ -61,8 +53,6 @@ class IrBuilder {
                     throw new Exception("Unkown Stmt in Build Stmt Ir");
                 }
         }
-
-        currentStmtSpan = previousStmtSpan;
     }
 
     void BuildVarDeclarationStmt(BoundVarDeclarationStmt v) {
@@ -214,7 +204,6 @@ class IrBuilder {
             var unreachable = CreateUnreachableBlock();
             SwitchCurrentBlock(unreachable);
         }
-        EnsureCurrentBlockSourceSpan();
         currentBlock.irInstrs.Add(irInstr);
     }
 
@@ -222,32 +211,7 @@ class IrBuilder {
         if (currentBlock.terminator is not null) {
             throw new Exception("onyl one terminator allowed");
         }
-        if (currentBlock.sourceSpan.Length == 0) {
-            EnsureCurrentBlockSourceSpan();
-        }
         currentBlock.terminator = terminator;
-    }
-
-    void EnsureCurrentBlockSourceSpan() {
-        if (currentStmtSpan.Length == 0) {
-            return;
-        }
-
-        currentBlock.sourceSpan = CombineSpans(currentBlock.sourceSpan, currentStmtSpan);
-    }
-
-    TextSpan CombineSpans(TextSpan first, TextSpan second) {
-        if (first.Length == 0) {
-            return second;
-        }
-
-        if (second.Length == 0) {
-            return first;
-        }
-
-        int start = Math.Min(first.Start, second.Start);
-        int end = Math.Max(first.Start + first.Length, second.Start + second.Length);
-        return new TextSpan(start, end - start);
     }
 
     int GetBlockId() {
@@ -266,7 +230,7 @@ class IrBuilder {
     }
 
     BasicBlock CreateUnreachableBlock() {
-        var newBlock = new BasicBlock(GetBlockId(), true);
+        var newBlock = new BasicBlock(GetBlockId(), true, true);
         basicBlocks.Add(newBlock);
         return newBlock;
     }

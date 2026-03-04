@@ -22,7 +22,6 @@ class Lexer {
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
         diagnostics = context.diagnostics;
-        diagnostics.SourceText = data;
     }
 
     public char Peek() {
@@ -56,7 +55,7 @@ class Lexer {
             char c = At();
 
             if (c == '\0') {
-                tokens.Add(newToken(TokenType.EoF, "EoF", null, new TextSpan(position, 0)));
+                tokens.Add(newToken(TokenType.EoF, "EoF"));
                 break;
             }
 
@@ -93,7 +92,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.Or, "||"));
                         }
                         else {
-                            ReportError(DiagnosticDescriptors.LexerUnexpectedSinglePipe, new TextSpan(position - 1, 1));
+                            ReportError(DiagnosticDescriptors.LexerUnexpectedSinglePipe);
                         }
                         break;
                     }
@@ -104,7 +103,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.And, "&&"));
                         }
                         else {
-                            ReportError(DiagnosticDescriptors.LexerUnexpectedSingleAmpersand, new TextSpan(position - 1, 1));
+                            ReportError(DiagnosticDescriptors.LexerUnexpectedSingleAmpersand);
                         }
                         break;
                     }
@@ -208,7 +207,7 @@ class Lexer {
                             tokens.Add(newToken(TokenType.Identifier, text));
                         }
                         else {
-                            ReportError(DiagnosticDescriptors.LexerUnknownCharacter, new TextSpan(position, 1), c);
+                            ReportError(DiagnosticDescriptors.LexerUnknownCharacter, c);
                             Next();
                         }
                         break;
@@ -221,16 +220,15 @@ class Lexer {
         return tokens.ToArray();
     }
 
-    public Token newToken(TokenType tokenType, string text, long? value = null, TextSpan? textSpan = null) {
-        TextSpan span = textSpan ?? new TextSpan(position - text.Length, text.Length);
+    public Token newToken(TokenType tokenType, string text, long? value = null) {
         if (value is long v) {
-            return new Token(text, tokenType, v, span);
+            return new Token(text, tokenType, v);
         }
 
-        return new Token(text, tokenType, span);
+        return new Token(text, tokenType);
     }
 
-    void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {
-        diagnostics.Report(descriptor, textSpan, args);
+    void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Report(descriptor, args);
     }
 }

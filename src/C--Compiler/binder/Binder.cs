@@ -53,30 +53,30 @@ class Binder {
     }
 
     BoundStmt BindExpressionStmt(ExpressionStmt expressionStmt) {
-        return new BoundExpressionStmt(BindExpr(expressionStmt.Expression), GetStmtSpan(expressionStmt));
+        return new BoundExpressionStmt(BindExpr(expressionStmt.Expression));
     }
 
     BoundStmt BindReturnStmt(ReturnStmt returnStmt) {
         var boundReturnedExpr = BindExpr(returnStmt.returnExpr);
-        return new BoundReturnStmt(boundReturnedExpr, GetStmtSpan(returnStmt));
+        return new BoundReturnStmt(boundReturnedExpr);
     }
 
     BoundStmt BindIfStmt(IfStmt ifStmt) {
         BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
 
         if (boundConditionExpr.type != SymbolType.Bool && boundConditionExpr.type != SymbolType.DiagnosticsError) {
-            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool, GetExprSpan(ifStmt.condition));
+            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
 
         if (ifStmt.elseStmt is null) {
-            return new BoundIfStmt(boundConditionExpr, thenStmt, GetStmtSpan(ifStmt));
+            return new BoundIfStmt(boundConditionExpr, thenStmt);
         }
 
         BoundStmt elseStmt = BindStmt(ifStmt.elseStmt);
 
-        return new BoundIfStmt(boundConditionExpr, thenStmt, GetStmtSpan(ifStmt), elseStmt);
+        return new BoundIfStmt(boundConditionExpr, thenStmt, elseStmt);
     }
 
     BoundStmt BindBlockStmt(BlockStmt blockStmt) {
@@ -88,21 +88,21 @@ class Binder {
         }
 
         PopScope();
-        return new BoundBlockStmt(boundStmts.ToArray(), GetStmtSpan(blockStmt));
+        return new BoundBlockStmt(boundStmts.ToArray());
     }
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
         bool isAlreadyInScope = scopes.Peek().ContainsKey(varDeclarationStmt.name.Text);
         if (isAlreadyInScope) {
-            ReportError(DiagnosticDescriptors.BinderVarAlreadyDeclared, varDeclarationStmt.name.TextSpan, name);
+            ReportError(DiagnosticDescriptors.BinderVarAlreadyDeclared, name);
         }
 
         SymbolType declared = InferTypeInTypedDecl(typeToken);
         BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
 
         if (declared != initBoundExpr.type && declared != SymbolType.DiagnosticsError && initBoundExpr.type != SymbolType.DiagnosticsError) {
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch, varDeclarationStmt.name.TextSpan);
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
         }
 
         int index = AllocateLocalIndex();
@@ -111,7 +111,7 @@ class Binder {
             scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
         }
 
-        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr, GetStmtSpan(varDeclarationStmt));
+        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
     }
 
     BoundExpr BindExpr(Expr expr) {
@@ -130,7 +130,7 @@ class Binder {
         if (localSymbol is not null) {
             return new BoundNameExpr(localSymbol);
         }
-        ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, nameExpr.name.TextSpan, name);
+        ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
         return new BoundErrorExpr();
 
     }
@@ -142,7 +142,7 @@ class Binder {
 
         if (type == SymbolType.Int) {
             if (!literalExpr.value.hasValue) {
-                ReportError(DiagnosticDescriptors.BinderNumberLiteralMissingValue, literalToken.TextSpan);
+                ReportError(DiagnosticDescriptors.BinderNumberLiteralMissingValue);
                 return new BoundErrorExpr();
             }
 
@@ -155,7 +155,7 @@ class Binder {
             return new BoundLiteralExpr(v, type);
         }
 
-        ReportError(DiagnosticDescriptors.BinderUnexpectedLiteralType, literalToken.TextSpan, type);
+        ReportError(DiagnosticDescriptors.BinderUnexpectedLiteralType, type);
         return new BoundErrorExpr();
     }
 
@@ -173,7 +173,7 @@ class Binder {
             return new BoundErrorExpr();
         }
 
-        ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch, binaryExpr.Operator.TextSpan);
+        ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
         return new BoundErrorExpr();
 
     }
@@ -203,7 +203,7 @@ class Binder {
             return type;
         }
 
-        ReportError(DiagnosticDescriptors.BinderUnknownTypeToken, typeToken.TextSpan, typeToken.Text);
+        ReportError(DiagnosticDescriptors.BinderUnknownTypeToken, typeToken.Text);
         return SymbolType.DiagnosticsError;
     }
 
@@ -218,68 +218,15 @@ class Binder {
                     return SymbolType.Int;
                 }
             default: {
-                    ReportError(DiagnosticDescriptors.BinderUnknownTokenType, token.TextSpan, tokenType);
+                    ReportError(DiagnosticDescriptors.BinderUnknownTokenType, tokenType);
                     return SymbolType.DiagnosticsError;
                 }
         }
 
     }
 
-    TextSpan GetExprSpan(Expr expr) {
-        return expr switch {
-            LiteralExpr l => l.value.TextSpan,
-            NameExpr n => n.name.TextSpan,
-            BinaryExpr b => b.Operator.TextSpan,
-            _ => TextSpan.None,
-        };
-    }
-
-    TextSpan GetStmtSpan(Stmt stmt) {
-        return stmt switch {
-            VarDeclarationStmt v => CombineSpans(GetTypeSpan(v.type), GetExprSpan(v.declarementExpr)),
-            ReturnStmt r => GetExprSpan(r.returnExpr),
-            IfStmt i => i.elseStmt is null
-                ? CombineSpans(GetExprSpan(i.condition), GetStmtSpan(i.thenStmt))
-                : CombineSpans(GetExprSpan(i.condition), GetStmtSpan(i.elseStmt!)),
-            BlockStmt b => GetBlockSpan(b),
-            ExpressionStmt e => GetExprSpan(e.Expression),
-            _ => TextSpan.None,
-        };
-    }
-
-    TextSpan GetBlockSpan(BlockStmt blockStmt) {
-        if (blockStmt.stmts.Length == 0) {
-            return TextSpan.None;
-        }
-
-        TextSpan first = GetStmtSpan(blockStmt.stmts[0]);
-        TextSpan last = GetStmtSpan(blockStmt.stmts[blockStmt.stmts.Length - 1]);
-        return CombineSpans(first, last);
-    }
-
-    TextSpan GetTypeSpan(TypeSyntax typeSyntax) {
-        return typeSyntax switch {
-            IdentifierTypeSyntax i => i.identifier.TextSpan,
-            _ => TextSpan.None,
-        };
-    }
-
-    TextSpan CombineSpans(TextSpan first, TextSpan second) {
-        if (first.Length == 0) {
-            return second;
-        }
-
-        if (second.Length == 0) {
-            return first;
-        }
-
-        int start = Math.Min(first.Start, second.Start);
-        int end = Math.Max(first.Start + first.Length, second.Start + second.Length);
-        return new TextSpan(start, end - start);
-    }
-
-    void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {
-        diagnostics.Report(descriptor, textSpan, args);
+    void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Report(descriptor, args);
     }
 }
 

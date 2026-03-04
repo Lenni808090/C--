@@ -1,31 +1,35 @@
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
+
 namespace CMinus.Compiler.Lowering;
 
 class ControlFlowAnalyser {
     readonly IrCompiledUnit irCompiledUnit;
     readonly DiagnosticBag diagnostics;
 
-    Dictionary<int, BasicBlock> idToBlock;
+    readonly Dictionary<int, BasicBlock> idToBlock;
+
     public ControlFlowAnalyser(IrCompiledUnit irCompiledUnit, CompilerContext compilerContext) {
         this.irCompiledUnit = irCompiledUnit;
         diagnostics = compilerContext.diagnostics;
-        idToBlock = new();
+
+        idToBlock = new Dictionary<int, BasicBlock>();
         FillIdToBlock();
     }
 
     public IrCompiledUnit Analyse() {
         BasicBlock[] blocks = irCompiledUnit.basicBlocks;
+        if (blocks.Length == 0) {
+            return irCompiledUnit;
+        }
+
         var visited = new HashSet<int>();
-        // popinter way faster then array shifting
         int head = 0;
         var worklist = new List<BasicBlock> { blocks[0] };
 
         while (head < worklist.Count) {
+            BasicBlock currBlock = worklist[head++];
 
-            var currBlock = worklist[head++];
-
-            // hashet fast check if contains + adding as visited;
             if (!visited.Add(currBlock.blockId)) {
                 continue;
             }
@@ -33,28 +37,35 @@ class ControlFlowAnalyser {
             switch (currBlock.terminator) {
                 case IrReturn:
                     break;
-                case IrGoto g:
-                    worklist.Add(idToBlock[g.basicBlockId]);
-                    break;
-                case IrBranch b:
-                    worklist.Add(idToBlock[b.thenBlockId]);
-                    worklist.Add(idToBlock[b.elseBlockId]);
-                    break;
+
+                case IrGoto g: {
+                        worklist.Add(idToBlock[g.basicBlockId]);
+                        break;
+                    }
+
+                case IrBranch b: {
+                        worklist.Add(idToBlock[b.thenBlockId]);
+                        worklist.Add(idToBlock[b.elseBlockId]);
+                        break;
+                    }
+
                 case null:
-                    diagnostics.Report(DiagnosticDescriptors.ControlFLowAllPathsNeedReturn, currBlock.sourceSpan);
                     break;
+
                 default:
-                    throw new Exception("unkown terminator" + currBlock.terminator);
+                    throw new Exception("unkown terminator " + currBlock.terminator);
             }
         }
 
-        List<BasicBlock> reached = new();
+        var reached = new List<BasicBlock>(visited.Count);
+
         foreach (BasicBlock block in blocks) {
             if (visited.Contains(block.blockId)) {
                 reached.Add(block);
-            }
-            else {
-                diagnostics.Report(DiagnosticDescriptors.ConrolFlowUnreachableCode, block.sourceSpan);
+
+                if (block.terminator is null && !block.isCompilerGenerated) {
+                    diagnostics.Report(DiagnosticDescriptors.ControlFLowAllPathsNeedReturn);
+                }
             }
         }
 
@@ -62,8 +73,7 @@ class ControlFlowAnalyser {
     }
 
     void FillIdToBlock() {
-        BasicBlock[] blocks = irCompiledUnit.basicBlocks;
-        foreach (BasicBlock basic in blocks) {
+        foreach (BasicBlock basic in irCompiledUnit.basicBlocks) {
             idToBlock[basic.blockId] = basic;
         }
     }

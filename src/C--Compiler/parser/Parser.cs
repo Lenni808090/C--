@@ -37,13 +37,13 @@ class Parser {
         }
 
         Token unexpected = Current;
-        ReportError(DiagnosticDescriptors.ParserUnexpectedToken, unexpected.TextSpan, message, unexpected.TokenType);
+        ReportError(DiagnosticDescriptors.ParserUnexpectedToken, message, unexpected.TokenType);
 
         if (ShouldConsumeUnexpectedToken(type, unexpected.TokenType)) {
             NextToken();
         }
 
-        return new Token(string.Empty, type, new TextSpan(unexpected.TextSpan.Start, 0));
+        return new Token(string.Empty, type);
     }
 
     bool Match(TokenType type) {
@@ -151,7 +151,7 @@ class Parser {
             NextToken();
         }
         else {
-            ReportError(DiagnosticDescriptors.ParserMissingClosingBrace, Current.TextSpan);
+            ReportError(DiagnosticDescriptors.ParserMissingClosingBrace);
         }
 
         return new BlockStmt(body.ToArray());
@@ -288,17 +288,17 @@ class Parser {
                     return expr;
                 }
             default: {
-                    ReportError(DiagnosticDescriptors.ParserExpectedPrimaryExpression, token.TextSpan, token.TokenType, token.Text);
+                    ReportError(DiagnosticDescriptors.ParserExpectedPrimaryExpression, token.TokenType, token.Text);
                     if (Current.TokenType != TokenType.EoF) {
                         NextToken();
                     }
-                    return new LiteralExpr(new Token("0", TokenType.Number, 0, token.TextSpan));
+                    return new LiteralExpr(new Token("0", TokenType.Number, 0));
                 }
         }
     }
 
-    void ReportError(DiagnosticDescriptor descriptor, TextSpan textSpan, params object[] args) {
-        diagnostics.Report(descriptor, textSpan, args);
+    void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Report(descriptor, args);
     }
 
 }

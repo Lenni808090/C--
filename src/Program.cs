@@ -21,39 +21,55 @@ class Program {
                         }
                         int z = 93;
                         ";
+
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;
+
         Lexer lexer = new Lexer(code, compilerContext);
         Token[] tokens = lexer.Lex();
+
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
             return;
         }
+
         foreach (Token token in tokens) {
             Console.WriteLine(token.TokenType + " " + token.Text);
         }
+
         Parser parser = new Parser(tokens, compilerContext);
         CompilationUnit compilationUnit = parser.ParseUnit();
+
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
             return;
         }
+
         PrintSyntaxUnit(compilationUnit);
 
         Binder binder = new Binder(compilationUnit, compilerContext);
         BoundCompiledUnit bound = binder.BindCompiledUnit();
+
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
             return;
         }
+
         PrintBoundUnit(bound);
 
         IrBuilder irBuilder = new IrBuilder(bound);
         IrCompiledUnit irCompiledUnit = irBuilder.BuildCompiledUnit();
-        PrintIrCompiledUnit(irCompiledUnit);
+
         ControlFlowAnalyser controlFlowAnalyser = new ControlFlowAnalyser(irCompiledUnit, compilerContext);
         irCompiledUnit = controlFlowAnalyser.Analyse();
+
         PrintIrCompiledUnit(irCompiledUnit);
+
+        if (diagnostics.CheckForErrors()) {
+            diagnostics.PrintAllErrors();
+            return;
+        }
+
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
             return;
@@ -61,7 +77,9 @@ class Program {
 
         CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
         CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
+
         Console.WriteLine();
+
         PrintBytecode(compiledFunction);
 
         Value[] regs = new Value[compiledFunction.maxRegCount];
@@ -368,7 +386,7 @@ class Program {
     static void PrintIrCompiledUnit(IrCompiledUnit irCompiledUnit) {
         Console.WriteLine("=== IR BLOCKS ===");
         foreach (BasicBlock block in irCompiledUnit.basicBlocks) {
-            Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable}, span=[{block.sourceSpan.Start}..{block.sourceSpan.Start + block.sourceSpan.Length}))");
+            Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable}, compilerGenerated={block.isCompilerGenerated})");
 
             foreach (IrInstr irInstr in block.irInstrs) {
                 switch (irInstr) {
