@@ -14,10 +14,12 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                        if(2 == 2){
+                        if(3 == 2){
                             int y = 200;
+                            return y;
                         }else {
-                            int y = 300;
+                            int y = 500;
+                            return y;
                         }";
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;
@@ -307,6 +309,11 @@ class Program {
                     Console.Write(indent);
                     Console.WriteLine("+--Then");
                     PrintBoundStmt(i.thenStmt, indent + "   ", true);
+                    if (i.elseStmt is not null) {
+                        Console.Write(indent);
+                        Console.WriteLine("+--Else");
+                        PrintBoundStmt(i.elseStmt, indent + "   ", true);
+                    }
                     break;
                 }
             case BoundBlockStmt b: {
