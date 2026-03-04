@@ -76,13 +76,14 @@ class IrBuilder {
         int conditionResReg = BuildExpr(ifStmt.boundConditionExpr);
 
         var thenBlock = CreateBlock();
-        var mergeBlock = CreateBlock();
+        var mergeBlock = MakeNewBlock();
         BasicBlock? elseBlock = null;
         if (ifStmt.elseStmt is not null) {
             elseBlock = CreateBlock();
             TerminateBranch(conditionResReg, thenBlock.blockId, elseBlock.blockId);
         }
         else {
+            AddBlock(mergeBlock);
             TerminateBranch(conditionResReg, thenBlock.blockId, mergeBlock.blockId);
         }
 
@@ -94,7 +95,7 @@ class IrBuilder {
             SwitchCurrentBlock(mergeBlock);
             return;
         }
-
+        AddBlock(mergeBlock);
         SwitchCurrentBlock(elseBlock);
         BuildStmt(ifStmt.elseStmt!);
         TerminateGoto(mergeBlock.blockId);
@@ -231,6 +232,9 @@ class IrBuilder {
         return new BasicBlock(GetBlockId());
     }
 
+    void AddBlock(BasicBlock b) {
+        basicBlocks.Add(b);
+    }
     BasicBlock CreateBlock() {
         var newBlock = MakeNewBlock();
         basicBlocks.Add(newBlock);

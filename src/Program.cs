@@ -4,6 +4,7 @@ using CMinus.Compiler;
 using CMinus.Compiler.Binding;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Lexing;
+using CMinus.Compiler.Lowering;
 using CMinus.Compiler.Parsing;
 using CMinus.Compiler.Syntax;
 using CMinus.Runtime;
@@ -12,15 +13,11 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"int x = 1;
-                        if(x + 1 == 2){
+        string code = @"
+                        if(2 == 2){
                             int y = 200;
-                            int z = (x + y) * 2;
-                            return (z + x) * 3;
                         }else {
                             int y = 300;
-                            int z = (x + y) * 2;
-                            return (z + x) * 3;
                         }";
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;
@@ -49,7 +46,10 @@ class Program {
         }
         PrintBoundUnit(bound);
 
-        CodeGenerator codeGenerator = new CodeGenerator(bound);
+        IrBuilder irBuilder = new IrBuilder(bound);
+        IrCompiledUnit irCompiledUnit = irBuilder.BuildCompiledUnit();
+
+        CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
         CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
         Console.WriteLine();
         PrintBytecode(compiledFunction);
@@ -240,12 +240,12 @@ class Program {
                 case OpCode.SUBTRACT_INT:
                 case OpCode.MULTIPLY_INT:
                 case OpCode.DIVIDE_INT:
-                case OpCode.CMP_EQ_INT:
+                case OpCode.CMP_EQ:
                 case OpCode.CMP_LT_INT:
                 case OpCode.CMP_MT_INT:
                 case OpCode.CMP_LTE_INT:
                 case OpCode.CMP_MTE_INT:
-                case OpCode.CMP_NEQ_INT: {
+                case OpCode.CMP_NEQ: {
                         byte dst = code[ip++];
                         byte left = code[ip++];
                         byte right = code[ip++];
