@@ -18,6 +18,7 @@ class Lexer {
         { "false", TokenType.False},
         {"if", TokenType.If},
         {"else", TokenType.Else},
+        {"while", TokenType.While},
     };
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();

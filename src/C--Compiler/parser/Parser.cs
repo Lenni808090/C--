@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
@@ -158,6 +159,9 @@ class Parser {
             case TokenType.If: {
                     return ParseIfStmt();
                 }
+            case TokenType.While: {
+                    return ParseWhileStmt();
+                }
             case TokenType.OpenBrace: {
                     return ParseBlockStmt();
                 }
@@ -212,6 +216,18 @@ class Parser {
         Stmt elseStmt = ParseStmt();
 
         return new IfStmt(condition, thenStmt, elseStmt);
+    }
+
+    Stmt ParseWhileStmt() {
+        NextToken();
+
+        Expect(TokenType.OpenParentheses, "opening ( expected after while");
+        Expr condition = ParseExpr();
+        Expect(TokenType.CloseParentheses, "closing ) expected after condition");
+
+        var body = ParseStmt();
+
+        return new WhileStmt(condition, body);
     }
 
     TypeSyntax ParseType() {

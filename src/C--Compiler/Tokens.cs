@@ -23,6 +23,7 @@ enum TokenType {
 
     If,
     Else,
+    While,
 
     Plus,
     Minus,
