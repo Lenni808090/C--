@@ -3,7 +3,7 @@ namespace CMinus.Compiler.Lowering;
 abstract class IrInstr { };
 abstract class Terminator { };
 
-class IrCompiledUnit {
+sealed class IrCompiledUnit {
     public BasicBlock[] basicBlocks;
 
     public int localCount;
@@ -16,7 +16,7 @@ class IrCompiledUnit {
     }
 }
 
-class BasicBlock {
+sealed class BasicBlock {
     public List<IrInstr> irInstrs;
     public bool isUnreachable;
     public Terminator? terminator;
@@ -30,7 +30,7 @@ class BasicBlock {
 }
 
 
-class IrLoadConst : IrInstr {
+sealed class IrLoadConst : IrInstr {
 
     public Runtime.ValueType valueType;
     public long rawValue;
@@ -43,7 +43,7 @@ class IrLoadConst : IrInstr {
     }
 }
 
-class IrStoreLocal : IrInstr {
+sealed class IrStoreLocal : IrInstr {
     public int srcReg;
 
     public int localIndex;
@@ -54,7 +54,7 @@ class IrStoreLocal : IrInstr {
     }
 }
 
-class IrLoadLocal : IrInstr {
+sealed class IrLoadLocal : IrInstr {
     public int dstReg;
     public int localIndex;
 
@@ -64,7 +64,7 @@ class IrLoadLocal : IrInstr {
     }
 }
 
-class IrReturn : Terminator {
+sealed class IrReturn : Terminator {
     public int returnReg;
 
     public IrReturn(int returnReg) {
@@ -72,7 +72,7 @@ class IrReturn : Terminator {
     }
 }
 
-class IrMove : IrInstr {
+sealed class IrMove : IrInstr {
     public int dstReg;
     public int srcReg;
 
@@ -82,7 +82,7 @@ class IrMove : IrInstr {
     }
 }
 
-class IrBinaryOp : IrInstr {
+sealed class IrBinaryOp : IrInstr {
     public IrBinaryOPKind irBinaryOP;
 
     public int dstReg;
@@ -98,7 +98,7 @@ class IrBinaryOp : IrInstr {
 }
 
 
-class IrGoto : Terminator {
+sealed class IrGoto : Terminator {
     public int basicBlockId;
 
     public IrGoto(int basicBlockId) {
@@ -107,7 +107,7 @@ class IrGoto : Terminator {
 }
 
 
-class IrBranch : Terminator {
+sealed class IrBranch : Terminator {
     public int condReg;
     public int thenBlockId;
 

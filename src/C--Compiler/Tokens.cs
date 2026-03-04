@@ -44,7 +44,7 @@ enum TokenType {
 }
 
 
-class Token {
+sealed class Token {
     public string Text;
 
     public TokenType TokenType;

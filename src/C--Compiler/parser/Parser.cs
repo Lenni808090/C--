@@ -99,6 +99,19 @@ class Parser {
         return matches;
     }
 
+    bool matchesAssignemntStmt() {
+        bool matches = true;
+
+        if (Current.TokenType != TokenType.Identifier) {
+            matches = false;
+        }
+
+        if (Peek(1).TokenType != TokenType.Equals) {
+            matches = false;
+        }
+
+        return matches;
+    }
     public CompilationUnit ParseUnit() {
         List<Stmt> stmts = new();
 
@@ -114,11 +127,28 @@ class Parser {
 
         if (matchesDeclarationStmt()) {
             TypeSyntax type = ParseType();
-            Token identifier = Expect(TokenType.Identifier, "After type declaration an identifier is expected");
-            Expect(TokenType.Equals, "After identifier '=' expected in var declaration");
+
+            Token identifier = NextToken();
+
+            //equals;
+            NextToken();
+
             Expr assignedExpr = ParseExpr();
+
             Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
+
             return new VarDeclarationStmt(type, identifier, assignedExpr);
+        }
+        else if (matchesAssignemntStmt()) {
+            Token identifier = NextToken();
+            //equals;
+            NextToken();
+
+            Expr assignedExpr = ParseExpr();
+
+            Expect(TokenType.Semicolon, "Missing ';' after variable assignment");
+
+            return new VarAssignmentStmt(identifier, assignedExpr);
         }
 
         switch (Current.TokenType) {

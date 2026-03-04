@@ -88,6 +88,18 @@ sealed class VarDeclarationStmt : Stmt {
     }
 }
 
+sealed class VarAssignmentStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
+
+    public Token variable;
+    public Expr assignmentExpr;
+
+    public VarAssignmentStmt(Token variable, Expr assignmentExpr) {
+        this.variable = variable;
+        this.assignmentExpr = assignmentExpr;
+    }
+
+}
 
 sealed class LiteralExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.LiteralExpr;
@@ -128,6 +140,7 @@ sealed class BinaryExpr : Expr {
 enum SyntaxKind {
     ReturnStmt,
     VarDeclarationStmt,
+    VarAssignmentStmt,
     IfStmt,
     BlockStmt,
     CompilationUnit,
