@@ -210,7 +210,7 @@ class IrBuilder {
 
 
     void Emit(IrInstr irInstr) {
-        if (currentBlock.terminator is null) {
+        if (currentBlock.terminator is not null) {
             throw new Exception("Block already closed");
         }
         currentBlock.irInstrs.Add(irInstr);
@@ -233,7 +233,6 @@ class IrBuilder {
 
     BasicBlock CreateBlock() {
         var newBlock = MakeNewBlock();
-        basicBlocks.Add(newBlock);
         return newBlock;
     }
 
