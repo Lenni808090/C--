@@ -118,7 +118,7 @@ class VM {
                         break;
                     }
 
-                case OpCode.CMP_EQ_INT: {
+                case OpCode.CMP_EQ: {
                         byte dstReg = bytecode[instructionPointer++];
                         byte leftReg = bytecode[instructionPointer++];
                         byte rightReg = bytecode[instructionPointer++];
@@ -158,7 +158,7 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
-                case OpCode.CMP_NEQ_INT: {
+                case OpCode.CMP_NEQ: {
                         byte dstReg = bytecode[instructionPointer++];
                         byte leftReg = bytecode[instructionPointer++];
                         byte rightReg = bytecode[instructionPointer++];

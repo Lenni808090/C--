@@ -117,11 +117,11 @@ class Emitter {
     public void EmitCmpMTEInt(byte dstReg, byte leftReg, byte rightReg) {
         EmitRRR(OpCode.CMP_MTE_INT, dstReg, leftReg, rightReg);
     }
-    public void EmitCmpEQInt(byte dstReg, byte leftReg, byte rightReg) {
-        EmitRRR(OpCode.CMP_EQ_INT, dstReg, leftReg, rightReg);
+    public void EmitCmpEQ(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.CMP_EQ, dstReg, leftReg, rightReg);
     }
-    public void EmitCmpNEQInt(byte dstReg, byte leftReg, byte rightReg) {
-        EmitRRR(OpCode.CMP_NEQ_INT, dstReg, leftReg, rightReg);
+    public void EmitCmpNEQ(byte dstReg, byte leftReg, byte rightReg) {
+        EmitRRR(OpCode.CMP_NEQ, dstReg, leftReg, rightReg);
     }
     public void EmitOp(OpCode opCode) {
         emittedBytecode.Add((byte)opCode);

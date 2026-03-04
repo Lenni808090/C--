@@ -1,150 +1,178 @@
-using CMinus.Compiler.Binding;
-using CMinus.Compiler.Syntax;
+using CMinus.Compiler.Lowering;
 using CMinus.Runtime;
 
 namespace CMinus.CodeGen;
 
 class CodeGenerator {
     FunctionBuilder functionBuilder;
-    BoundCompiledUnit boundCompiledUnit;
+    IrCompiledUnit irCompiledUnit;
 
 
-    byte nextReg;
-    byte maxReg;
-    public CodeGenerator(BoundCompiledUnit boundCompiledUnit) {
+    Dictionary<int, Label> blockLabels;
+    public CodeGenerator(IrCompiledUnit irCompiledUnit) {
+        blockLabels = new();
         functionBuilder = new();
-        this.boundCompiledUnit = boundCompiledUnit;
+        this.irCompiledUnit = irCompiledUnit;
     }
 
     public CompiledFunction GenerateFunction() {
-        nextReg = 0;
-        foreach (BoundStmt boundStmt in boundCompiledUnit.boundStmts) {
-            EmitStmt(boundStmt);
+
+
+        foreach (BasicBlock basicBlock in irCompiledUnit.basicBlocks) {
+            blockLabels.Add(basicBlock.blockId, functionBuilder.Emitter.NewLabel());
         }
-        int localCount = boundCompiledUnit.localCount;
-        return functionBuilder.Build(localCount, maxReg);
+
+        foreach (BasicBlock block in irCompiledUnit.basicBlocks) {
+            EmitBlock(block);
+        }
+        int localCount = irCompiledUnit.localCount;
+        return functionBuilder.Build(localCount, irCompiledUnit.maxVReg);
     }
 
 
-    void EmitStmt(BoundStmt boundStmt) {
+    void EmitBlock(BasicBlock basicBlock) {
+        functionBuilder.Emitter.DefineLabel(blockLabels[basicBlock.blockId]);
+        foreach (IrInstr instr in basicBlock.irInstrs) {
+            EmitInstr(instr);
+        }
 
-        switch (boundStmt) {
-            case BoundVarDeclarationStmt declarationStmt: {
-                    EmitVarDeclaration(declarationStmt);
+        if (basicBlock.terminator is null) {
+            throw new Exception($"BasicBlock {basicBlock.blockId} missing terminator");
+        }
+
+        EmitTerminator(basicBlock.terminator);
+    }
+
+
+    void EmitInstr(IrInstr instr) {
+        switch (instr) {
+            case IrLoadConst loadConst: {
+                    EmitLoadConst(loadConst);
                     break;
                 }
-            case BoundReturnStmt returnStmt: {
-                    EmitReturnStmt(returnStmt);
+            case IrStoreLocal storeLocal: {
+                    EmitStoreLocal(storeLocal);
                     break;
                 }
-            case BoundIfStmt boundIfStmt: {
-                    EmitIfStmt(boundIfStmt);
+            case IrLoadLocal loadLocal: {
+                    EmitLoadLocal(loadLocal);
                     break;
                 }
-            case BoundBlockStmt boundBlockStmt: {
-                    EmitBlockStmt(boundBlockStmt);
-                    break;
-                }
-            case BoundExpressionStmt stmt: {
-                    EmitExpresssionStmt(stmt);
+            case IrBinaryOp binaryOp: {
+                    EmitBinaryOp(binaryOp);
                     break;
                 }
             default: {
-                    throw new Exception("unkown stmt in codegen: " + boundStmt);
+                    throw new Exception("Unkown instruction in codegen");
+                }
+
+        }
+    }
+
+    void EmitTerminator(Terminator terminator) {
+        switch (terminator) {
+            case IrReturn @return: {
+                    EmitReturn(@return);
+                    break;
+                }
+            case IrBranch branch: {
+                    EmitBranch(branch);
+                    break;
+                }
+            case IrGoto @goto: {
+                    EmitGoto(@goto);
+                    break;
+                }
+            default: {
+                    throw new Exception("unkown terminator in codegen");
                 }
         }
     }
 
-    void EmitVarDeclaration(BoundVarDeclarationStmt boundVarDeclarationStmt) {
-        int localIndex = boundVarDeclarationStmt.localSymbol.index;
-        byte srcReg = EmitExpr(boundVarDeclarationStmt.initializer);
-        functionBuilder.Emitter.EmitStoreLocal(srcReg, (byte)localIndex);
+    void EmitLoadConst(IrLoadConst loadConst) {
+        int constInd = newConst(loadConst.valueType, loadConst.rawValue);
+        functionBuilder.Emitter.EmitLoadConstant((byte)loadConst.dstReg, (byte)constInd);
     }
 
-    void EmitReturnStmt(BoundReturnStmt boundReturnStmt) {
-        byte srcReg = EmitExpr(boundReturnStmt.boundReturnedExpr);
-        functionBuilder.Emitter.EmitReturn(srcReg);
+    void EmitStoreLocal(IrStoreLocal storeLocal) {
+        functionBuilder.Emitter.EmitStoreLocal((byte)storeLocal.srcReg, (byte)storeLocal.localIndex);
     }
 
-    void EmitIfStmt(BoundIfStmt boundIfStmt) {
-        byte condReg = EmitExpr(boundIfStmt.boundConditionExpr);
-
-        var newLabel = functionBuilder.Emitter.NewLabel();
-        functionBuilder.Emitter.EmitJumpIfFalse(condReg, newLabel);
-
-        EmitStmt(boundIfStmt.thenStmt);
-
-        functionBuilder.Emitter.DefineLabel(newLabel);
+    void EmitLoadLocal(IrLoadLocal loadLocal) {
+        functionBuilder.Emitter.EmitLoadLocal((byte)loadLocal.dstReg, (byte)loadLocal.localIndex);
     }
 
-    void EmitBlockStmt(BoundBlockStmt boundBlockStmt) {
-        foreach (BoundStmt boundStmt in boundBlockStmt.boundStmts) {
-            EmitStmt(boundStmt);
+    void EmitBinaryOp(IrBinaryOp binaryOp) {
+        byte dst = (byte)binaryOp.dstReg;
+        byte left = (byte)binaryOp.leftReg;
+        byte right = (byte)binaryOp.rightReg;
+
+        switch (binaryOp.irBinaryOP) {
+            case IrBinaryOPKind.AddInt: {
+                    functionBuilder.Emitter.EmitAddInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.SubtractInt: {
+                    functionBuilder.Emitter.EmitSubtractInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.MultiplyInt: {
+                    functionBuilder.Emitter.EmitMultiplyInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.DivideInt: {
+                    functionBuilder.Emitter.EmitDivideInt(dst, left, right);
+                    break;
+                }
+
+            case IrBinaryOPKind.CmpLtInt: {
+                    functionBuilder.Emitter.EmitCmpLTInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.CmpLtEInt: {
+                    functionBuilder.Emitter.EmitCmpLTEInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.CmpMtInt: {
+                    functionBuilder.Emitter.EmitCmpMTInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.CmpMtEInt: {
+                    functionBuilder.Emitter.EmitCmpMTEInt(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.CmpEq: {
+                    functionBuilder.Emitter.EmitCmpEQ(dst, left, right);
+                    break;
+                }
+            case IrBinaryOPKind.CmpNEq: {
+                    functionBuilder.Emitter.EmitCmpNEQ(dst, left, right);
+                    break;
+                }
+
+            default: {
+                    throw new Exception($"Unknown IrBinaryOPKind: {binaryOp.irBinaryOP}");
+                }
         }
     }
 
-    void EmitExpresssionStmt(BoundExpressionStmt boundExpressionStmt) {
-        EmitExpr(boundExpressionStmt.boundExpr);
+    void EmitReturn(IrReturn @return) {
+        functionBuilder.Emitter.EmitReturn((byte)@return.returnReg);
     }
 
-    byte EmitExpr(BoundExpr boundExpr) {
-        return boundExpr switch {
-            BoundLiteralExpr boundLiteralExpr => EmitLiteralExpr(boundLiteralExpr),
-            BoundNameExpr boundNameExpr => EmitNameExpr(boundNameExpr),
-            BoundBinaryExpr boundBinaryExpr => EmitBinaryExpr(boundBinaryExpr),
-            _ => throw new Exception("unkown expression in emit expr"),
-
-        };
+    void EmitGoto(IrGoto @goto) {
+        var gotoLabel = blockLabels[@goto.basicBlockId];
+        functionBuilder.Emitter.EmitJump(gotoLabel);
     }
+    void EmitBranch(IrBranch branch) {
+        var thenLabel = blockLabels[branch.thenBlockId];
+        var elseLabel = blockLabels[branch.elseBlockId];
 
-    byte EmitLiteralExpr(BoundLiteralExpr literalExpr) {
-        byte dstReg = AllocReg();
-        long value = literalExpr.value;
-        Runtime.ValueType type = getValueType(literalExpr.type);
-
-        var newConst = new Value(type, value);
-        int constIndex = functionBuilder.AddConstant(newConst);
-        functionBuilder.Emitter.EmitLoadConstant(dstReg, (byte)constIndex);
-        return dstReg;
+        functionBuilder.Emitter.EmitJumpIfFalse((byte)branch.condReg, elseLabel);
+        functionBuilder.Emitter.EmitJump(thenLabel);
     }
-
-    byte EmitNameExpr(BoundNameExpr nameExpr) {
-        byte dstReg = AllocReg();
-        int localIndex = nameExpr.localSymbol.index;
-        functionBuilder.Emitter.EmitLoadLocal(dstReg, (byte)localIndex);
-        return dstReg;
+    int newConst(Runtime.ValueType type, long value) {
+        var _const = new Value(type, value);
+        return functionBuilder.AddConstant(_const);
     }
-
-    byte EmitBinaryExpr(BoundBinaryExpr binaryExpr) {
-        byte leftDstReg = EmitExpr(binaryExpr.leftBoundExpr);
-        byte rightDstReg = EmitExpr(binaryExpr.rightBoundExpr);
-
-        byte resDstReg = AllocReg();
-        var opKind = binaryExpr.boundBinaryOperator.operatorKind;
-        var emit = BinaryOperatorEmitter.getEmitMethod(opKind);
-        if (emit is not null) {
-            emit(functionBuilder.Emitter, resDstReg, leftDstReg, rightDstReg);
-        }
-        else {
-            throw new Exception("unkown binary operator in codegen " + opKind);
-        }
-
-        return resDstReg;
-    }
-    Runtime.ValueType getValueType(SymbolType symbolType) {
-        return symbolType switch {
-            SymbolType.Int => Runtime.ValueType.Int,
-            SymbolType.Bool => Runtime.ValueType.Bool,
-            _ => throw new Exception("Unkown symbol type in get value type" + symbolType),
-        };
-    }
-
-    byte AllocReg() {
-        byte reg = nextReg++;
-        if (nextReg > maxReg) {
-            maxReg = nextReg;
-        }
-        return reg;
-    }
-
 }

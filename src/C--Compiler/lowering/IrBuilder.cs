@@ -233,11 +233,11 @@ class IrBuilder {
 
     BasicBlock CreateBlock() {
         var newBlock = MakeNewBlock();
+        basicBlocks.Add(newBlock);
         return newBlock;
     }
 
     void SwitchCurrentBlock(BasicBlock basicBlock) {
-        basicBlocks.Add(basicBlock);
         currentBlock = basicBlock;
     }
 
@@ -303,15 +303,13 @@ class IrBuilder {
             BoundBinaryOperatorKind.MultiplyInt => IrBinaryOPKind.MultiplyInt,
             BoundBinaryOperatorKind.DivideInt => IrBinaryOPKind.DivideInt,
 
-            BoundBinaryOperatorKind.EqualsInt => IrBinaryOPKind.CmpEqInt,
-            BoundBinaryOperatorKind.NotEqualsInt => IrBinaryOPKind.CmpNEqInt,
+            BoundBinaryOperatorKind.Equals => IrBinaryOPKind.CmpEq,
+            BoundBinaryOperatorKind.NotEquals => IrBinaryOPKind.CmpNEq,
             BoundBinaryOperatorKind.LessThanInt => IrBinaryOPKind.CmpLtInt,
             BoundBinaryOperatorKind.LessThanOrEqualInt => IrBinaryOPKind.CmpLtEInt,
             BoundBinaryOperatorKind.GreaterThanInt => IrBinaryOPKind.CmpMtInt,
             BoundBinaryOperatorKind.GreaterThanOrEqualInt => IrBinaryOPKind.CmpMtEInt,
 
-            BoundBinaryOperatorKind.EqualsBool => IrBinaryOPKind.CmpEqBool,
-            BoundBinaryOperatorKind.NotEqualsBool => IrBinaryOPKind.CmpNEqBool,
 
             _ => throw new Exception("Unsupported binary operator: " + kind),
         };

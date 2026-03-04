@@ -128,15 +128,12 @@ enum IrBinaryOPKind {
     MultiplyInt,
     DivideInt,
 
-    // Int comparisons
-    CmpEqInt,
-    CmpNEqInt,
+    CmpEq,
+    CmpNEq,
+
     CmpLtInt,
     CmpLtEInt,
     CmpMtInt,
     CmpMtEInt,
 
-    // Bool comparisons
-    CmpEqBool,
-    CmpNEqBool,
 }

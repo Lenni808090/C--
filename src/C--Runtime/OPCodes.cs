@@ -18,12 +18,12 @@ enum OpCode : byte {
     JUMP_IF_TRUE,
 
 
-    CMP_EQ_INT,
+    CMP_EQ,
     CMP_LT_INT,
     CMP_LTE_INT,
     CMP_MT_INT,
     CMP_MTE_INT,
-    CMP_NEQ_INT,
+    CMP_NEQ,
 
 
     MOVE
