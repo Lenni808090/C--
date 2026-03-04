@@ -114,7 +114,10 @@ class IrBuilder {
         var whileBlock = CreateBlock();
         var endBlock = CreateBlock();
 
-        TerminateGoto(condBlock.blockId);
+        if (currentBlock.terminator is null) {
+            TerminateGoto(condBlock.blockId);
+        }
+
         SwitchCurrentBlock(condBlock);
 
         int resReg = BuildExpr(whileStmt.boundConditionExpr);
