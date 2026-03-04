@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using CMinus.Compiler.Binding;
 using CMinus.Compiler.Syntax;
 
@@ -72,7 +73,33 @@ class IrBuilder {
     }
 
     void BuildIfStmt(BoundIfStmt ifStmt) {
-        ifStmt.
+        int conditionResReg = BuildExpr(ifStmt.boundConditionExpr);
+
+        var thenBlock = CreateBlock();
+        var mergeBlock = CreateBlock();
+        BasicBlock? elseBlock = null;
+        if (ifStmt.elseStmt is not null) {
+            elseBlock = CreateBlock();
+            TerminateBranch(conditionResReg, thenBlock.blockId, elseBlock.blockId);
+        }
+        else {
+            TerminateBranch(conditionResReg, thenBlock.blockId, mergeBlock.blockId);
+        }
+
+        SwitchCurrentBlock(thenBlock);
+        BuildStmt(ifStmt.thenStmt);
+        TerminateGoto(mergeBlock.blockId);
+
+        if (elseBlock is null) {
+            SwitchCurrentBlock(mergeBlock);
+            return;
+        }
+
+        SwitchCurrentBlock(elseBlock);
+        BuildStmt(ifStmt.elseStmt!);
+        TerminateGoto(mergeBlock.blockId);
+
+        SwitchCurrentBlock(mergeBlock);
     }
 
     void BuildBlockStmt(BoundBlockStmt blockStmt) {
