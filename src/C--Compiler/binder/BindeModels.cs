@@ -54,6 +54,15 @@ sealed class BoundIfStmt : BoundStmt {
     }
 }
 
+sealed class BoundWhileStmt : BoundStmt {
+    public BoundExpr boundConditionExpr;
+    public BoundStmt body;
+    public BoundWhileStmt(BoundExpr boundConditionExpr, BoundStmt body) {
+        this.boundConditionExpr = boundConditionExpr;
+        this.body = body;
+    }
+}
+
 sealed class BoundBlockStmt : BoundStmt {
     public BoundStmt[] boundStmts;
 

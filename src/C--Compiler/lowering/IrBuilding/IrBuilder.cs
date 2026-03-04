@@ -25,6 +25,10 @@ class IrBuilder {
         var stmts = boundCompiledUnit.boundStmts;
 
         foreach (var stmt in stmts) {
+            if (currentBlock.terminator is not null) {
+                var unreachable = CreateUnreachableBlock();
+                SwitchCurrentBlock(unreachable);
+            }
             BuildStmt(stmt);
         }
 
@@ -43,6 +47,10 @@ class IrBuilder {
                 }
             case BoundIfStmt i: {
                     BuildIfStmt(i);
+                    break;
+                }
+            case BoundWhileStmt w: {
+                    BuildWhileStmt(w);
                     break;
                 }
             case BoundExpressionStmt e: {
@@ -98,6 +106,25 @@ class IrBuilder {
         }
 
         SwitchCurrentBlock(mergeBlock);
+    }
+
+
+    void BuildWhileStmt(BoundWhileStmt whileStmt) {
+        var condBlock = CreateBlock();
+        var whileBlock = CreateBlock();
+        var endBlock = CreateBlock();
+
+        TerminateGoto(condBlock.blockId);
+        SwitchCurrentBlock(condBlock);
+
+        int resReg = BuildExpr(whileStmt.boundConditionExpr);
+        TerminateBranch(resReg, whileBlock.blockId, endBlock.blockId);
+
+        SwitchCurrentBlock(whileBlock);
+        BuildStmt(whileStmt.body);
+        TerminateGoto(condBlock.blockId);
+
+        SwitchCurrentBlock(endBlock);
     }
 
     void BuildExpressionStmt(BoundExpressionStmt expressionStmt) {
@@ -220,8 +247,7 @@ class IrBuilder {
 
     void Emit(IrInstr irInstr) {
         if (currentBlock.terminator is not null) {
-            var unreachable = CreateUnreachableBlock();
-            SwitchCurrentBlock(unreachable);
+            throw new Exception("there is already a terminator in this block");
         }
         currentBlock.irInstrs.Add(irInstr);
     }

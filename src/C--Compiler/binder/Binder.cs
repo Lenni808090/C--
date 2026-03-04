@@ -48,6 +48,7 @@ class Binder {
             VarAssignmentStmt va => BindVarAssignmentStmt(va),
             ReturnStmt r => BindReturnStmt(r),
             IfStmt i => BindIfStmt(i),
+            WhileStmt w => BindWhileStmt(w),
             BlockStmt b => BindBlockStmt(b),
             ExpressionStmt e => BindExpressionStmt(e),
             _ => throw new Exception($"Unexpected stmt: {stmt.syntaxKind}"),
@@ -79,6 +80,19 @@ class Binder {
         BoundStmt elseStmt = BindStmt(ifStmt.elseStmt);
 
         return new BoundIfStmt(boundConditionExpr, thenStmt, elseStmt);
+    }
+
+    BoundStmt BindWhileStmt(WhileStmt whileStmt) {
+
+        BoundExpr boundConditionExpr = BindExpr(whileStmt.condition);
+
+        if (boundConditionExpr.type != SymbolType.Bool && boundConditionExpr.type != SymbolType.DiagnosticsError) {
+            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
+        }
+
+        BoundStmt body = BindStmt(whileStmt.body);
+
+        return new BoundWhileStmt(boundConditionExpr, body);
     }
 
     BoundStmt BindBlockStmt(BlockStmt blockStmt) {

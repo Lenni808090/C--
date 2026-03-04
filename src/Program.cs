@@ -15,10 +15,8 @@ class Program {
     static void Main() {
         string code = @"
                         int isTrue = 0;
-                        if(2 == 2){
-                            isTrue = 1;
-                        }else {
-                            isTrue = 2;
+                        while(isTrue < 5){
+                            isTrue = isTrue + 1;
                         }
                         return isTrue;
                         ";
