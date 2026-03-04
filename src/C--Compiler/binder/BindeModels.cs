@@ -1,7 +1,6 @@
 namespace CMinus.Compiler.Binding;
 
 abstract class BoundStmt {
-    protected BoundStmt() { }
 };
 abstract class BoundExpr {
     public SymbolType type {
@@ -30,6 +29,16 @@ sealed class BoundVarDeclarationStmt : BoundStmt {
     public BoundVarDeclarationStmt(LocalSymbol localSymbol, BoundExpr initializer) {
         this.localSymbol = localSymbol;
         this.initializer = initializer;
+    }
+}
+
+sealed class BoundVarAssignmentStmt : BoundStmt {
+    public LocalSymbol localSymbol;
+    public BoundExpr assignmentExpr;
+
+    public BoundVarAssignmentStmt(LocalSymbol localSymbol, BoundExpr assignmentExpr) {
+        this.localSymbol = localSymbol;
+        this.assignmentExpr = assignmentExpr;
     }
 }
 
@@ -95,6 +104,10 @@ sealed class BoundBinaryExpr : BoundExpr {
 
 sealed class BoundErrorExpr : BoundExpr {
     public BoundErrorExpr() : base(SymbolType.DiagnosticsError) { }
+}
+
+sealed class BoundErrorStmt : BoundStmt {
+
 }
 
 

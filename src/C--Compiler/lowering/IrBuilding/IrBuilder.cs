@@ -49,6 +49,10 @@ class IrBuilder {
                     BuildExpressionStmt(e);
                     break;
                 }
+            case BoundVarAssignmentStmt va: {
+                    BuildVarAssignmentStmt(va);
+                    break;
+                }
             case BoundBlockStmt b: {
                     BuildBlockStmt(b);
                     break;
@@ -98,6 +102,13 @@ class IrBuilder {
 
     void BuildExpressionStmt(BoundExpressionStmt expressionStmt) {
         BuildExpr(expressionStmt.boundExpr);
+    }
+
+
+    void BuildVarAssignmentStmt(BoundVarAssignmentStmt assignmentStmt) {
+        int dstReg = BuildExpr(assignmentStmt.assignmentExpr);
+        var localIndex = assignmentStmt.localSymbol.index;
+        EmitStoreLocal(dstReg, localIndex);
     }
 
     void BuildBlockStmt(BoundBlockStmt blockStmt) {

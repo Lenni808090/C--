@@ -14,15 +14,13 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                        if(3 == 2){
-                            int y = 200;
-                            return 0;
-                            90;
+                        int isTrue = 0;
+                        if(2 == 2){
+                            isTrue = 1;
                         }else {
-                            int y = 500;
+                            isTrue = 2;
                         }
-                        int z = 93;
-                        return z;
+                        return isTrue;
                         ";
 
         CompilerContext compilerContext = new();
@@ -121,6 +119,11 @@ class Program {
                 }
             case ReturnStmt r: {
                     PrintSyntaxExpr(r.returnExpr, indent, true);
+                    break;
+                }
+            case VarAssignmentStmt va: {
+                    PrintNameToken("name", va.variable, indent, false);
+                    PrintSyntaxExpr(va.assignmentExpr, indent, true);
                     break;
                 }
             case ExpressionStmt e: {
@@ -323,6 +326,12 @@ class Program {
                 }
             case BoundReturnStmt r: {
                     PrintBoundExpr(r.boundReturnedExpr, indent, true);
+                    break;
+                }
+            case BoundVarAssignmentStmt va: {
+                    Console.Write(indent);
+                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.symbolType} (index {va.localSymbol.index})");
+                    PrintBoundExpr(va.assignmentExpr, indent, true);
                     break;
                 }
             case BoundExpressionStmt e: {

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
@@ -44,6 +45,7 @@ class Binder {
     BoundStmt BindStmt(Stmt stmt) {
         return stmt switch {
             VarDeclarationStmt v => BindVarDeclarationStmt(v),
+            VarAssignmentStmt va => BindVarAssignmentStmt(va),
             ReturnStmt r => BindReturnStmt(r),
             IfStmt i => BindIfStmt(i),
             BlockStmt b => BindBlockStmt(b),
@@ -112,6 +114,25 @@ class Binder {
         }
 
         return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
+    }
+
+    BoundStmt BindVarAssignmentStmt(VarAssignmentStmt varAssignmentStmt) {
+        var name = varAssignmentStmt.variable.Text;
+        var local = lookUpLocal(name);
+        SymbolType localType = local is null ? SymbolType.DiagnosticsError : local.symbolType;
+
+        var assignmentExpr = BindExpr(varAssignmentStmt.assignmentExpr);
+
+        if (local is null) {
+            ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
+            return new BoundErrorStmt();
+        }
+
+        if (assignmentExpr.type != localType && assignmentExpr.type != SymbolType.DiagnosticsError && localType != SymbolType.DiagnosticsError) {
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+        }
+
+        return new BoundVarAssignmentStmt(local, assignmentExpr);
     }
 
     BoundExpr BindExpr(Expr expr) {
