@@ -12,9 +12,13 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"int x = 0;
+        string code = @"int x = 1;
                         if(x + 1 == 2){
                             int y = 200;
+                            int z = (x + y) * 2;
+                            return (z + x) * 3;
+                        }else {
+                            int y = 300;
                             int z = (x + y) * 2;
                             return (z + x) * 3;
                         }";
@@ -100,6 +104,11 @@ class Program {
                     Console.Write(indent);
                     Console.WriteLine("+--Then");
                     PrintSyntaxStmt(i.thenStmt, indent + "   ", true);
+                    if (i.elseStmt is not null) {
+                        Console.Write(indent);
+                        Console.WriteLine("+--Else");
+                        PrintSyntaxStmt(i.elseStmt, indent + "   ", true);
+                    }
 
                     break;
                 }

@@ -172,7 +172,16 @@ class Parser {
         Expect(TokenType.CloseParentheses, "closing ) expected after condition");
 
         Stmt thenStmt = ParseStmt();
-        return new IfStmt(condition, thenStmt);
+
+        if (Current.TokenType != TokenType.Else) {
+            return new IfStmt(condition, thenStmt);
+        }
+
+        NextToken();
+
+        Stmt elseStmt = ParseStmt();
+
+        return new IfStmt(condition, thenStmt, elseStmt);
     }
 
     TypeSyntax ParseType() {

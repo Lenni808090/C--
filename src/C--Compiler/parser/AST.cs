@@ -56,10 +56,12 @@ sealed class IfStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
     public Expr condition;
     public Stmt thenStmt;
+    public Stmt? elseStmt;
 
-    public IfStmt(Expr condition, Stmt thenStmt) {
+    public IfStmt(Expr condition, Stmt thenStmt, Stmt? elseStmt = null) {
         this.condition = condition;
         this.thenStmt = thenStmt;
+        this.elseStmt = elseStmt;
     }
 }
 

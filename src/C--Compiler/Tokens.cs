@@ -24,6 +24,7 @@ enum TokenType {
     Semicolon,
 
     If,
+    Else,
 
     Plus,
     Minus,

@@ -17,6 +17,7 @@ class Lexer {
         { "true", TokenType.True},
         { "false", TokenType.False},
         {"if", TokenType.If},
+        {"else", TokenType.Else},
     };
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();

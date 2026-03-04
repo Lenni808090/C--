@@ -46,6 +46,10 @@ class IrBuilder {
                     BuildReturnStmt(r);
                     break;
                 }
+            case BoundIfStmt i: {
+                    BuildIfStmt(i);
+                    break;
+                }
             case BoundBlockStmt b: {
                     BuildBlockStmt(b);
                     break;
@@ -65,6 +69,10 @@ class IrBuilder {
     void BuildReturnStmt(BoundReturnStmt returnStmt) {
         int returnedReg = BuildExpr(returnStmt.boundReturnedExpr);
         TerminateReturn(returnedReg);
+    }
+
+    void BuildIfStmt(BoundIfStmt ifStmt) {
+        //TODO if stmts;
     }
 
     void BuildBlockStmt(BoundBlockStmt blockStmt) {
