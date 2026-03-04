@@ -215,7 +215,6 @@ class IrBuilder {
 
     void Emit(IrInstr irInstr) {
         if (currentBlock.terminator is not null) {
-            Console.Write("unreachable block created at " + basicBlocks.Count);
             var unreachable = CreateUnreachableBlock();
             SwitchCurrentBlock(unreachable);
         }
@@ -227,14 +226,32 @@ class IrBuilder {
         if (currentBlock.terminator is not null) {
             throw new Exception("onyl one terminator allowed");
         }
-        EnsureCurrentBlockSourceSpan();
+        if (currentBlock.sourceSpan.Length == 0) {
+            EnsureCurrentBlockSourceSpan();
+        }
         currentBlock.terminator = terminator;
     }
 
     void EnsureCurrentBlockSourceSpan() {
-        if (currentBlock.sourceSpan.Length == 0 && currentStmtSpan.Length > 0) {
-            currentBlock.sourceSpan = currentStmtSpan;
+        if (currentStmtSpan.Length == 0) {
+            return;
         }
+
+        currentBlock.sourceSpan = CombineSpans(currentBlock.sourceSpan, currentStmtSpan);
+    }
+
+    TextSpan CombineSpans(TextSpan first, TextSpan second) {
+        if (first.Length == 0) {
+            return second;
+        }
+
+        if (second.Length == 0) {
+            return first;
+        }
+
+        int start = Math.Min(first.Start, second.Start);
+        int end = Math.Max(first.Start + first.Length, second.Start + second.Length);
+        return new TextSpan(start, end - start);
     }
 
     int GetBlockId() {

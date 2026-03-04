@@ -18,6 +18,7 @@ class Program {
                             int y = 200;
                             return y;
                             int z = 2;
+                            int oeoeoe = 8376283728;
                         }else {
                             int y = 500;
                             return y;
@@ -51,8 +52,10 @@ class Program {
 
         IrBuilder irBuilder = new IrBuilder(bound);
         IrCompiledUnit irCompiledUnit = irBuilder.BuildCompiledUnit();
+        PrintIrCompiledUnit(irCompiledUnit);
         ControlFlowAnalyser controlFlowAnalyser = new ControlFlowAnalyser(irCompiledUnit, compilerContext);
         irCompiledUnit = controlFlowAnalyser.Analyse();
+        PrintIrCompiledUnit(irCompiledUnit);
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
             return;
@@ -361,6 +364,56 @@ class Program {
                     Console.WriteLine($"{expr.GetType().Name} : {expr.type}");
                     break;
                 }
+        }
+    }
+
+    static void PrintIrCompiledUnit(IrCompiledUnit irCompiledUnit) {
+        Console.WriteLine("=== IR BLOCKS ===");
+        foreach (BasicBlock block in irCompiledUnit.basicBlocks) {
+            Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable}, span=[{block.sourceSpan.Start}..{block.sourceSpan.Start + block.sourceSpan.Length}))");
+
+            foreach (IrInstr irInstr in block.irInstrs) {
+                switch (irInstr) {
+                    case IrLoadConst c:
+                        Console.WriteLine($"  load_const r{c.dstReg} <- {c.valueType}({c.rawValue})");
+                        break;
+                    case IrStoreLocal s:
+                        Console.WriteLine($"  store_local local[{s.localIndex}] <- r{s.srcReg}");
+                        break;
+                    case IrLoadLocal l:
+                        Console.WriteLine($"  load_local r{l.dstReg} <- local[{l.localIndex}]");
+                        break;
+                    case IrMove m:
+                        Console.WriteLine($"  move r{m.dstReg} <- r{m.srcReg}");
+                        break;
+                    case IrBinaryOp b:
+                        Console.WriteLine($"  binary {b.irBinaryOP} r{b.dstReg} <- r{b.leftReg}, r{b.rightReg}");
+                        break;
+                    default:
+                        Console.WriteLine("  <unknown instr>");
+                        break;
+                }
+            }
+
+            if (block.terminator is null) {
+                Console.WriteLine("  terminator: <none>");
+            }
+            else {
+                switch (block.terminator) {
+                    case IrReturn r:
+                        Console.WriteLine($"  terminator: return r{r.returnReg}");
+                        break;
+                    case IrGoto g:
+                        Console.WriteLine($"  terminator: goto block {g.basicBlockId}");
+                        break;
+                    case IrBranch b:
+                        Console.WriteLine($"  terminator: branch r{b.condReg} ? block {b.thenBlockId} : block {b.elseBlockId}");
+                        break;
+                    default:
+                        Console.WriteLine("  terminator: <unknown>");
+                        break;
+                }
+            }
         }
     }
 

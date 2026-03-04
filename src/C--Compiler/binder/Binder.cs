@@ -243,7 +243,7 @@ class Binder {
 
     TextSpan GetStmtSpan(Stmt stmt) {
         return stmt switch {
-            VarDeclarationStmt v => CombineSpans(v.name.TextSpan, GetExprSpan(v.declarementExpr)),
+            VarDeclarationStmt v => CombineSpans(GetTypeSpan(v.type), GetExprSpan(v.declarementExpr)),
             ReturnStmt r => GetExprSpan(r.returnExpr),
             IfStmt i => i.elseStmt is null
                 ? CombineSpans(GetExprSpan(i.condition), GetStmtSpan(i.thenStmt))
@@ -262,6 +262,13 @@ class Binder {
         TextSpan first = GetStmtSpan(blockStmt.stmts[0]);
         TextSpan last = GetStmtSpan(blockStmt.stmts[blockStmt.stmts.Length - 1]);
         return CombineSpans(first, last);
+    }
+
+    TextSpan GetTypeSpan(TypeSyntax typeSyntax) {
+        return typeSyntax switch {
+            IdentifierTypeSyntax i => i.identifier.TextSpan,
+            _ => TextSpan.None,
+        };
     }
 
     TextSpan CombineSpans(TextSpan first, TextSpan second) {
