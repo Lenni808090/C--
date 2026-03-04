@@ -35,13 +35,6 @@ class Binder {
             boundStmts.Add(boundStmt);
         }
         PopScope();
-        // temporary
-        boundStmts.Add(
-            new BoundReturnStmt(
-                new BoundLiteralExpr(0, SymbolType.Int),
-                TextSpan.None
-            )
-        );
 
         int localCount = nextLocalIndex;
         return new BoundCompiledUnit(boundStmts.ToArray(), localCount);

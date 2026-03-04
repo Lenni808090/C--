@@ -16,13 +16,11 @@ class Program {
         string code = @"
                         if(3 == 2){
                             int y = 200;
-                            return y;
-                            int z = 2;
-                            int oeoeoe = 8376283728;
                         }else {
                             int y = 500;
-                            return y;
-                        }";
+                        }
+                        int z = 93;
+                        ";
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;
         Lexer lexer = new Lexer(code, compilerContext);

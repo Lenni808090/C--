@@ -35,4 +35,5 @@ public static class DiagnosticDescriptors {
         new("BND009", "Binder", "unkown type {0}", Severity.Error);
 
     public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);
+    public static readonly DiagnosticDescriptor ControlFLowAllPathsNeedReturn = new("CFA002", "Control Flow Analysis", "all paths need to return a value", Severity.Error);
 }

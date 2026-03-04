@@ -1,6 +1,6 @@
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
-using CMinus.Compiler.Lowering;
+namespace CMinus.Compiler.Lowering;
 
 class ControlFlowAnalyser {
     readonly IrCompiledUnit irCompiledUnit;
@@ -40,8 +40,11 @@ class ControlFlowAnalyser {
                     worklist.Add(idToBlock[b.thenBlockId]);
                     worklist.Add(idToBlock[b.elseBlockId]);
                     break;
+                case null:
+                    diagnostics.Report(DiagnosticDescriptors.ControlFLowAllPathsNeedReturn, currBlock.sourceSpan);
+                    break;
                 default:
-                    throw new Exception("unkown terminator");
+                    throw new Exception("unkown terminator" + currBlock.terminator);
             }
         }
 

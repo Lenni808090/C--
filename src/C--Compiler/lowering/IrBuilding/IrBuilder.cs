@@ -33,10 +33,6 @@ class IrBuilder {
             BuildStmt(stmt);
         }
 
-        if (currentBlock.terminator is null) {
-            throw new Exception("block needs terminator");
-        }
-
         return new IrCompiledUnit(basicBlocks.ToArray(), boundCompiledUnit.localCount, maxVReg);
     }
 
