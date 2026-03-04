@@ -16,10 +16,13 @@ class Program {
         string code = @"
                         if(3 == 2){
                             int y = 200;
+                            return 0;
+                            90;
                         }else {
                             int y = 500;
                         }
                         int z = 93;
+                        return z;
                         ";
 
         CompilerContext compilerContext = new();
@@ -59,7 +62,7 @@ class Program {
 
         IrBuilder irBuilder = new IrBuilder(bound);
         IrCompiledUnit irCompiledUnit = irBuilder.BuildCompiledUnit();
-
+        PrintIrCompiledUnit(irCompiledUnit);
         ControlFlowAnalyser controlFlowAnalyser = new ControlFlowAnalyser(irCompiledUnit, compilerContext);
         irCompiledUnit = controlFlowAnalyser.Analyse();
 
@@ -386,7 +389,7 @@ class Program {
     static void PrintIrCompiledUnit(IrCompiledUnit irCompiledUnit) {
         Console.WriteLine("=== IR BLOCKS ===");
         foreach (BasicBlock block in irCompiledUnit.basicBlocks) {
-            Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable}, compilerGenerated={block.isCompilerGenerated})");
+            Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable})");
 
             foreach (IrInstr irInstr in block.irInstrs) {
                 switch (irInstr) {

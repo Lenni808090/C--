@@ -45,12 +45,16 @@ class IrBuilder {
                     BuildIfStmt(i);
                     break;
                 }
+            case BoundExpressionStmt e: {
+                    BuildExpressionStmt(e);
+                    break;
+                }
             case BoundBlockStmt b: {
                     BuildBlockStmt(b);
                     break;
                 }
             default: {
-                    throw new Exception("Unkown Stmt in Build Stmt Ir");
+                    throw new Exception("Unkown Stmt in Build Stmt Ir" + boundStmt);
                 }
         }
     }
@@ -92,6 +96,10 @@ class IrBuilder {
         SwitchCurrentBlock(mergeBlock);
     }
 
+    void BuildExpressionStmt(BoundExpressionStmt expressionStmt) {
+        BuildExpr(expressionStmt.boundExpr);
+    }
+
     void BuildBlockStmt(BoundBlockStmt blockStmt) {
         foreach (var stmt in blockStmt.boundStmts) {
             BuildStmt(stmt);
@@ -110,7 +118,7 @@ class IrBuilder {
                     return BuildBinaryExpr(b);
                 }
             default: {
-                    throw new Exception("Unkown Expr in Build Expr Ir");
+                    throw new Exception("Unkown Expr in Build Expr Ir" + boundExpr);
                 }
         }
     }
@@ -230,7 +238,7 @@ class IrBuilder {
     }
 
     BasicBlock CreateUnreachableBlock() {
-        var newBlock = new BasicBlock(GetBlockId(), true, true);
+        var newBlock = new BasicBlock(GetBlockId(), true);
         basicBlocks.Add(newBlock);
         return newBlock;
     }

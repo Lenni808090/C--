@@ -19,15 +19,13 @@ class IrCompiledUnit {
 class BasicBlock {
     public List<IrInstr> irInstrs;
     public bool isUnreachable;
-    public bool isCompilerGenerated;
     public Terminator? terminator;
     public int blockId;
 
-    public BasicBlock(int blockId, bool isUnreachable = false, bool isCompilerGenerated = false) {
+    public BasicBlock(int blockId, bool isUnreachable = false) {
         irInstrs = new();
         this.blockId = blockId;
         this.isUnreachable = isUnreachable;
-        this.isCompilerGenerated = isCompilerGenerated;
     }
 }
 

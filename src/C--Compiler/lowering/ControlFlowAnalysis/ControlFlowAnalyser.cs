@@ -63,9 +63,12 @@ class ControlFlowAnalyser {
             if (visited.Contains(block.blockId)) {
                 reached.Add(block);
 
-                if (block.terminator is null && !block.isCompilerGenerated) {
+                if (block.terminator is null) {
                     diagnostics.Report(DiagnosticDescriptors.ControlFLowAllPathsNeedReturn);
                 }
+            }
+            else {
+                diagnostics.Report(DiagnosticDescriptors.ConrolFlowUnreachableCode);
             }
         }
 
