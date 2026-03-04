@@ -128,24 +128,41 @@ class Binder {
     }
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
+
         Token typeToken = ((IdentifierTypeSyntax)varDeclarationStmt.type).identifier;
-        bool isAlreadyInScope = scopes.Peek().ContainsKey(varDeclarationStmt.name.Text);
+
+
+        BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
+
+        bool isAlreadyInScope = scopes.Peek().ContainsKey(name);
         if (isAlreadyInScope) {
             ReportError(DiagnosticDescriptors.BinderVarAlreadyDeclared, name);
+            return new BoundErrorStmt();
         }
 
         SymbolType declared = InferTypeInTypedDecl(typeToken);
-        BoundExpr initBoundExpr = BindExpr(varDeclarationStmt.declarementExpr);
 
-        if (declared != initBoundExpr.type && declared != SymbolType.DiagnosticsError && initBoundExpr.type != SymbolType.DiagnosticsError) {
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+        if (declared == SymbolType.DiagnosticsError) {
+            scopes.Peek().Add(name, CreateErrorLocal(name));
+            return new BoundErrorStmt();
         }
+
+        if (initBoundExpr.type == SymbolType.DiagnosticsError) {
+            scopes.Peek().Add(name, CreateErrorLocal(name));
+            return new BoundErrorStmt();
+        }
+
+        if (declared != initBoundExpr.type) {
+            scopes.Peek().Add(name, CreateErrorLocal(name));
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorStmt();
+        }
+
 
         int index = AllocateLocalIndex();
         LocalSymbol localSymbol = new LocalSymbol(name, declared, index);
-        if (!isAlreadyInScope) {
-            scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
-        }
+        scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
+
 
         return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
     }
@@ -291,7 +308,9 @@ class Binder {
         }
 
     }
-
+    LocalSymbol CreateErrorLocal(string name) {
+        return new LocalSymbol(name, SymbolType.DiagnosticsError, -1);
+    }
     void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
         diagnostics.Report(descriptor, args);
     }
