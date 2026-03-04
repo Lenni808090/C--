@@ -16,9 +16,11 @@ class Lexer {
         { "return", TokenType.Return },
         { "true", TokenType.True},
         { "false", TokenType.False},
-        {"if", TokenType.If},
-        {"else", TokenType.Else},
-        {"while", TokenType.While},
+        { "if", TokenType.If},
+        { "else", TokenType.Else},
+        { "while", TokenType.While},
+        { "continue", TokenType.Continue},
+        { "break", TokenType.Break},
     };
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();

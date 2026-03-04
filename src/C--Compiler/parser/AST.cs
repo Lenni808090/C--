@@ -76,6 +76,13 @@ sealed class WhileStmt : Stmt {
         this.body = body;
     }
 }
+
+sealed class ContinueStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.ContinueStmt;
+}
+sealed class BreakStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.BreakStmt;
+}
 sealed class BlockStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.BlockStmt;
     public Stmt[] stmts;
@@ -155,7 +162,10 @@ enum SyntaxKind {
     IfStmt,
     WhileStmt,
     BlockStmt,
+    ContinueStmt,
+    BreakStmt,
     CompilationUnit,
+
 
     LiteralExpr,
     NameExpr,

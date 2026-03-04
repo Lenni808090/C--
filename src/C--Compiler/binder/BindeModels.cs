@@ -63,6 +63,15 @@ sealed class BoundWhileStmt : BoundStmt {
     }
 }
 
+sealed class BoundBreakStmt : BoundStmt {
+
+}
+
+sealed class BoundContinueStmt : BoundStmt {
+
+}
+
+
 sealed class BoundBlockStmt : BoundStmt {
     public BoundStmt[] boundStmts;
 

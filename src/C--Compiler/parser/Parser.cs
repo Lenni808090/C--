@@ -165,6 +165,14 @@ class Parser {
             case TokenType.OpenBrace: {
                     return ParseBlockStmt();
                 }
+            case TokenType.Continue: {
+                    NextToken();
+                    return new ContinueStmt();
+                }
+            case TokenType.Break: {
+                    NextToken();
+                    return new BreakStmt();
+                }
             default: {
                     Expr expr = ParseExpr();
                     Expect(TokenType.Semicolon, "Missing ';' after expression");

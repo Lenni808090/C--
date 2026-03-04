@@ -9,6 +9,7 @@ class Binder {
     List<BoundStmt> boundStmts;
     Stack<Dictionary<string, LocalSymbol>> scopes;
 
+    int loopDepth;
     DiagnosticBag diagnostics;
 
     int nextLocalIndex;
@@ -26,6 +27,7 @@ class Binder {
         diagnostics = compilerContext.diagnostics;
         boundStmts = new();
         stmtsToBind = compilationUnit.stmts;
+        loopDepth = 0;
     }
 
     public BoundCompiledUnit BindCompiledUnit() {
@@ -48,6 +50,8 @@ class Binder {
             VarAssignmentStmt va => BindVarAssignmentStmt(va),
             ReturnStmt r => BindReturnStmt(r),
             IfStmt i => BindIfStmt(i),
+            ContinueStmt c => BindContinueStmt(c),
+            BreakStmt b => BindBreakStmt(b),
             WhileStmt w => BindWhileStmt(w),
             BlockStmt b => BindBlockStmt(b),
             ExpressionStmt e => BindExpressionStmt(e),
@@ -82,6 +86,20 @@ class Binder {
         return new BoundIfStmt(boundConditionExpr, thenStmt, elseStmt);
     }
 
+    BoundStmt BindContinueStmt(ContinueStmt continueStmt) {
+        if (!isInLoop()) {
+            ReportError(DiagnosticDescriptors.BinderNotInLoopContinue);
+        }
+        return new BoundContinueStmt();
+    }
+
+
+    BoundStmt BindBreakStmt(BreakStmt breakStmt) {
+        if (!isInLoop()) {
+            ReportError(DiagnosticDescriptors.BinderNotInLoopBreak);
+        }
+        return new BoundBreakStmt();
+    }
     BoundStmt BindWhileStmt(WhileStmt whileStmt) {
 
         BoundExpr boundConditionExpr = BindExpr(whileStmt.condition);
@@ -90,7 +108,9 @@ class Binder {
             ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
+        EnterLoop();
         BoundStmt body = BindStmt(whileStmt.body);
+        ExitLoop();
 
         return new BoundWhileStmt(boundConditionExpr, body);
     }
@@ -231,6 +251,18 @@ class Binder {
 
     int AllocateLocalIndex() {
         return nextLocalIndex++;
+    }
+
+    int EnterLoop() {
+        return loopDepth += 1;
+    }
+
+    int ExitLoop() {
+        return loopDepth -= 1;
+    }
+
+    bool isInLoop() {
+        return loopDepth > 0;
     }
 
     SymbolType InferTypeInTypedDecl(Token typeToken) {
