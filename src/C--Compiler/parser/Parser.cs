@@ -127,29 +127,10 @@ class Parser {
     Stmt ParseStmt() {
 
         if (matchesDeclarationStmt()) {
-            TypeSyntax type = ParseType();
-
-            Token identifier = NextToken();
-
-            //equals;
-            NextToken();
-
-            Expr assignedExpr = ParseExpr();
-
-            Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
-
-            return new VarDeclarationStmt(type, identifier, assignedExpr);
+            return ParseDeclarationStmt();
         }
         else if (matchesAssignemntStmt()) {
-            Token identifier = NextToken();
-            //equals;
-            NextToken();
-
-            Expr assignedExpr = ParseExpr();
-
-            Expect(TokenType.Semicolon, "Missing ';' after variable assignment");
-
-            return new VarAssignmentStmt(identifier, assignedExpr);
+            return ParseAssignemntStmt();
         }
 
         switch (Current.TokenType) {
@@ -177,6 +158,33 @@ class Parser {
                     return new ExpressionStmt(expr);
                 }
         }
+    }
+
+    Stmt ParseDeclarationStmt() {
+        TypeSyntax type = ParseType();
+
+        Token identifier = NextToken();
+
+        //equals;
+        NextToken();
+
+        Expr assignedExpr = ParseExpr();
+
+        Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
+
+        return new VarDeclarationStmt(type, identifier, assignedExpr);
+    }
+
+    Stmt ParseAssignemntStmt() {
+        Token identifier = NextToken();
+        //equals;
+        NextToken();
+
+        Expr assignedExpr = ParseExpr();
+
+        Expect(TokenType.Semicolon, "Missing ';' after variable assignment");
+
+        return new VarAssignmentStmt(identifier, assignedExpr);
     }
 
     Stmt ParseBlockStmt() {
@@ -256,6 +264,7 @@ class Parser {
         return ParseLogicalOrExpr();
     }
 
+
     Expr ParseLogicalOrExpr() {
         Expr left = ParseLogicalAndExpr();
 
@@ -320,16 +329,27 @@ class Parser {
     }
 
     Expr ParseMultiplyExpr() {
-        Expr left = ParsePrimary();
+        Expr left = ParseUnaryExpr();
         while (Current.TokenType == TokenType.Multiply || Current.TokenType == TokenType.Divide) {
             Token op = NextToken();
-            Expr right = ParsePrimary();
+            Expr right = ParseUnaryExpr();
             left = new BinaryExpr(left, op, right);
         }
 
         return left;
 
     }
+    Expr ParseUnaryExpr() {
+        if (Current.TokenType == TokenType.Bang || Current.TokenType == TokenType.Minus) {
+            var Operator = NextToken();
+            var operatedExpr = ParseUnaryExpr();
+            return new UnaryExpr(Operator, operatedExpr);
+        }
+
+        return ParsePrimary();
+    }
+
+
     Expr ParsePrimary() {
         Token token = Current;
         switch (token.TokenType) {

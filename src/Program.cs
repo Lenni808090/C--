@@ -12,20 +12,23 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-            int x = 0;
-            int sum = 0;
+                        int i = 0;
+                        int sum = 0;
 
-            while (x < 6) {
-                x = x + 1;
+                        while (i < 6) {
+                            i = i + 1;
 
-                if (x == 3) {
-                    continue;
-                }
+                            if (i == 2) {
+                                continue;
+                            }
+                            if (i == 5) {
+                                break;
+                            }
 
-                sum = sum + x;
-            }
+                            sum = sum + i;
+                        }
 
-            return sum;
+                        return sum;
                         ";
 
         CompilerContext compilerContext = new();

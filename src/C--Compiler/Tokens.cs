@@ -11,7 +11,6 @@ enum TokenType {
 
     Equals,
 
-    Bang,
 
     OpenParentheses,
     CloseParentheses,
@@ -29,6 +28,7 @@ enum TokenType {
     Continue,
     Break,
 
+    Bang,
     Plus,
     Minus,
     Multiply,

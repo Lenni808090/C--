@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using CMinus.Compiler;
 
 namespace CMinus.Compiler.Syntax;
@@ -154,6 +155,17 @@ sealed class BinaryExpr : Expr {
     }
 }
 
+sealed class UnaryExpr : Expr {
+    public override SyntaxKind syntaxKind => SyntaxKind.UnaryExpr;
+
+    public Token Operator;
+    public Expr operatedExpr;
+
+    public UnaryExpr(Token Operator, Expr operatedExpr) {
+        this.Operator = Operator;
+        this.operatedExpr = operatedExpr;
+    }
+}
 
 enum SyntaxKind {
     ReturnStmt,
@@ -170,6 +182,7 @@ enum SyntaxKind {
     LiteralExpr,
     NameExpr,
     BinaryExpr,
+    UnaryExpr,
     ExpressionStmt,
 
 
