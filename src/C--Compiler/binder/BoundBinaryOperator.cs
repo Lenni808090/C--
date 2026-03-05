@@ -1,9 +1,19 @@
+using System.Runtime.CompilerServices;
 using CMinus.Compiler;
 
 namespace CMinus.Compiler.Binding;
 
-sealed class BoundBinaryOperator {
-    public TokenType tokenType;
+abstract class BinaryOperator {
+    public abstract TokenType tokenType {
+        get;
+    }
+
+}
+
+sealed class BoundBinaryOperator : BinaryOperator {
+    public override TokenType tokenType {
+        get;
+    }
     public BoundBinaryOperatorKind operatorKind;
     public SymbolType leftType;
     public SymbolType rightType;
@@ -92,4 +102,44 @@ enum BoundBinaryOperatorKind {
 
     LogicalAnd,
     LogicalOr,
+}
+
+
+class BoundUnaryOperator : BinaryOperator {
+    public override TokenType tokenType {
+        get;
+    }
+
+    public BoundUnaryOperatorKind unaryOperatorKind;
+
+    public SymbolType operandType;
+    public SymbolType resultType;
+
+    public BoundUnaryOperator(TokenType tokenType, SymbolType operandType, SymbolType resultType, BoundUnaryOperatorKind unaryOperatorKind) {
+        this.tokenType = tokenType;
+        this.operandType = operandType;
+        this.unaryOperatorKind = unaryOperatorKind;
+        this.resultType = resultType;
+    }
+
+    public static readonly BoundUnaryOperator[] boundUnaryOperators = new[] {
+        new BoundUnaryOperator(TokenType.Bang, SymbolType.Bool, SymbolType.Bool, BoundUnaryOperatorKind.LogicalNot),
+        new BoundUnaryOperator(TokenType.Minus, SymbolType.Int, SymbolType.Int, BoundUnaryOperatorKind.NegateInt),
+};
+
+    public static BoundUnaryOperator? GetUnaryOperator(TokenType tokenType, SymbolType operandType) {
+        foreach (var op in boundUnaryOperators) {
+            if (op.tokenType == tokenType && op.operandType == operandType) {
+                return op;
+            }
+        }
+
+        return null;
+    }
+}
+
+
+enum BoundUnaryOperatorKind {
+    LogicalNot,
+    NegateInt,
 }

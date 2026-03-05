@@ -63,13 +63,9 @@ sealed class BoundWhileStmt : BoundStmt {
     }
 }
 
-sealed class BoundBreakStmt : BoundStmt {
+sealed class BoundBreakStmt : BoundStmt { };
 
-}
-
-sealed class BoundContinueStmt : BoundStmt {
-
-}
+sealed class BoundContinueStmt : BoundStmt { };
 
 
 sealed class BoundBlockStmt : BoundStmt {
@@ -117,6 +113,16 @@ sealed class BoundBinaryExpr : BoundExpr {
         this.leftBoundExpr = leftBoundExpr;
         this.rightBoundExpr = rightBoundExpr;
         this.boundBinaryOperator = boundBinaryOperatorKind;
+    }
+}
+
+sealed class BoundUnaryExpr : BoundExpr {
+    public BoundExpr operatedExpr;
+    public BoundUnaryOperator boundUnaryOperator;
+
+    public BoundUnaryExpr(BoundExpr operatedExpr, BoundUnaryOperator boundUnaryOperator, SymbolType symbolType) : base(symbolType) {
+        this.operatedExpr = operatedExpr;
+        this.boundUnaryOperator = boundUnaryOperator;
     }
 }
 
