@@ -4,6 +4,7 @@ namespace CMinus.Compiler.Lowering;
 
 class IrBuilder {
     List<BasicBlock> basicBlocks;
+    Stack<int> loopTarget;
     BasicBlock currentBlock;
 
     BoundCompiledUnit boundCompiledUnit;
@@ -14,6 +15,7 @@ class IrBuilder {
 
     public IrBuilder(BoundCompiledUnit boundCompiledUnit) {
         basicBlocks = new();
+        loopTarget = new();
         this.boundCompiledUnit = boundCompiledUnit;
         nextTempLocalInd = boundCompiledUnit.localCount;
 
@@ -39,6 +41,10 @@ class IrBuilder {
         switch (boundStmt) {
             case BoundVarDeclarationStmt v: {
                     BuildVarDeclarationStmt(v);
+                    break;
+                }
+            case BoundContinueStmt c: {
+                    BuildContinueStmt(c);
                     break;
                 }
             case BoundReturnStmt r: {
@@ -75,6 +81,10 @@ class IrBuilder {
         int localIndex = v.localSymbol.index;
         int srcReg = BuildExpr(v.initializer);
         EmitStoreLocal(srcReg, localIndex);
+    }
+
+    void BuildContinueStmt(BoundContinueStmt continueStmt) {
+        TerminateGoto(loopTarget.Peek());
     }
 
     void BuildReturnStmt(BoundReturnStmt returnStmt) {
@@ -114,12 +124,13 @@ class IrBuilder {
         var whileBlock = CreateBlock();
         var endBlock = CreateBlock();
 
+        loopTarget.Push(condBlock.blockId);
+
         if (currentBlock.terminator is null) {
             TerminateGoto(condBlock.blockId);
         }
 
         SwitchCurrentBlock(condBlock);
-
         int resReg = BuildExpr(whileStmt.boundConditionExpr);
         TerminateBranch(resReg, whileBlock.blockId, endBlock.blockId);
 
@@ -131,6 +142,7 @@ class IrBuilder {
         }
 
         SwitchCurrentBlock(endBlock);
+        loopTarget.Pop();
     }
 
     void BuildExpressionStmt(BoundExpressionStmt expressionStmt) {
@@ -146,6 +158,10 @@ class IrBuilder {
 
     void BuildBlockStmt(BoundBlockStmt blockStmt) {
         foreach (var stmt in blockStmt.boundStmts) {
+            if (currentBlock.terminator is not null) {
+                var unreachable = CreateUnreachableBlock();
+                SwitchCurrentBlock(unreachable);
+            }
             BuildStmt(stmt);
         }
     }

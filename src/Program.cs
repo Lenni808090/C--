@@ -13,8 +13,7 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"
-                        int isTrue = 0;
+        string code = @"int isTrue = 0;
                         while(isTrue < 5){
                             isTrue = isTrue + 1;
                         }

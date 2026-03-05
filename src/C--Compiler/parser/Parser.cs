@@ -166,12 +166,10 @@ class Parser {
                     return ParseBlockStmt();
                 }
             case TokenType.Continue: {
-                    NextToken();
-                    return new ContinueStmt();
+                    return ParseContinueStmt();
                 }
             case TokenType.Break: {
-                    NextToken();
-                    return new BreakStmt();
+                    return ParseBreakStmt();
                 }
             default: {
                     Expr expr = ParseExpr();
@@ -199,6 +197,16 @@ class Parser {
         return new BlockStmt(body.ToArray());
     }
 
+    Stmt ParseContinueStmt() {
+        NextToken();
+        Expect(TokenType.Semicolon, "Missing ';' after continue");
+        return new ContinueStmt();
+    }
+    Stmt ParseBreakStmt() {
+        NextToken();
+        Expect(TokenType.Semicolon, "Missing ';' after break");
+        return new BreakStmt();
+    }
     Stmt ParseReturmStmt() {
         NextToken();
         Expr returnExpr = ParseExpr();
