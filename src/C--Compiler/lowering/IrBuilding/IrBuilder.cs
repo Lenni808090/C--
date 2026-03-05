@@ -362,7 +362,7 @@ class IrBuilder {
 
     int EmitUnary(IrUnaryOpKind op, int srcReg) {
         int dstReg = AllocVReg();
-        Emit(new IrUnaryInstr(dstReg, srcReg, op));
+        Emit(new IrUnary(dstReg, srcReg, op));
         return dstReg;
     }
 

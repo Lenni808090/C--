@@ -62,6 +62,10 @@ class CodeGenerator {
                     EmitBinaryOp(binaryOp);
                     break;
                 }
+            case IrUnary unary: {
+                    EmitUnary(unary);
+                    break;
+                }
             default: {
                     throw new Exception("Unkown instruction in codegen");
                 }
@@ -152,6 +156,25 @@ class CodeGenerator {
 
             default: {
                     throw new Exception($"Unknown IrBinaryOPKind: {binaryOp.irBinaryOP}");
+                }
+        }
+    }
+
+    void EmitUnary(IrUnary unary) {
+        var dst = (ushort)unary.dstReg;
+        var opearand = (ushort)unary.operandReg;
+
+        switch (unary.irUnaryOp) {
+            case IrUnaryOpKind.NegInt: {
+                    functionBuilder.Emitter.EmitNegInt(dst, opearand);
+                    break;
+                }
+            case IrUnaryOpKind.Not: {
+                    functionBuilder.Emitter.EmitNot(dst, opearand);
+                    break;
+                }
+            default: {
+                    throw new Exception($"Unknown IrUnaryOPKind: {unary.irUnaryOp}");
                 }
         }
     }

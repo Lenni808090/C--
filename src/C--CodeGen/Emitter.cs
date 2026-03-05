@@ -103,6 +103,17 @@ class Emitter {
         EmitRRR(OpCode.DIVIDE_INT, dstReg, leftReg, rightReg);
     }
 
+    public void EmitNegInt(ushort dstReg, ushort srcReg) {
+        EmitOp(OpCode.NEG_INT);
+        EmitU16(dstReg);
+        EmitU16(srcReg);
+    }
+
+    public void EmitNot(ushort dstReg, ushort srcReg) {
+        EmitOp(OpCode.NOT);
+        EmitU16(dstReg);
+        EmitU16(srcReg);
+    }
     public void EmitCmpLTInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_LT_INT, dstReg, leftReg, rightReg);
     }
@@ -124,6 +135,8 @@ class Emitter {
     public void EmitCmpNEQ(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_NEQ, dstReg, leftReg, rightReg);
     }
+
+
     public void EmitOp(OpCode opCode) {
         emittedBytecode.Add((byte)opCode);
     }

@@ -97,15 +97,15 @@ sealed class IrBinaryOp : IrInstr {
     }
 }
 
-sealed class IrUnaryInstr : IrInstr {
+sealed class IrUnary : IrInstr {
     public int dstReg;
-    public int srcReg;
+    public int operandReg;
 
     public IrUnaryOpKind irUnaryOp;
 
-    public IrUnaryInstr(int dstReg, int srcReg, IrUnaryOpKind irUnaryOp) {
+    public IrUnary(int dstReg, int operandReg, IrUnaryOpKind irUnaryOp) {
         this.dstReg = dstReg;
-        this.srcReg = srcReg;
+        this.operandReg = operandReg;
         this.irUnaryOp = irUnaryOp;
     }
 }
