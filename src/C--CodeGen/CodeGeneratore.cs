@@ -91,21 +91,21 @@ class CodeGenerator {
 
     void EmitLoadConst(IrLoadConst loadConst) {
         int constInd = newConst(loadConst.valueType, loadConst.rawValue);
-        functionBuilder.Emitter.EmitLoadConstant((byte)loadConst.dstReg, (byte)constInd);
+        functionBuilder.Emitter.EmitLoadConstant((ushort)loadConst.dstReg, (ushort)constInd);
     }
 
     void EmitStoreLocal(IrStoreLocal storeLocal) {
-        functionBuilder.Emitter.EmitStoreLocal((byte)storeLocal.srcReg, (byte)storeLocal.localIndex);
+        functionBuilder.Emitter.EmitStoreLocal((ushort)storeLocal.srcReg, (ushort)storeLocal.localIndex);
     }
 
     void EmitLoadLocal(IrLoadLocal loadLocal) {
-        functionBuilder.Emitter.EmitLoadLocal((byte)loadLocal.dstReg, (byte)loadLocal.localIndex);
+        functionBuilder.Emitter.EmitLoadLocal((ushort)loadLocal.dstReg, (ushort)loadLocal.localIndex);
     }
 
     void EmitBinaryOp(IrBinaryOp binaryOp) {
-        byte dst = (byte)binaryOp.dstReg;
-        byte left = (byte)binaryOp.leftReg;
-        byte right = (byte)binaryOp.rightReg;
+        var dst = (ushort)binaryOp.dstReg;
+        var left = (ushort)binaryOp.leftReg;
+        var right = (ushort)binaryOp.rightReg;
 
         switch (binaryOp.irBinaryOP) {
             case IrBinaryOPKind.AddInt: {
@@ -157,7 +157,7 @@ class CodeGenerator {
     }
 
     void EmitReturn(IrReturn @return) {
-        functionBuilder.Emitter.EmitReturn((byte)@return.returnReg);
+        functionBuilder.Emitter.EmitReturn((ushort)@return.returnReg);
     }
 
     void EmitGoto(IrGoto @goto) {
@@ -168,7 +168,7 @@ class CodeGenerator {
         var thenLabel = blockLabels[branch.thenBlockId];
         var elseLabel = blockLabels[branch.elseBlockId];
 
-        functionBuilder.Emitter.EmitJumpIfFalse((byte)branch.condReg, elseLabel);
+        functionBuilder.Emitter.EmitJumpIfFalse((ushort)branch.condReg, elseLabel);
         functionBuilder.Emitter.EmitJump(thenLabel);
     }
     int newConst(Runtime.ValueType type, long value) {
