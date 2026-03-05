@@ -97,6 +97,19 @@ sealed class IrBinaryOp : IrInstr {
     }
 }
 
+sealed class IrUnaryInstr : IrInstr {
+    public int dstReg;
+    public int srcReg;
+
+    public IrUnaryOpKind irUnaryOp;
+
+    public IrUnaryInstr(int dstReg, int srcReg, IrUnaryOpKind irUnaryOp) {
+        this.dstReg = dstReg;
+        this.srcReg = srcReg;
+        this.irUnaryOp = irUnaryOp;
+    }
+}
+
 
 sealed class IrGoto : Terminator {
     public int basicBlockId;
@@ -137,6 +150,11 @@ enum IrBinaryOPKind {
     CmpMtInt,
     CmpMtEInt,
 
+}
+
+enum IrUnaryOpKind {
+    NegInt,
+    Not,
 }
 
 

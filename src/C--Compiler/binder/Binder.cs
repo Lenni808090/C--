@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
@@ -190,6 +191,7 @@ class Binder {
         return expr switch {
             NameExpr n => BindNameExpr(n),
             LiteralExpr l => BindLiteralExpr(l),
+            UnaryExpr u => BindUnaryExpr(u),
             BinaryExpr b => BindBinaryExpr(b),
             _ => throw new Exception($"Unexpected expr: {expr.syntaxKind}"),
         };
@@ -228,6 +230,22 @@ class Binder {
         }
 
         ReportError(DiagnosticDescriptors.BinderUnexpectedLiteralType, type);
+        return new BoundErrorExpr();
+    }
+
+    BoundExpr BindUnaryExpr(UnaryExpr unaryExpr) {
+        BoundExpr boundOperatedExpr = BindExpr(unaryExpr.operatedExpr);
+        var boundUnaryOperator = BoundUnaryOperator.GetUnaryOperator(unaryExpr.Operator.TokenType, boundOperatedExpr.type);
+
+        if (boundUnaryOperator is not null) {
+            return new BoundUnaryExpr(boundOperatedExpr, boundUnaryOperator, boundUnaryOperator.resultType);
+        }
+
+        if (boundOperatedExpr.type == SymbolType.DiagnosticsError) {
+            return new BoundErrorExpr();
+        }
+
+        ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
         return new BoundErrorExpr();
     }
 

@@ -105,7 +105,7 @@ enum BoundBinaryOperatorKind {
 }
 
 
-class BoundUnaryOperator : BinaryOperator {
+sealed class BoundUnaryOperator : BinaryOperator {
     public override TokenType tokenType {
         get;
     }

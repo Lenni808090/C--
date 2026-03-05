@@ -88,7 +88,22 @@ class VM {
                         regs[dstReg] = new Value(ValueType.Int, left / right);
                         break;
                     }
+                case OpCode.NEG_INT: {
+                        ushort dstReg = getu16();
+                        ushort srcReg = getu16();
 
+                        int toBeNegged = (int)regs[srcReg].RawData;
+                        regs[dstReg] = new Value(ValueType.Int, -toBeNegged);
+                        break;
+                    }
+
+                case OpCode.NOT: {
+                        ushort dstReg = getu16();
+                        ushort srcReg = getu16();
+
+                        regs[dstReg] = new Value(ValueType.Bool, regs[srcReg].AsBool() ? 0 : 1);
+                        break;
+                    }
 
                 case OpCode.JUMP: {
                         int offset = BitConverter.ToInt32(bytecode, instructionPointer);

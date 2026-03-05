@@ -12,6 +12,9 @@ enum OpCode : byte {
     SUBTRACT_INT,
     MULTIPLY_INT,
     DIVIDE_INT,
+    NEG_INT,
+
+    NOT,
 
     JUMP,
     JUMP_IF_FALSE,

@@ -1,3 +1,4 @@
+using System.Data;
 using CMinus.Compiler.Binding;
 
 namespace CMinus.Compiler.Lowering;
@@ -187,6 +188,9 @@ class IrBuilder {
             case BoundBinaryExpr b: {
                     return BuildBinaryExpr(b);
                 }
+            case BoundUnaryExpr b: {
+                    return BuildUnaryExpr(b);
+                }
             default: {
                     throw new Exception("Unkown Expr in Build Expr Ir" + boundExpr);
                 }
@@ -220,6 +224,16 @@ class IrBuilder {
         var irOpKind = MapBinaryOp(opKind);
 
         return EmitBinary(irOpKind, leftReg, rightReg);
+    }
+
+
+    int BuildUnaryExpr(BoundUnaryExpr unaryExpr) {
+        var opKind = unaryExpr.boundUnaryOperator.unaryOperatorKind;
+        var irUnaryOP = MapUnaryOp(opKind);
+
+        int operandResReg = BuildExpr(unaryExpr.operatedExpr);
+
+        return EmitUnary(irUnaryOP, operandResReg);
     }
 
     int BuildLogicalOrExpr(BoundBinaryExpr binaryExpr) {
@@ -346,6 +360,12 @@ class IrBuilder {
         return dstReg;
     }
 
+    int EmitUnary(IrUnaryOpKind op, int srcReg) {
+        int dstReg = AllocVReg();
+        Emit(new IrUnaryInstr(dstReg, srcReg, op));
+        return dstReg;
+    }
+
     void TerminateReturn(int returnReg) {
         Terminate(new IrReturn(returnReg));
     }
@@ -390,6 +410,16 @@ class IrBuilder {
 
 
             _ => throw new Exception("Unsupported binary operator: " + kind),
+        };
+    }
+
+
+    IrUnaryOpKind MapUnaryOp(BoundUnaryOperatorKind kind) {
+        return kind switch {
+            BoundUnaryOperatorKind.LogicalNot => IrUnaryOpKind.Not,
+            BoundUnaryOperatorKind.NegateInt => IrUnaryOpKind.NegInt,
+
+            _ => throw new Exception("Unsupported unary operator: " + kind),
         };
     }
     int AllocVReg() {
