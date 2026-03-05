@@ -26,63 +26,63 @@ class VM {
 
             switch (currentByteCode) {
                 case OpCode.LOAD_CONST: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte constIndex = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 constIndex = getu16();
                         regs[dstReg] = constants[constIndex];
                         break;
                     }
 
                 case OpCode.STORE_LOCAL: {
-                        byte srcReg = bytecode[instructionPointer++];
-                        byte localIndex = bytecode[instructionPointer++];
+                        UInt16 srcReg = getu16();
+                        UInt16 localIndex = getu16();
                         locals[localIndex] = regs[srcReg];
                         break;
                     }
                 case OpCode.LOAD_LOCAL: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte localIndex = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 localIndex = getu16();
                         regs[dstReg] = locals[localIndex];
                         break;
                     }
 
 
                 case OpCode.RETURN: {
-                        byte returnReg = bytecode[instructionPointer++];
+                        UInt16 returnReg = getu16();
                         return regs[returnReg];
                     }
 
 
                 case OpCode.ADD_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int left = (int)regs[leftReg].RawData;
                         int right = (int)regs[rightReg].RawData;
                         regs[dstReg] = new Value(ValueType.Int, left + right);
                         break;
                     }
                 case OpCode.SUBTRACT_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int left = (int)regs[leftReg].RawData;
                         int right = (int)regs[rightReg].RawData;
                         regs[dstReg] = new Value(ValueType.Int, left - right);
                         break;
                     }
                 case OpCode.MULTIPLY_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int left = (int)regs[leftReg].RawData;
                         int right = (int)regs[rightReg].RawData;
                         regs[dstReg] = new Value(ValueType.Int, left * right);
                         break;
                     }
                 case OpCode.DIVIDE_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int left = (int)regs[leftReg].RawData;
                         int right = (int)regs[rightReg].RawData;
                         regs[dstReg] = new Value(ValueType.Int, left / right);
@@ -97,7 +97,7 @@ class VM {
                         break;
                     }
                 case OpCode.JUMP_IF_FALSE: {
-                        byte condReg = bytecode[instructionPointer++];
+                        UInt16 condReg = getu16();
                         bool cond = regs[condReg].AsBool();
                         int offset = BitConverter.ToInt32(bytecode, instructionPointer);
                         instructionPointer += 4;
@@ -108,7 +108,7 @@ class VM {
                     }
 
                 case OpCode.JUMP_IF_TRUE: {
-                        byte condReg = bytecode[instructionPointer++];
+                        UInt16 condReg = getu16();
                         bool cond = regs[condReg].AsBool();
                         int offset = BitConverter.ToInt32(bytecode, instructionPointer);
                         instructionPointer += 4;
@@ -119,49 +119,49 @@ class VM {
                     }
 
                 case OpCode.CMP_EQ: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int result = ((int)regs[leftReg].RawData == (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
                 case OpCode.CMP_LT_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int result = ((int)regs[leftReg].RawData < (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
                 case OpCode.CMP_MT_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int result = ((int)regs[leftReg].RawData > (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
                 case OpCode.CMP_LTE_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int result = ((int)regs[leftReg].RawData <= (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
                 case OpCode.CMP_MTE_INT: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int result = ((int)regs[leftReg].RawData >= (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
                 case OpCode.CMP_NEQ: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte leftReg = bytecode[instructionPointer++];
-                        byte rightReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 leftReg = getu16();
+                        UInt16 rightReg = getu16();
                         int result = ((int)regs[leftReg].RawData != (int)regs[rightReg].RawData) ? 1 : 0;
                         regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
@@ -169,8 +169,8 @@ class VM {
 
 
                 case OpCode.MOVE: {
-                        byte dstReg = bytecode[instructionPointer++];
-                        byte srcReg = bytecode[instructionPointer++];
+                        UInt16 dstReg = getu16();
+                        UInt16 srcReg = getu16();
                         regs[dstReg] = regs[srcReg];
                         break;
                     }
@@ -182,5 +182,10 @@ class VM {
         }
     }
 
+    UInt16 getu16() {
+        UInt16 reg = BitConverter.ToUInt16(bytecode, instructionPointer);
+        instructionPointer += 2;
+        return reg;
+    }
 
 }

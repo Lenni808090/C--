@@ -1,8 +1,6 @@
-using System;
 using CMinus.CodeGen;
 using CMinus.Compiler;
 using CMinus.Compiler.Binding;
-using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Lexing;
 using CMinus.Compiler.Lowering;
 using CMinus.Compiler.Parsing;
@@ -13,11 +11,21 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"int isTrue = 0;
-                        while(isTrue < 5){
-                            isTrue = isTrue + 1;
-                        }
-                        return isTrue;
+        string code = @"
+            int x = 0;
+            int sum = 0;
+
+            while (x < 6) {
+                x = x + 1;
+
+                if (x == 3) {
+                    continue;
+                }
+
+                sum = sum + x;
+            }
+
+            return sum;
                         ";
 
         CompilerContext compilerContext = new();
@@ -141,6 +149,20 @@ class Program {
                         PrintSyntaxStmt(i.elseStmt, indent + "   ", true);
                     }
 
+                    break;
+                }
+            case WhileStmt w: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Condition");
+                    PrintSyntaxExpr(w.condition, indent + "   ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Body");
+                    PrintSyntaxStmt(w.body, indent + "   ", true);
+                    break;
+                }
+            case ContinueStmt:
+            case BreakStmt: {
                     break;
                 }
             case BlockStmt b: {
@@ -348,6 +370,20 @@ class Program {
                         Console.WriteLine("+--Else");
                         PrintBoundStmt(i.elseStmt, indent + "   ", true);
                     }
+                    break;
+                }
+            case BoundWhileStmt w: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Condition");
+                    PrintBoundExpr(w.boundConditionExpr, indent + "   ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Body");
+                    PrintBoundStmt(w.body, indent + "   ", true);
+                    break;
+                }
+            case BoundContinueStmt:
+            case BoundBreakStmt: {
                     break;
                 }
             case BoundBlockStmt b: {

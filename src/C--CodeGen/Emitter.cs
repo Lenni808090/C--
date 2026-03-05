@@ -26,18 +26,18 @@ class Emitter {
         fixups.Add(new Fixup(patchPos, label));
     }
 
-    public void EmitJumpIfFalse(byte condReg, Label label) {
-        emittedBytecode.Add((byte)OpCode.JUMP_IF_FALSE);
-        emittedBytecode.Add(condReg);
+    public void EmitJumpIfFalse(UInt16 condReg, Label label) {
+        EmitOp(OpCode.JUMP_IF_FALSE);
+        EmitU16(condReg);
         int patchPos = pos;
         EmitI32(0);
         fixups.Add(new Fixup(patchPos, label));
     }
 
 
-    public void EmitJumpIfTrue(byte firstIndex, Label label) {
+    public void EmitJumpIfTrue(UInt16 firstIndex, Label label) {
         EmitOp(OpCode.JUMP_IF_TRUE);
-        EmitU8(firstIndex);
+        EmitU16(firstIndex);
         int patchPos = pos;
         EmitI32(0);
         fixups.Add(new Fixup(patchPos, label));
@@ -52,75 +52,76 @@ class Emitter {
         var bytes = BitConverter.GetBytes(value);
         emittedBytecode.AddRange(bytes);
     }
-    public void EmitU8(byte value) {
-        emittedBytecode.Add((byte)value);
+    public void EmitU16(UInt16 value) {
+        byte[] conValue = BitConverter.GetBytes(value);
+        emittedBytecode.AddRange(conValue);
     }
 
-    public void EmitLoadConstant(byte dstReg, byte constIndex) {
+    public void EmitLoadConstant(UInt16 dstReg, UInt16 constIndex) {
         EmitOp(OpCode.LOAD_CONST);
-        EmitU8(dstReg);
-        EmitU8(constIndex);
+        EmitU16(dstReg);
+        EmitU16(constIndex);
     }
 
-    public void EmitStoreLocal(byte srcReg, byte localIndex) {
+    public void EmitStoreLocal(UInt16 srcReg, UInt16 localIndex) {
         EmitOp(OpCode.STORE_LOCAL);
-        EmitU8(srcReg);
-        EmitU8(localIndex);
+        EmitU16(srcReg);
+        EmitU16(localIndex);
     }
 
-    public void EmitLoadLocal(byte dstReg, byte localIndex) {
+    public void EmitLoadLocal(UInt16 dstReg, UInt16 localIndex) {
         EmitOp(OpCode.LOAD_LOCAL);
-        EmitU8(dstReg);
-        EmitU8(localIndex);
+        EmitU16(dstReg);
+        EmitU16(localIndex);
     }
 
-    public void EmitReturn(byte returnReg) {
+    public void EmitReturn(UInt16 returnReg) {
         EmitOp(OpCode.RETURN);
-        EmitU8(returnReg);
+        EmitU16(returnReg);
     }
 
-    private void EmitRRR(OpCode op, byte dstReg, byte leftReg, byte rightReg) {
+    private void EmitRRR(OpCode op, UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitOp(op);
-        EmitU8(dstReg);
-        EmitU8(leftReg);
-        EmitU8(rightReg);
+        EmitU16(dstReg);
+        EmitU16(leftReg);
+        EmitU16(rightReg);
     }
 
-    public void EmitAddInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitAddInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.ADD_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitSubtractInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitSubtractInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.SUBTRACT_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitMultiplyInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitMultiplyInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.MULTIPLY_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitDivideInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitDivideInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.DIVIDE_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitCmpLTInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitCmpLTInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_LT_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitCmpLTEInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitCmpLTEInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_LTE_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitCmpMTInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitCmpMTInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_MT_INT, dstReg, leftReg, rightReg);
     }
 
-    public void EmitCmpMTEInt(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitCmpMTEInt(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_MTE_INT, dstReg, leftReg, rightReg);
     }
-    public void EmitCmpEQ(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitCmpEQ(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_EQ, dstReg, leftReg, rightReg);
     }
-    public void EmitCmpNEQ(byte dstReg, byte leftReg, byte rightReg) {
+    public void EmitCmpNEQ(UInt16 dstReg, UInt16 leftReg, UInt16 rightReg) {
         EmitRRR(OpCode.CMP_NEQ, dstReg, leftReg, rightReg);
     }
     public void EmitOp(OpCode opCode) {
