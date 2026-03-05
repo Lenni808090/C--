@@ -257,6 +257,11 @@ class Program {
 
         byte[] code = fn.bytecode;
         int ip = 0;
+        ushort ReadU16() {
+            ushort value = BitConverter.ToUInt16(code, ip);
+            ip += 2;
+            return value;
+        }
 
         while (ip < code.Length) {
             int start = ip;
@@ -266,25 +271,25 @@ class Program {
 
             switch (op) {
                 case OpCode.LOAD_CONST: {
-                        byte dst = code[ip++];
-                        byte ci = code[ip++];
+                        ushort dst = ReadU16();
+                        ushort ci = ReadU16();
                         Console.WriteLine($" r{dst}, const[{ci}]");
                         break;
                     }
                 case OpCode.LOAD_LOCAL: {
-                        byte dst = code[ip++];
-                        byte li = code[ip++];
+                        ushort dst = ReadU16();
+                        ushort li = ReadU16();
                         Console.WriteLine($" r{dst}, local[{li}]");
                         break;
                     }
                 case OpCode.STORE_LOCAL: {
-                        byte src = code[ip++];
-                        byte li = code[ip++];
+                        ushort src = ReadU16();
+                        ushort li = ReadU16();
                         Console.WriteLine($" r{src}, local[{li}]");
                         break;
                     }
                 case OpCode.RETURN: {
-                        byte r = code[ip++];
+                        ushort r = ReadU16();
                         Console.WriteLine($" r{r}");
                         break;
                     }
@@ -298,10 +303,16 @@ class Program {
                 case OpCode.CMP_LTE_INT:
                 case OpCode.CMP_MTE_INT:
                 case OpCode.CMP_NEQ: {
-                        byte dst = code[ip++];
-                        byte left = code[ip++];
-                        byte right = code[ip++];
+                        ushort dst = ReadU16();
+                        ushort left = ReadU16();
+                        ushort right = ReadU16();
                         Console.WriteLine($" r{dst}, r{left}, r{right}");
+                        break;
+                    }
+                case OpCode.MOVE: {
+                        ushort dst = ReadU16();
+                        ushort src = ReadU16();
+                        Console.WriteLine($" r{dst}, r{src}");
                         break;
                     }
                 case OpCode.JUMP: {
@@ -312,7 +323,7 @@ class Program {
                     }
                 case OpCode.JUMP_IF_FALSE:
                 case OpCode.JUMP_IF_TRUE: {
-                        byte cond = code[ip++];
+                        ushort cond = ReadU16();
                         int offset = BitConverter.ToInt32(code, ip);
                         ip += 4;
                         Console.WriteLine($" r{cond}, {offset}");

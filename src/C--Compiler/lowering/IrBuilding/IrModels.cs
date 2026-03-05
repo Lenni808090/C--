@@ -138,3 +138,14 @@ enum IrBinaryOPKind {
     CmpMtEInt,
 
 }
+
+
+sealed class LoopTarget {
+    public int condBlockId;
+    public int endBlockId;
+
+    public LoopTarget(int condBlockId, int endBlockId) {
+        this.condBlockId = condBlockId;
+        this.endBlockId = endBlockId;
+    }
+}

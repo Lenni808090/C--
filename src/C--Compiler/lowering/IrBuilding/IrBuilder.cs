@@ -4,7 +4,7 @@ namespace CMinus.Compiler.Lowering;
 
 class IrBuilder {
     List<BasicBlock> basicBlocks;
-    Stack<int> loopTarget;
+    Stack<LoopTarget> loopTarget;
     BasicBlock currentBlock;
 
     BoundCompiledUnit boundCompiledUnit;
@@ -47,6 +47,10 @@ class IrBuilder {
                     BuildContinueStmt(c);
                     break;
                 }
+            case BoundBreakStmt b: {
+                    BuildBrealStmt(b);
+                    break;
+                }
             case BoundReturnStmt r: {
                     BuildReturnStmt(r);
                     break;
@@ -84,7 +88,13 @@ class IrBuilder {
     }
 
     void BuildContinueStmt(BoundContinueStmt continueStmt) {
-        TerminateGoto(loopTarget.Peek());
+        var condBlockId = loopTarget.Peek().condBlockId;
+        TerminateGoto(condBlockId);
+    }
+
+    void BuildBrealStmt(BoundBreakStmt breakStmt) {
+        var endBlockId = loopTarget.Peek().endBlockId;
+        TerminateGoto(endBlockId);
     }
 
     void BuildReturnStmt(BoundReturnStmt returnStmt) {
@@ -124,7 +134,7 @@ class IrBuilder {
         var whileBlock = CreateBlock();
         var endBlock = CreateBlock();
 
-        loopTarget.Push(condBlock.blockId);
+        loopTarget.Push(CreateLoopTarget(condBlock, endBlock));
 
         if (currentBlock.terminator is null) {
             TerminateGoto(condBlock.blockId);
@@ -350,6 +360,9 @@ class IrBuilder {
         Terminate(new IrBranch(condReg, thenBlockId, elseBlockId));
     }
 
+    LoopTarget CreateLoopTarget(BasicBlock condBlock, BasicBlock endBlock) {
+        return new LoopTarget(condBlock.blockId, endBlock.blockId);
+    }
 
 
     Runtime.ValueType GetValueType(SymbolType symbolType) {
