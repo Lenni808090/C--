@@ -12,12 +12,63 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-int x = 20;
-x += 5;
-x -= 3;
-x *= 2;
-x /= 4;
-return x;
+int total = 0;
+bool flip = false;
+int seed = -3;
+seed = -seed;
+
+int i = 0;
+while (i < 12) {
+    if (i == 2) {
+        i += 1;
+        continue;
+    }
+
+    if (i == 9) {
+        break;
+    }
+
+    if ((i < 5 && !flip) || (i == 7)) {
+        total += i;
+    }
+    else {
+        total -= 1;
+    }
+
+    if (i == 4) {
+        flip = true;
+    }
+
+    i += 1;
+}
+
+for (int j = 6; j > 0; j -= 1) {
+    total += j;
+    if (j == 3) {
+        continue;
+    }
+    total += 1;
+}
+
+for (i = 0; i < 4; i = i + 1) {
+    total += i * 2;
+}
+
+{
+    int total = 100;
+    if (total > 50) {
+        total -= 40;
+    }
+}
+
+if ((total > 0 && flip) || false) {
+    total += seed;
+}
+else {
+    total = 0;
+}
+
+return total;
 ";
 
         CompilerContext compilerContext = new();

@@ -35,7 +35,7 @@ class IrBuilder {
             BuildStmt(stmt);
         }
 
-        return new IrCompiledUnit(basicBlocks.ToArray(), boundCompiledUnit.localCount, maxVReg);
+        return new IrCompiledUnit(basicBlocks.ToArray(), nextTempLocalInd, maxVReg);
     }
 
     void BuildStmt(BoundStmt boundStmt) {
