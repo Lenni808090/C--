@@ -158,9 +158,9 @@ class IrBuilder {
 
 
     void BuildForStmt(BoundForStmt forStmt) {
-        var iterBlock = CreateBlock();
         var condBlock = CreateBlock();
-        var forBlock = CreateBlock();
+        var bodyBlock = CreateBlock();
+        var iterBlock = CreateBlock();
         var endBlock = CreateBlock();
 
         loopTarget.Push(CreateLoopTarget(iterBlock, endBlock));
@@ -171,25 +171,25 @@ class IrBuilder {
             TerminateGoto(condBlock.blockId);
         }
 
-        SwitchCurrentBlock(iterBlock);
-        BuildExpr(forStmt.iteration);
-        TerminateGoto(condBlock.blockId);
-
         SwitchCurrentBlock(condBlock);
-        int resReg = BuildExpr(forStmt.condition);
-        TerminateBranch(resReg, forBlock.blockId, endBlock.blockId);
+        int condReg = BuildExpr(forStmt.condition);
+        TerminateBranch(condReg, bodyBlock.blockId, endBlock.blockId);
 
-        SwitchCurrentBlock(forBlock);
+        SwitchCurrentBlock(bodyBlock);
         BuildStmt(forStmt.body);
-
         if (currentBlock.terminator is null) {
             TerminateGoto(iterBlock.blockId);
+        }
+
+        SwitchCurrentBlock(iterBlock);
+        BuildExpr(forStmt.iteration);
+        if (currentBlock.terminator is null) {
+            TerminateGoto(condBlock.blockId);
         }
 
         SwitchCurrentBlock(endBlock);
         loopTarget.Pop();
     }
-
     void BuildExpressionStmt(BoundExpressionStmt expressionStmt) {
         BuildExpr(expressionStmt.boundExpr);
     }
