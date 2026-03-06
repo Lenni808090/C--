@@ -82,13 +82,16 @@ sealed class WhileStmt : Stmt {
 sealed class ForStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ForStmt;
 
-    public Stmt initializer;
+    public VarDeclarationStmt? declarationStmt;
+
+    public Expr? initializeExpr;
     public Expr condition;
     public Expr iteration;
     public Stmt body;
 
-    public ForStmt(Stmt initializer, Expr condition, Expr iteration, Stmt body) {
-        this.initializer = initializer;
+    public ForStmt(VarDeclarationStmt? declarationStmt, Expr? initializeExpr, Expr condition, Expr iteration, Stmt body) {
+        this.declarationStmt = declarationStmt;
+        this.initializeExpr = initializeExpr;
         this.condition = condition;
         this.iteration = iteration;
         this.body = body;

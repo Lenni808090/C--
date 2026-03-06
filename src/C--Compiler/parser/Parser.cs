@@ -163,21 +163,19 @@ class Parser {
     }
 
     Stmt ParseDeclarationStmt() {
-        TypeSyntax type = ParseType();
-
-        Token identifier = NextToken();
-
-        //equals;
-        NextToken();
-
-        Expr assignedExpr = ParseExpr();
-
-        Expect(TokenType.Semicolon, "Missing ';' after variable declaration");
-
-        return new VarDeclarationStmt(type, identifier, assignedExpr);
+        var decl = ParseVarDeclarationCore();
+        Expect(TokenType.Semicolon, "missing ';' after declaration");
+        return decl;
     }
 
 
+    VarDeclarationStmt ParseVarDeclarationCore() {
+        var type = ParseType();
+        Token identifier = NextToken();
+        NextToken();
+        Expr init = ParseExpr();
+        return new VarDeclarationStmt(type, identifier, init);
+    }
 
     Stmt ParseBlockStmt() {
         NextToken();
@@ -238,27 +236,28 @@ class Parser {
         NextToken();
 
         Expect(TokenType.OpenParentheses, "opening ( expected after for");
-        Stmt? initStmt = null;
-
+        Expr? initializerExpr = null;
+        VarDeclarationStmt? declarationStmt = null;
         if (matchesDeclarationStmt()) {
-            initStmt = ParseDeclarationStmt();
+            declarationStmt = ParseVarDeclarationCore();
         }
         else if (matchesAssignemntExpr()) {
-            initStmt = ParseAssignemntExpr();
+            initializerExpr = ParseAssignemntExpr();
         }
         else {
             ReportError(DiagnosticDescriptors.ParserForLoopNeedsAssignmentOrDeclaration);
         }
-
         Expect(TokenType.Semicolon, "Semnicolon expected after Decl or Assign in For");
 
         Expr condition = ParseExpr();
-
         Expect(TokenType.Semicolon, "Semnicolon expected after Condition in For");
 
-        Expr iteration =
+        Expr iteration = ParseExpr();
+        Expect(TokenType.CloseParentheses, "CLosing Parentheses expected after iteration in For");
 
-        return new ForStmt();
+        var body = ParseStmt();
+
+        return new ForStmt(declarationStmt, initializerExpr, condition, iteration, body);
     }
 
     Stmt ParseWhileStmt() {

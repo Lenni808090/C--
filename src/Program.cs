@@ -13,13 +13,11 @@ class Program {
     static void Main() {
         string code = @"
                         int x = 2;
-                        bool a = false;
-
-                        if (!a) {
-                            x = -x * 3;
+                        int y = x = x + 1;
+                        for(int i = 0; i < 10; i = i + 1){
+                            y = y + 1;
                         }
-
-                        return x;
+                        return y;
                          ";
 
         CompilerContext compilerContext = new();
@@ -120,11 +118,6 @@ class Program {
                     PrintSyntaxExpr(r.returnExpr, indent, true);
                     break;
                 }
-            case VarAssignmentStmt va: {
-                    PrintNameToken("name", va.variable, indent, false);
-                    PrintSyntaxExpr(va.assignmentExpr, indent, true);
-                    break;
-                }
             case ExpressionStmt e: {
                     PrintSyntaxExpr(e.Expression, indent, true);
                     break;
@@ -201,6 +194,11 @@ class Program {
                     Console.WriteLine("symbol: " + bin.Operator.Text);
 
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
+                    break;
+                }
+            case VarAssignmentExpr va: {
+                    PrintNameToken("name", va.variable, indent, false);
+                    PrintSyntaxExpr(va.assignmentExpr, indent, true);
                     break;
                 }
             case UnaryExpr unary: {
@@ -367,12 +365,7 @@ class Program {
                     PrintBoundExpr(r.boundReturnedExpr, indent, true);
                     break;
                 }
-            case BoundVarAssignmentStmt va: {
-                    Console.Write(indent);
-                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.symbolType} (index {va.localSymbol.index})");
-                    PrintBoundExpr(va.assignmentExpr, indent, true);
-                    break;
-                }
+
             case BoundExpressionStmt e: {
                     PrintBoundExpr(e.boundExpr, indent, true);
                     break;
@@ -435,6 +428,12 @@ class Program {
                 }
             case BoundNameExpr name: {
                     Console.WriteLine($"BoundNameExpr : {name.type}  name={name.localSymbol.name} (index {name.localSymbol.index})");
+                    break;
+                }
+            case BoundVarAssignmentExpr va: {
+                    Console.Write(indent);
+                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.symbolType} (index {va.localSymbol.index})");
+                    PrintBoundExpr(va.assignmentExpr, indent, true);
                     break;
                 }
             case BoundBinaryExpr bin: {

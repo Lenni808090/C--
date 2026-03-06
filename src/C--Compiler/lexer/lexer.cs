@@ -26,6 +26,7 @@ class Lexer {
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
         diagnostics = context.diagnostics;
+
     }
 
     public char Peek() {
