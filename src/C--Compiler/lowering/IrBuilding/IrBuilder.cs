@@ -64,6 +64,10 @@ class IrBuilder {
                     BuildWhileStmt(w);
                     break;
                 }
+            case BoundForStmt f: {
+                    BuildForStmt(f);
+                    break;
+                }
             case BoundExpressionStmt e: {
                     BuildExpressionStmt(e);
                     break;
@@ -85,7 +89,7 @@ class IrBuilder {
     }
 
     void BuildContinueStmt(BoundContinueStmt continueStmt) {
-        var condBlockId = loopTarget.Peek().condBlockId;
+        var condBlockId = loopTarget.Peek().continueBlockId;
         TerminateGoto(condBlockId);
     }
 
@@ -146,6 +150,40 @@ class IrBuilder {
 
         if (currentBlock.terminator is null) {
             TerminateGoto(condBlock.blockId);
+        }
+
+        SwitchCurrentBlock(endBlock);
+        loopTarget.Pop();
+    }
+
+
+    void BuildForStmt(BoundForStmt forStmt) {
+        var iterBlock = CreateBlock();
+        var condBlock = CreateBlock();
+        var forBlock = CreateBlock();
+        var endBlock = CreateBlock();
+
+        loopTarget.Push(CreateLoopTarget(iterBlock, endBlock));
+
+        BuildStmt(forStmt.initializer);
+
+        if (currentBlock.terminator is null) {
+            TerminateGoto(condBlock.blockId);
+        }
+
+        SwitchCurrentBlock(iterBlock);
+        BuildExpr(forStmt.iteration);
+        TerminateGoto(condBlock.blockId);
+
+        SwitchCurrentBlock(condBlock);
+        int resReg = BuildExpr(forStmt.condition);
+        TerminateBranch(resReg, forBlock.blockId, endBlock.blockId);
+
+        SwitchCurrentBlock(forBlock);
+        BuildStmt(forStmt.body);
+
+        if (currentBlock.terminator is null) {
+            TerminateGoto(iterBlock.blockId);
         }
 
         SwitchCurrentBlock(endBlock);

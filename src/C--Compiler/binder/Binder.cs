@@ -53,6 +53,7 @@ class Binder {
             ContinueStmt c => BindContinueStmt(c),
             BreakStmt b => BindBreakStmt(b),
             WhileStmt w => BindWhileStmt(w),
+            ForStmt f => BindForStmt(f),
             BlockStmt b => BindBlockStmt(b),
             ExpressionStmt e => BindExpressionStmt(e),
             _ => throw new Exception($"Unexpected stmt: {stmt.syntaxKind}"),
@@ -113,6 +114,37 @@ class Binder {
         ExitLoop();
 
         return new BoundWhileStmt(boundConditionExpr, body);
+    }
+
+
+    BoundStmt BindForStmt(ForStmt forStmt) {
+        PushScope();
+
+        BoundStmt initializer;
+
+        if (forStmt.declarationStmt is not null) {
+            initializer = BindStmt(forStmt.declarationStmt);
+        }
+        else {
+            var initializerExpr = BindExpr(forStmt.initializeExpr!);
+            initializer = new BoundExpressionStmt(initializerExpr);
+        }
+
+        var condition = BindExpr(forStmt.condition);
+
+        if (condition.type != SymbolType.Bool && condition.type != SymbolType.DiagnosticsError) {
+            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
+        }
+
+        var iteration = BindExpr(forStmt.iteration);
+
+        EnterLoop();
+        BoundStmt body = BindStmt(forStmt.body);
+        ExitLoop();
+
+        PopScope();
+
+        return new BoundForStmt(initializer, condition, iteration, body);
     }
 
     BoundStmt BindBlockStmt(BlockStmt blockStmt) {

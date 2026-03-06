@@ -148,6 +148,31 @@ class Program {
                     PrintSyntaxStmt(w.body, indent + "   ", true);
                     break;
                 }
+            case ForStmt f: {
+                    if (f.declarationStmt is not null) {
+                        Console.Write(indent);
+                        Console.WriteLine("+--Declaration");
+                        PrintSyntaxStmt(f.declarationStmt, indent + "   ", true);
+                    }
+                    else if (f.initializeExpr is not null) {
+                        Console.Write(indent);
+                        Console.WriteLine("+--Initialize");
+                        PrintSyntaxExpr(f.initializeExpr, indent + "   ", true);
+                    }
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Condition");
+                    PrintSyntaxExpr(f.condition, indent + "   ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Iteration");
+                    PrintSyntaxExpr(f.iteration, indent + "   ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Body");
+                    PrintSyntaxStmt(f.body, indent + "   ", true);
+                    break;
+                }
             case ContinueStmt:
             case BreakStmt: {
                     break;

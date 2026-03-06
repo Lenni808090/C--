@@ -159,11 +159,11 @@ enum IrUnaryOpKind {
 
 
 sealed class LoopTarget {
-    public int condBlockId;
+    public int continueBlockId;
     public int endBlockId;
 
-    public LoopTarget(int condBlockId, int endBlockId) {
-        this.condBlockId = condBlockId;
+    public LoopTarget(int continueBlockId, int endBlockId) {
+        this.continueBlockId = continueBlockId;
         this.endBlockId = endBlockId;
     }
 }

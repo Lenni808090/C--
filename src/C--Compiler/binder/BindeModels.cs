@@ -54,6 +54,22 @@ sealed class BoundWhileStmt : BoundStmt {
     }
 }
 
+sealed class BoundForStmt : BoundStmt {
+    public BoundStmt initializer;
+    public BoundExpr condition;
+
+    public BoundExpr iteration;
+
+    public BoundStmt body;
+
+    public BoundForStmt(BoundStmt initializer, BoundExpr condition, BoundExpr iteration, BoundStmt body) {
+        this.initializer = initializer;
+        this.condition = condition;
+        this.iteration = iteration;
+        this.body = body;
+    }
+}
+
 sealed class BoundBreakStmt : BoundStmt { };
 
 sealed class BoundContinueStmt : BoundStmt { };
@@ -80,6 +96,13 @@ sealed class BoundExpressionStmt : BoundStmt {
         this.boundExpr = boundExpr;
     }
 }
+
+
+
+
+
+
+
 sealed class BoundVarAssignmentExpr : BoundExpr {
     public LocalSymbol localSymbol;
     public BoundExpr assignmentExpr;
