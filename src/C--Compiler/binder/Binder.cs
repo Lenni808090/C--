@@ -72,7 +72,7 @@ class Binder {
     BoundStmt BindIfStmt(IfStmt ifStmt) {
         BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
 
-        if (boundConditionExpr.type != SymbolType.Bool && boundConditionExpr.type != SymbolType.DiagnosticsError) {
+        if (boundConditionExpr.type != SymbolType.Bool && IsValidType(boundConditionExpr.type)) {
             ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
@@ -105,7 +105,7 @@ class Binder {
 
         BoundExpr boundConditionExpr = BindExpr(whileStmt.condition);
 
-        if (boundConditionExpr.type != SymbolType.Bool && boundConditionExpr.type != SymbolType.DiagnosticsError) {
+        if (boundConditionExpr.type != SymbolType.Bool && IsValidType(boundConditionExpr.type)) {
             ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
@@ -132,7 +132,7 @@ class Binder {
 
         var condition = BindExpr(forStmt.condition);
 
-        if (condition.type != SymbolType.Bool && condition.type != SymbolType.DiagnosticsError) {
+        if (condition.type != SymbolType.Bool && IsValidType(condition.type)) {
             ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
@@ -174,12 +174,12 @@ class Binder {
 
         SymbolType declared = InferTypeInTypedDecl(typeToken);
 
-        if (declared == SymbolType.DiagnosticsError) {
+        if (!IsValidType(declared)) {
             scopes.Peek().Add(name, CreateErrorLocal(name));
             return new BoundErrorStmt();
         }
 
-        if (initBoundExpr.type == SymbolType.DiagnosticsError) {
+        if (!IsValidType(initBoundExpr.type)) {
             scopes.Peek().Add(name, CreateErrorLocal(name));
             return new BoundErrorStmt();
         }
@@ -215,8 +215,6 @@ class Binder {
     BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
         var name = varAssignmentExpr.variable.Text;
         var local = lookUpLocal(name);
-        SymbolType localType = local is null ? SymbolType.DiagnosticsError : local.symbolType;
-
         var assignedExpr = BindExpr(varAssignmentExpr.assignmentExpr);
 
         if (local is null) {
@@ -224,23 +222,49 @@ class Binder {
             return new BoundErrorExpr();
         }
 
-        if (assignedExpr.type != localType && assignedExpr.type != SymbolType.DiagnosticsError && localType != SymbolType.DiagnosticsError) {
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
-        }
-
         var assignmentOperatorType = varAssignmentExpr.assignmentOperator.TokenType;
 
-        if (assignmentOperatorType != TokenType.Equals) {
-            var boundOp = MapCompoundAssignmentToBinaryOperator(assignmentOperatorType, localType, assignedExpr.type);
-            if (boundOp is null) {
-                ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
-                return new BoundErrorExpr();
-            }
-            assignedExpr = new BoundBinaryExpr(new BoundNameExpr(local), assignedExpr, boundOp, boundOp.resultType);
+        if (assignmentOperatorType == TokenType.Equals) {
+            return BindSimpleVarAssignment(local, assignedExpr);
+        }
+
+        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType);
+    }
+
+    BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr) {
+        if (!IsValidType(assignedExpr.type) || !IsValidType(local.symbolType)) {
+            return new BoundErrorExpr();
+        }
+
+        if (assignedExpr.type != local.symbolType) {
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorExpr();
         }
 
         return new BoundVarAssignmentExpr(local, assignedExpr, local.symbolType);
     }
+
+    BoundExpr BindCompoundVarAssignment(LocalSymbol local, BoundExpr assignedExpr, TokenType assignmentOperatorType) {
+        if (!IsValidType(assignedExpr.type) || !IsValidType(local.symbolType)) {
+            return new BoundErrorExpr();
+        }
+
+        var boundOp = MapCompoundAssignmentToBinaryOperator(assignmentOperatorType, local.symbolType, assignedExpr.type);
+        if (boundOp is null) {
+            ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
+            return new BoundErrorExpr();
+        }
+
+        var compoundExpr = new BoundBinaryExpr(new BoundNameExpr(local), assignedExpr, boundOp, boundOp.resultType);
+        if (compoundExpr.type != local.symbolType) {
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorExpr();
+        }
+
+        return new BoundVarAssignmentExpr(local, compoundExpr, local.symbolType);
+    }
+
+
     BoundExpr BindNameExpr(NameExpr nameExpr) {
         string name = nameExpr.name.Text;
         LocalSymbol? localSymbol = lookUpLocal(name);
@@ -284,7 +308,7 @@ class Binder {
             return new BoundUnaryExpr(boundOperatedExpr, boundUnaryOperator, boundUnaryOperator.resultType);
         }
 
-        if (boundOperatedExpr.type == SymbolType.DiagnosticsError) {
+        if (!IsValidType(boundOperatedExpr.type)) {
             return new BoundErrorExpr();
         }
 
@@ -302,7 +326,7 @@ class Binder {
             return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundBinaryOperator.resultType);
         }
 
-        if (boundLeftExpr.type == SymbolType.DiagnosticsError || boundRightExpr.type == SymbolType.DiagnosticsError) {
+        if (!IsValidType(boundLeftExpr.type) || !IsValidType(boundRightExpr.type)) {
             return new BoundErrorExpr();
         }
 
@@ -341,6 +365,10 @@ class Binder {
 
     bool isInLoop() {
         return loopDepth > 0;
+    }
+
+    bool IsValidType(SymbolType symbolType) {
+        return symbolType != SymbolType.DiagnosticsError;
     }
 
     SymbolType InferTypeInTypedDecl(Token typeToken) {

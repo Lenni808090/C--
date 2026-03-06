@@ -75,6 +75,7 @@ class Lexer {
                 case '+': {
                         Next();
                         if (At() == '=') {
+                            Next();
                             tokens.Add(newToken(TokenType.PlusEquals, "+="));
                         }
                         else {
@@ -85,6 +86,7 @@ class Lexer {
                 case '-': {
                         Next();
                         if (At() == '=') {
+                            Next();
                             tokens.Add(newToken(TokenType.MinusEquals, "-="));
                         }
                         else {
@@ -95,6 +97,7 @@ class Lexer {
                 case '*': {
                         Next();
                         if (At() == '=') {
+                            Next();
                             tokens.Add(newToken(TokenType.MultiplyEquals, "*="));
                         }
                         else {
@@ -105,6 +108,7 @@ class Lexer {
                 case '/': {
                         Next();
                         if (At() == '=') {
+                            Next();
                             tokens.Add(newToken(TokenType.DivideEquals, "/="));
                         }
                         else {
