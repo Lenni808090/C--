@@ -68,10 +68,6 @@ class IrBuilder {
                     BuildExpressionStmt(e);
                     break;
                 }
-            case BoundVarAssignmentStmt va: {
-                    BuildVarAssignmentStmt(va);
-                    break;
-                }
             case BoundBlockStmt b: {
                     BuildBlockStmt(b);
                     break;
@@ -161,11 +157,7 @@ class IrBuilder {
     }
 
 
-    void BuildVarAssignmentStmt(BoundVarAssignmentStmt assignmentStmt) {
-        int dstReg = BuildExpr(assignmentStmt.assignmentExpr);
-        var localIndex = assignmentStmt.localSymbol.index;
-        EmitStoreLocal(dstReg, localIndex);
-    }
+
 
     void BuildBlockStmt(BoundBlockStmt blockStmt) {
         foreach (var stmt in blockStmt.boundStmts) {
@@ -179,6 +171,9 @@ class IrBuilder {
 
     int BuildExpr(BoundExpr boundExpr) {
         switch (boundExpr) {
+            case BoundVarAssignmentExpr va: {
+                    return BuildVarAssignmentExpr(va);
+                }
             case BoundLiteralExpr l: {
                     return BuildLiteralExpr(l);
                 }
@@ -196,7 +191,12 @@ class IrBuilder {
                 }
         }
     }
-
+    int BuildVarAssignmentExpr(BoundVarAssignmentExpr assignmentStmt) {
+        int srcReg = BuildExpr(assignmentStmt.assignmentExpr);
+        var localIndex = assignmentStmt.localSymbol.index;
+        EmitStoreLocal(srcReg, localIndex);
+        return srcReg;
+    }
     int BuildLiteralExpr(BoundLiteralExpr literalExpr) {
         var type = GetValueType(literalExpr.type);
         long value = literalExpr.value;

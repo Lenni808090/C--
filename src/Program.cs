@@ -12,24 +12,15 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                        int i = 0;
-                        int sum = 0;
+                        int x = 2;
+                        bool a = false;
 
-                        while (i < 6) {
-                            i = i + 1;
-
-                            if (i == 2) {
-                                continue;
-                            }
-                            if (i == 5) {
-                                break;
-                            }
-
-                            sum = sum + i;
+                        if (!a) {
+                            x = -x * 3;
                         }
 
-                        return sum;
-                        ";
+                        return x;
+                         ";
 
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;
@@ -212,6 +203,14 @@ class Program {
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
                     break;
                 }
+            case UnaryExpr unary: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Operator");
+                    Console.Write(indent + "   ");
+                    Console.WriteLine("symbol: " + unary.Operator.Text);
+                    PrintSyntaxExpr(unary.operatedExpr, indent, true);
+                    break;
+                }
 
             default: {
                     Console.Write(indent);
@@ -312,6 +311,13 @@ class Program {
                         Console.WriteLine($" r{dst}, r{left}, r{right}");
                         break;
                     }
+                case OpCode.NEG_INT:
+                case OpCode.NOT: {
+                        ushort dst = ReadU16();
+                        ushort src = ReadU16();
+                        Console.WriteLine($" r{dst}, r{src}");
+                        break;
+                    }
                 case OpCode.MOVE: {
                         ushort dst = ReadU16();
                         ushort src = ReadU16();
@@ -400,6 +406,9 @@ class Program {
             case BoundBreakStmt: {
                     break;
                 }
+            case BoundErrorStmt: {
+                    break;
+                }
             case BoundBlockStmt b: {
                     for (int j = 0; j < b.boundStmts.Length; j++) {
                         PrintBoundStmt(b.boundStmts[j], indent, j == b.boundStmts.Length - 1);
@@ -435,6 +444,12 @@ class Program {
                     PrintBoundExpr(bin.rightBoundExpr, indent, true);
                     break;
                 }
+            case BoundUnaryExpr unary: {
+                    Console.WriteLine($"BoundUnaryExpr : {unary.type}  op={unary.boundUnaryOperator.unaryOperatorKind}");
+                    indent += isLast ? "   " : "�  ";
+                    PrintBoundExpr(unary.operatedExpr, indent, true);
+                    break;
+                }
             default: {
                     Console.WriteLine($"{expr.GetType().Name} : {expr.type}");
                     break;
@@ -463,6 +478,9 @@ class Program {
                         break;
                     case IrBinaryOp b:
                         Console.WriteLine($"  binary {b.irBinaryOP} r{b.dstReg} <- r{b.leftReg}, r{b.rightReg}");
+                        break;
+                    case IrUnary u:
+                        Console.WriteLine($"  unary {u.irUnaryOp} r{u.dstReg} <- r{u.operandReg}");
                         break;
                     default:
                         Console.WriteLine("  <unknown instr>");

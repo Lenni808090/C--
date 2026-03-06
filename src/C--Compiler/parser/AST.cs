@@ -78,6 +78,23 @@ sealed class WhileStmt : Stmt {
     }
 }
 
+
+sealed class ForStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.ForStmt;
+
+    public Stmt initializer;
+    public Expr condition;
+    public Expr iteration;
+    public Stmt body;
+
+    public ForStmt(Stmt initializer, Expr condition, Expr iteration, Stmt body) {
+        this.initializer = initializer;
+        this.condition = condition;
+        this.iteration = iteration;
+        this.body = body;
+    }
+}
+
 sealed class ContinueStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ContinueStmt;
 }
@@ -107,13 +124,13 @@ sealed class VarDeclarationStmt : Stmt {
     }
 }
 
-sealed class VarAssignmentStmt : Stmt {
+sealed class VarAssignmentExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
 
     public Token variable;
     public Expr assignmentExpr;
 
-    public VarAssignmentStmt(Token variable, Expr assignmentExpr) {
+    public VarAssignmentExpr(Token variable, Expr assignmentExpr) {
         this.variable = variable;
         this.assignmentExpr = assignmentExpr;
     }
@@ -173,6 +190,7 @@ enum SyntaxKind {
     VarAssignmentStmt,
     IfStmt,
     WhileStmt,
+    ForStmt,
     BlockStmt,
     ContinueStmt,
     BreakStmt,

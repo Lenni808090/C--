@@ -20,6 +20,7 @@ class Lexer {
         { "else", TokenType.Else},
         { "while", TokenType.While},
         { "continue", TokenType.Continue},
+        { "for", TokenType.For},
         { "break", TokenType.Break},
     };
     public Lexer(string data, CompilerContext context) {
@@ -53,6 +54,8 @@ class Lexer {
 
     public Token[] Lex() {
         List<Token> tokens = new();
+
+
 
         while (true) {
             char c = At();

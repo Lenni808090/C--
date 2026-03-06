@@ -76,6 +76,8 @@ class Parser {
     bool IsStmtBoundaryToken(TokenType tokenType) {
         return tokenType == TokenType.Return ||
                tokenType == TokenType.If ||
+               tokenType == TokenType.While ||
+               tokenType == TokenType.For ||
                tokenType == TokenType.OpenBrace ||
                tokenType == TokenType.CloseBrace ||
                tokenType == TokenType.Identifier ||
@@ -100,7 +102,7 @@ class Parser {
         return matches;
     }
 
-    bool matchesAssignemntStmt() {
+    bool matchesAssignemntExpr() {
         bool matches = true;
 
         if (Current.TokenType != TokenType.Identifier) {
@@ -129,9 +131,6 @@ class Parser {
         if (matchesDeclarationStmt()) {
             return ParseDeclarationStmt();
         }
-        else if (matchesAssignemntStmt()) {
-            return ParseAssignemntStmt();
-        }
 
         switch (Current.TokenType) {
             case TokenType.Return: {
@@ -139,6 +138,9 @@ class Parser {
                 }
             case TokenType.If: {
                     return ParseIfStmt();
+                }
+            case TokenType.For: {
+                    return ParseForStmt();
                 }
             case TokenType.While: {
                     return ParseWhileStmt();
@@ -175,17 +177,7 @@ class Parser {
         return new VarDeclarationStmt(type, identifier, assignedExpr);
     }
 
-    Stmt ParseAssignemntStmt() {
-        Token identifier = NextToken();
-        //equals;
-        NextToken();
 
-        Expr assignedExpr = ParseExpr();
-
-        Expect(TokenType.Semicolon, "Missing ';' after variable assignment");
-
-        return new VarAssignmentStmt(identifier, assignedExpr);
-    }
 
     Stmt ParseBlockStmt() {
         NextToken();
@@ -242,6 +234,33 @@ class Parser {
         return new IfStmt(condition, thenStmt, elseStmt);
     }
 
+    Stmt ParseForStmt() {
+        NextToken();
+
+        Expect(TokenType.OpenParentheses, "opening ( expected after for");
+        Stmt? initStmt = null;
+
+        if (matchesDeclarationStmt()) {
+            initStmt = ParseDeclarationStmt();
+        }
+        else if (matchesAssignemntExpr()) {
+            initStmt = ParseAssignemntExpr();
+        }
+        else {
+            ReportError(DiagnosticDescriptors.ParserForLoopNeedsAssignmentOrDeclaration);
+        }
+
+        Expect(TokenType.Semicolon, "Semnicolon expected after Decl or Assign in For");
+
+        Expr condition = ParseExpr();
+
+        Expect(TokenType.Semicolon, "Semnicolon expected after Condition in For");
+
+        Expr iteration =
+
+        return new ForStmt();
+    }
+
     Stmt ParseWhileStmt() {
         NextToken();
 
@@ -261,9 +280,18 @@ class Parser {
     }
 
     Expr ParseExpr() {
-        return ParseLogicalOrExpr();
+        return ParseAssignemntExpr();
     }
 
+    Expr ParseAssignemntExpr() {
+        if (matchesAssignemntExpr()) {
+            Token identifier = NextToken();
+            NextToken();
+            Expr assignedExpr = ParseExpr();
+            return new VarAssignmentExpr(identifier, assignedExpr);
+        }
+        return ParseLogicalOrExpr();
+    }
 
     Expr ParseLogicalOrExpr() {
         Expr left = ParseLogicalAndExpr();

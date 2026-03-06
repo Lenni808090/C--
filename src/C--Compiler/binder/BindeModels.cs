@@ -32,15 +32,6 @@ sealed class BoundVarDeclarationStmt : BoundStmt {
     }
 }
 
-sealed class BoundVarAssignmentStmt : BoundStmt {
-    public LocalSymbol localSymbol;
-    public BoundExpr assignmentExpr;
-
-    public BoundVarAssignmentStmt(LocalSymbol localSymbol, BoundExpr assignmentExpr) {
-        this.localSymbol = localSymbol;
-        this.assignmentExpr = assignmentExpr;
-    }
-}
 
 sealed class BoundIfStmt : BoundStmt {
     public BoundExpr boundConditionExpr;
@@ -89,6 +80,16 @@ sealed class BoundExpressionStmt : BoundStmt {
         this.boundExpr = boundExpr;
     }
 }
+sealed class BoundVarAssignmentExpr : BoundExpr {
+    public LocalSymbol localSymbol;
+    public BoundExpr assignmentExpr;
+
+    public BoundVarAssignmentExpr(LocalSymbol localSymbol, BoundExpr assignmentExpr, SymbolType type) : base(type) {
+        this.localSymbol = localSymbol;
+        this.assignmentExpr = assignmentExpr;
+    }
+}
+
 sealed class BoundLiteralExpr : BoundExpr {
     public long value;
 

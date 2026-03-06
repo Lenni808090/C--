@@ -48,7 +48,6 @@ class Binder {
     BoundStmt BindStmt(Stmt stmt) {
         return stmt switch {
             VarDeclarationStmt v => BindVarDeclarationStmt(v),
-            VarAssignmentStmt va => BindVarAssignmentStmt(va),
             ReturnStmt r => BindReturnStmt(r),
             IfStmt i => BindIfStmt(i),
             ContinueStmt c => BindContinueStmt(c),
@@ -168,27 +167,11 @@ class Binder {
         return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
     }
 
-    BoundStmt BindVarAssignmentStmt(VarAssignmentStmt varAssignmentStmt) {
-        var name = varAssignmentStmt.variable.Text;
-        var local = lookUpLocal(name);
-        SymbolType localType = local is null ? SymbolType.DiagnosticsError : local.symbolType;
 
-        var assignmentExpr = BindExpr(varAssignmentStmt.assignmentExpr);
-
-        if (local is null) {
-            ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
-            return new BoundErrorStmt();
-        }
-
-        if (assignmentExpr.type != localType && assignmentExpr.type != SymbolType.DiagnosticsError && localType != SymbolType.DiagnosticsError) {
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
-        }
-
-        return new BoundVarAssignmentStmt(local, assignmentExpr);
-    }
 
     BoundExpr BindExpr(Expr expr) {
         return expr switch {
+            VarAssignmentExpr a => BindVarAssignmentExpr(a),
             NameExpr n => BindNameExpr(n),
             LiteralExpr l => BindLiteralExpr(l),
             UnaryExpr u => BindUnaryExpr(u),
@@ -197,7 +180,24 @@ class Binder {
         };
     }
 
+    BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentStmt) {
+        var name = varAssignmentStmt.variable.Text;
+        var local = lookUpLocal(name);
+        SymbolType localType = local is null ? SymbolType.DiagnosticsError : local.symbolType;
 
+        var assignmentExpr = BindExpr(varAssignmentStmt.assignmentExpr);
+
+        if (local is null) {
+            ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
+            return new BoundErrorExpr();
+        }
+
+        if (assignmentExpr.type != localType && assignmentExpr.type != SymbolType.DiagnosticsError && localType != SymbolType.DiagnosticsError) {
+            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+        }
+
+        return new BoundVarAssignmentExpr(local, assignmentExpr, local.symbolType);
+    }
     BoundExpr BindNameExpr(NameExpr nameExpr) {
         string name = nameExpr.name.Text;
         LocalSymbol? localSymbol = lookUpLocal(name);

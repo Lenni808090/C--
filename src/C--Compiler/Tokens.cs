@@ -24,6 +24,7 @@ enum TokenType {
     Else,
 
     While,
+    For,
 
     Continue,
     Break,

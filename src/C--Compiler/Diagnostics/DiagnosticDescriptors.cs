@@ -14,6 +14,10 @@ public static class DiagnosticDescriptors {
         new("PAR002", "Parser", "closing brace expected after body", Severity.Error);
     public static readonly DiagnosticDescriptor ParserExpectedPrimaryExpression =
         new("PAR003", "Parser", "Expected primary expression, got {0} '{1}'", Severity.Error);
+    public static readonly DiagnosticDescriptor ParserForLoopNeedsAssignmentOrDeclaration =
+        new("PAR004", "Parser", "A For Loop needs a Declarratrion or Assignment.Can not be empty", Severity.Error);
+
+
 
     public static readonly DiagnosticDescriptor BinderConditionMustBeBool =
         new("BND001", "Binder", "condition must be of type bool", Severity.Error);
