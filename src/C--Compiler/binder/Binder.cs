@@ -15,7 +15,7 @@ class Binder {
 
     int nextLocalIndex;
     Stmt[] stmtsToBind;
-    private static readonly Dictionary<string, SymbolType> standartTypes =
+    private static readonly Dictionary<string, SymbolType> standardTypes =
       new()
     {
         { "int", SymbolType.Int },
@@ -212,23 +212,34 @@ class Binder {
         };
     }
 
-    BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentStmt) {
-        var name = varAssignmentStmt.variable.Text;
+    BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
+        var name = varAssignmentExpr.variable.Text;
         var local = lookUpLocal(name);
         SymbolType localType = local is null ? SymbolType.DiagnosticsError : local.symbolType;
 
-        var assignmentExpr = BindExpr(varAssignmentStmt.assignmentExpr);
+        var assignedExpr = BindExpr(varAssignmentExpr.assignmentExpr);
 
         if (local is null) {
             ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
             return new BoundErrorExpr();
         }
 
-        if (assignmentExpr.type != localType && assignmentExpr.type != SymbolType.DiagnosticsError && localType != SymbolType.DiagnosticsError) {
+        if (assignedExpr.type != localType && assignedExpr.type != SymbolType.DiagnosticsError && localType != SymbolType.DiagnosticsError) {
             ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
         }
 
-        return new BoundVarAssignmentExpr(local, assignmentExpr, local.symbolType);
+        var assignmentOperatorType = varAssignmentExpr.assignmentOperator.TokenType;
+
+        if (assignmentOperatorType != TokenType.Equals) {
+            var boundOp = MapCompoundAssignmentToBinaryOperator(assignmentOperatorType, localType, assignedExpr.type);
+            if (boundOp is null) {
+                ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
+                return new BoundErrorExpr();
+            }
+            assignedExpr = new BoundBinaryExpr(new BoundNameExpr(local), assignedExpr, boundOp, boundOp.resultType);
+        }
+
+        return new BoundVarAssignmentExpr(local, assignedExpr, local.symbolType);
     }
     BoundExpr BindNameExpr(NameExpr nameExpr) {
         string name = nameExpr.name.Text;
@@ -333,7 +344,7 @@ class Binder {
     }
 
     SymbolType InferTypeInTypedDecl(Token typeToken) {
-        if (standartTypes.TryGetValue(typeToken.Text, out SymbolType type)) {
+        if (standardTypes.TryGetValue(typeToken.Text, out SymbolType type)) {
             return type;
         }
 
@@ -357,6 +368,16 @@ class Binder {
                 }
         }
 
+    }
+
+    BoundBinaryOperator? MapCompoundAssignmentToBinaryOperator(TokenType tokenType, SymbolType leftSide, SymbolType rightSide) {
+        return tokenType switch {
+            TokenType.PlusEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Plus, leftSide, rightSide),
+            TokenType.MinusEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Minus, leftSide, rightSide),
+            TokenType.MultiplyEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Multiply, leftSide, rightSide),
+            TokenType.DivideEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Divide, leftSide, rightSide),
+            _ => null,
+        };
     }
     LocalSymbol CreateErrorLocal(string name) {
         return new LocalSymbol(name, SymbolType.DiagnosticsError, -1);

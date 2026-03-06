@@ -131,9 +131,12 @@ sealed class VarAssignmentExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
 
     public Token variable;
+
+    public Token assignmentOperator;
     public Expr assignmentExpr;
 
-    public VarAssignmentExpr(Token variable, Expr assignmentExpr) {
+    public VarAssignmentExpr(Token variable, Token assignmentOperator, Expr assignmentExpr) {
+        this.assignmentOperator = assignmentOperator;
         this.variable = variable;
         this.assignmentExpr = assignmentExpr;
     }

@@ -30,10 +30,16 @@ enum TokenType {
     Break,
 
     Bang,
+
     Plus,
     Minus,
     Multiply,
     Divide,
+
+    PlusEquals,
+    MinusEquals,
+    MultiplyEquals,
+    DivideEquals,
 
     EqualsEquals,
     NotEquals,

@@ -74,22 +74,42 @@ class Lexer {
             switch (c) {
                 case '+': {
                         Next();
-                        tokens.Add(newToken(TokenType.Plus, "+"));
+                        if (At() == '=') {
+                            tokens.Add(newToken(TokenType.PlusEquals, "+="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Plus, "+"));
+                        }
                         break;
                     }
                 case '-': {
                         Next();
-                        tokens.Add(newToken(TokenType.Minus, "-"));
+                        if (At() == '=') {
+                            tokens.Add(newToken(TokenType.MinusEquals, "-="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Minus, "-"));
+                        }
                         break;
                     }
                 case '*': {
                         Next();
-                        tokens.Add(newToken(TokenType.Multiply, "*"));
+                        if (At() == '=') {
+                            tokens.Add(newToken(TokenType.MultiplyEquals, "*="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Multiply, "*"));
+                        }
                         break;
                     }
                 case '/': {
                         Next();
-                        tokens.Add(newToken(TokenType.Divide, "/"));
+                        if (At() == '=') {
+                            tokens.Add(newToken(TokenType.DivideEquals, "/="));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Divide, "/"));
+                        }
                         break;
                     }
                 case '|': {

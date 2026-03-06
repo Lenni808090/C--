@@ -109,11 +109,19 @@ class Parser {
             matches = false;
         }
 
-        if (Peek(1).TokenType != TokenType.Equals) {
+        if (!IsAssignmentOperator(Peek(1).TokenType)) {
             matches = false;
         }
 
         return matches;
+    }
+
+    bool IsAssignmentOperator(TokenType tokenType) {
+        return tokenType == TokenType.Equals
+               || tokenType == TokenType.PlusEquals
+               || tokenType == TokenType.MinusEquals
+               || tokenType == TokenType.MultiplyEquals
+               || tokenType == TokenType.DivideEquals;
     }
     public CompilationUnit ParseUnit() {
         List<Stmt> stmts = new();
@@ -285,9 +293,9 @@ class Parser {
     Expr ParseAssignemntExpr() {
         if (matchesAssignemntExpr()) {
             Token identifier = NextToken();
-            NextToken();
+            var assignOP = NextToken();
             Expr assignedExpr = ParseExpr();
-            return new VarAssignmentExpr(identifier, assignedExpr);
+            return new VarAssignmentExpr(identifier, assignOP, assignedExpr);
         }
         return ParseLogicalOrExpr();
     }

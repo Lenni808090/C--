@@ -37,12 +37,13 @@ public static class DiagnosticDescriptors {
         new("BND008", "Binder", "unknown type {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderUnknownTokenType =
         new("BND009", "Binder", "unkown type {0}", Severity.Error);
-
     public static readonly DiagnosticDescriptor BinderNotInLoopContinue =
         new("BND010", "Binder", "usage of continue outside of a loop", Severity.Error);
-
     public static readonly DiagnosticDescriptor BinderNotInLoopBreak =
         new("BND011", "Binder", "usage of break outside of a loop", Severity.Error);
-    public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);
+
+
+
+    public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Warning);
     public static readonly DiagnosticDescriptor ControlFLowAllPathsNeedReturn = new("CFA002", "Control Flow Analysis", "all paths need to return a value", Severity.Error);
 }

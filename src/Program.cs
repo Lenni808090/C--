@@ -12,13 +12,14 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                        int x = 2;
-                        int y = x = x + 1;
-                        for(int i = 0; i < 10; i = i + 1){
-                            y = y + 1;
-                        }
-                        return y;
-                         ";
+int x = 1;
+for (int i = 0; i < 3; i = i + 1) { 
+    x = x * 2;
+    continue;
+    x = x + 1;
+}
+return x;
+";
 
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;
