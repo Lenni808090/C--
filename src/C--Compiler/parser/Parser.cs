@@ -449,10 +449,38 @@ class Parser {
             return new UnaryExpr(Operator, operatedExpr);
         }
 
-        return ParsePrimary();
+        return ParsePostfix();
     }
 
+    Expr ParsePostfix() {
+        Expr expr = ParsePrimary();
 
+        while (Current.TokenType == TokenType.OpenParentheses) {
+            expr = ParseCallExpr(expr);
+        }
+
+        return expr;
+    }
+
+    Expr ParseCallExpr(Expr callee) {
+        Expect(TokenType.OpenParentheses, "Expected '(' after callable expression");
+
+        List<Expr> args = new();
+
+        while (Current.TokenType != TokenType.CloseParentheses && Current.TokenType != TokenType.EoF) {
+            args.Add(ParseExpr());
+
+            if (Current.TokenType == TokenType.Comma) {
+                NextToken();
+                continue;
+            }
+
+            break;
+        }
+
+        Expect(TokenType.CloseParentheses, "Expected ')' after arguments");
+        return new CallExpr(callee, args.ToArray());
+    }
     Expr ParsePrimary() {
         Token token = Current;
         switch (token.TokenType) {

@@ -189,7 +189,18 @@ sealed class VarDeclarationStmt : Stmt {
         this.declarementExpr = declarementExpr;
     }
 }
+sealed class CallExpr : Expr {
+    public Expr calle;
+    public Expr[] args;
 
+    public override SyntaxKind syntaxKind => SyntaxKind.CallExpr;
+
+    public override SourceLocation location => calle.location;
+    public CallExpr(Expr calle, Expr[] args) {
+        this.calle = calle;
+        this.args = args;
+    }
+}
 sealed class VarAssignmentExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
     public override SourceLocation location => variable.Location;
@@ -278,7 +289,7 @@ enum SyntaxKind {
     BinaryExpr,
     UnaryExpr,
     ExpressionStmt,
-
+    CallExpr,
 
     IdentifierType,
 }
