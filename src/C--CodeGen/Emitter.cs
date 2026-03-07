@@ -7,8 +7,7 @@ class Emitter {
     List<byte> emittedBytecode;
     List<Fixup> fixups;
     Dictionary<Label, int> labelPos;
-    int pos => emittedBytecode.Count;
-    public int Position => pos;
+    public int pos => emittedBytecode.Count;
 
     public Emitter() {
         fixups = new();
@@ -160,5 +159,11 @@ class Emitter {
 
     public byte[] BytecodeToArray() {
         return emittedBytecode.ToArray();
+    }
+
+    public void Reset() {
+        emittedBytecode.Clear();
+        fixups.Clear();
+        labelPos.Clear();
     }
 }

@@ -30,7 +30,7 @@ sealed class FunctionBuilder {
             return;
         }
 
-        int bytecodeOffset = Emitter.Position;
+        int bytecodeOffset = Emitter.pos;
         if (debugInfo.Count > 0 && debugInfo[^1].BytecodeOffset == bytecodeOffset) {
             return;
         }
@@ -52,5 +52,11 @@ sealed class FunctionBuilder {
             0,
             DebugInfo
         );
+    }
+
+    public CompiledFunction BuildAndReset(int localCount, int maxRegCount) {
+        var func = Build(localCount, maxRegCount);
+        Emitter.Reset();
+        return func;
     }
 }

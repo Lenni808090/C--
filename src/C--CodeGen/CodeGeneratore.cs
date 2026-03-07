@@ -16,25 +16,27 @@ class CodeGenerator {
         this.irCompiledUnit = irCompiledUnit;
     }
 
-    public CompiledFunction GenerateFunction() {
+    public CompiledProgram GenerateProgramm() {
+        List<CompiledFunction> compiledFunctions = new();
+        foreach (IrFunction irFunction in irCompiledUnit.irFunctions) {
+            compiledFunctions.Add(GenerateFunction(irFunction));
+        }
 
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.mainFunctionInd);
+    }
 
-        foreach (BasicBlock basicBlock in irCompiledUnit.basicBlocks) {
+    public CompiledFunction GenerateFunction(IrFunction irFunction) {
+
+        foreach (BasicBlock basicBlock in irFunction.basicBlocks) {
             blockLabels.Add(basicBlock.blockId, functionBuilder.Emitter.NewLabel());
         }
 
-        foreach (BasicBlock block in irCompiledUnit.basicBlocks) {
+        foreach (BasicBlock block in irFunction.basicBlocks) {
             EmitBlock(block);
         }
-        int localCount = irCompiledUnit.localCount;
-        return functionBuilder.Build(localCount, irCompiledUnit.maxVReg);
+        int localCount = irFunction.localCount;
+        return functionBuilder.BuildAndReset(localCount, irFunction.maxVReg);
     }
-
-    public CompiledProgram GenerateProgram() {
-        var entryFunction = GenerateFunction();
-        return new CompiledProgram(new[] { entryFunction }, 0);
-    }
-
 
     void EmitBlock(BasicBlock basicBlock) {
         functionBuilder.Emitter.DefineLabel(blockLabels[basicBlock.blockId]);
@@ -212,4 +214,6 @@ class CodeGenerator {
         var _const = new Value(type, value);
         return functionBuilder.AddConstant(_const);
     }
+
+
 }
