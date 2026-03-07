@@ -265,7 +265,7 @@ class Parser {
 
         List<ParameterSyntax> parameters = new();
         while (Current.TokenType != TokenType.CloseParentheses && Current.TokenType != TokenType.EoF) {
-            var paramName = NextToken();
+            var paramName = Expect(TokenType.Identifier, "parameter identifier expected inside parentheses");
 
             Expect(TokenType.Colon, "Colon expected after Param Name for Type Definition");
 

@@ -16,7 +16,9 @@ meth Add(x: int, y: int) -> int {
     return x + y;
 }
 
-Add(1 + 2,Add(9, 3));
+meth Main() -> int {
+    return Add(1 + 2, Add(9, 3));
+}
 ";
 
         CompilerContext compilerContext = new();
@@ -69,11 +71,11 @@ Add(1 + 2,Add(9, 3));
         }
 
         CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
-        CompiledProgram compiledProgram = codeGenerator.GenerateProgram();
+        CompiledProgram compiledProgram = codeGenerator.GenerateProgramm();
         Value[] constants = codeGenerator.Constants;
 
         Console.WriteLine();
-        PrintBytecode(compiledProgram.compiledFunctions[0], constants);
+        PrintProgramBytecode(compiledProgram, constants);
 
         VM vm = new VM(compiledProgram, constants);
         Value result = vm.Run();
@@ -330,9 +332,28 @@ Add(1 + 2,Add(9, 3));
 
     static void PrintBoundUnit(BoundCompiledUnit unit) {
         Console.WriteLine("=== BOUND TREE ===");
-        for (int i = 0; i < unit.boundStmts.Length; i++) {
-            PrintBoundStmt(unit.boundStmts[i], "", i == unit.boundStmts.Length - 1);
+        for (int i = 0; i < unit.functions.Length; i++) {
+            var function = unit.functions[i];
+            bool isEntry = ReferenceEquals(function, unit.mainFunction);
+            Console.WriteLine($"Function {function.functionSymbol.name} (entry={isEntry})");
+            PrintBoundFunction(function, "", true);
         }
+    }
+
+    static void PrintBoundFunction(BoundFunctionDeclaration function, string indent, bool isLast) {
+        string marker = isLast ? "+--" : "+--";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine($"BoundFunctionDeclaration : {function.functionSymbol.returnType}");
+
+        string childIndent = indent + (isLast ? "   " : "|  ");
+        Console.Write(childIndent);
+        Console.WriteLine($"name: {function.functionSymbol.name}");
+        Console.Write(childIndent);
+        Console.WriteLine($"args: {function.functionSymbol.argCount}");
+        Console.Write(childIndent);
+        Console.WriteLine($"locals: {function.functionSymbol.localCount}");
+        PrintBoundStmt(function.functionBody, childIndent, true);
     }
 
     static void PrintBytecode(CompiledFunction fn, Value[] constants) {
@@ -446,6 +467,14 @@ Add(1 + 2,Add(9, 3));
         Console.WriteLine($"MaxRegCount = {fn.maxRegCount}");
     }
 
+    static void PrintProgramBytecode(CompiledProgram program, Value[] constants) {
+        for (int i = 0; i < program.compiledFunctions.Length; i++) {
+            Console.WriteLine($"=== FUNCTION {i} (entry={i == program.entryFuncInd}) ===");
+            PrintBytecode(program.compiledFunctions[i], constants);
+            Console.WriteLine();
+        }
+    }
+
     static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
         string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
@@ -548,6 +577,14 @@ Add(1 + 2,Add(9, 3));
                     PrintBoundExpr(unary.operatedExpr, indent, true);
                     break;
                 }
+            case BoundCallExpr call: {
+                    Console.WriteLine($"BoundCallExpr : {call.type}  callee={call.callee.name}");
+                    indent += isLast ? "   " : "|  ";
+                    for (int i = 0; i < call.args.Length; i++) {
+                        PrintBoundExpr(call.args[i], indent, i == call.args.Length - 1);
+                    }
+                    break;
+                }
             default: {
                     Console.WriteLine($"{expr.GetType().Name} : {expr.type}");
                     break;
@@ -557,7 +594,10 @@ Add(1 + 2,Add(9, 3));
 
     static void PrintIrCompiledUnit(IrCompiledUnit irCompiledUnit) {
         Console.WriteLine("=== IR BLOCKS ===");
-        foreach (BasicBlock block in irCompiledUnit.basicBlocks) {
+        for (int functionIndex = 0; functionIndex < irCompiledUnit.irFunctions.Length; functionIndex++) {
+            IrFunction irFunction = irCompiledUnit.irFunctions[functionIndex];
+            Console.WriteLine($"Function {functionIndex} (entry={functionIndex == irCompiledUnit.mainFunctionInd}, locals={irFunction.localCount}, params={irFunction.paramCount}, maxRegs={irFunction.maxVReg})");
+            foreach (BasicBlock block in irFunction.basicBlocks) {
             Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable})");
 
             foreach (IrInstr irInstr in block.irInstrs) {
@@ -579,6 +619,9 @@ Add(1 + 2,Add(9, 3));
                         break;
                     case IrUnary u:
                         Console.WriteLine($"  unary {u.irUnaryOp} r{u.dstReg} <- r{u.operandReg}");
+                        break;
+                    case IrCallInstr c:
+                        Console.WriteLine($"  call r{c.dstReg} <- fn[{c.functionIndex}]({string.Join(", ", c.argRegs.Select(static r => $"r{r}"))})");
                         break;
                     default:
                         Console.WriteLine("  <unknown instr>");
@@ -605,6 +648,7 @@ Add(1 + 2,Add(9, 3));
                         break;
                 }
             }
+        }
         }
     }
 }

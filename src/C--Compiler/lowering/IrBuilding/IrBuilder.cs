@@ -30,9 +30,10 @@ class IrBuilder {
 
         int mainFunctionInd = -1;
 
+        fillSymbolToInd(functionsToBuild);
+
         for (int i = 0; i < functionsToBuild.Length; i++) {
             var function = functionsToBuild[i];
-            symbolToInd[function.functionSymbol] = i;
 
             if (ReferenceEquals(function, boundCompiledUnit.mainFunction)) {
                 mainFunctionInd = i;
@@ -44,6 +45,12 @@ class IrBuilder {
         return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd);
     }
 
+    public void fillSymbolToInd(BoundFunctionDeclaration[] functionDeclarations) {
+        for (int i = 0; i < functionDeclarations.Length; i++) {
+            var function = functionDeclarations[i];
+            symbolToInd[function.functionSymbol] = i;
+        }
+    }
 
     public IrFunction BuildFunction(BoundFunctionDeclaration functionDeclaration) {
         StartFunction(functionDeclaration);

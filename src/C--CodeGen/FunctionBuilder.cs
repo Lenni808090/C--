@@ -38,7 +38,7 @@ sealed class FunctionBuilder {
         debugInfo.Add(new InstructionDebugInfo(bytecodeOffset, location));
     }
 
-    public CompiledFunction Build(int localCount, int maxRegCount) {
+    public CompiledFunction Build(int localCount, int paramCount, int maxRegCount) {
         if (localCount < 0) {
             throw new ArgumentOutOfRangeException(nameof(localCount));
         }
@@ -49,13 +49,13 @@ sealed class FunctionBuilder {
             Emitter.BytecodeToArray(),
             localCount,
             maxRegCount,
-            0,
+            paramCount,
             DebugInfo
         );
     }
 
-    public CompiledFunction BuildAndReset(int localCount, int maxRegCount) {
-        var func = Build(localCount, maxRegCount);
+    public CompiledFunction BuildAndReset(int localCount, int paramCount, int maxRegCount) {
+        var func = Build(localCount, paramCount, maxRegCount);
         Emitter.Reset();
         return func;
     }

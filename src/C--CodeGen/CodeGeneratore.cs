@@ -35,9 +35,11 @@ class CodeGenerator {
         foreach (BasicBlock block in irFunction.basicBlocks) {
             EmitBlock(block);
         }
+
         int localCount = irFunction.localCount;
         blockLabels.Clear();
-        return functionBuilder.BuildAndReset(localCount, irFunction.maxVReg);
+
+        return functionBuilder.BuildAndReset(localCount, irFunction.paramCount, irFunction.maxVReg);
     }
 
     void EmitBlock(BasicBlock basicBlock) {

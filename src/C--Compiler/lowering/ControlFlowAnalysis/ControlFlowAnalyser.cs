@@ -14,14 +14,18 @@ class ControlFlowAnalyser {
         diagnostics = compilerContext.diagnostics;
 
         idToBlock = new Dictionary<int, BasicBlock>();
-        FillIdToBlock();
+    }
+    public IrCompiledUnit Analyse() {
+        List<IrFunction> irFunctions = new();
+        foreach (IrFunction irFunction in irCompiledUnit.irFunctions) {
+            irFunctions.Add(AnalyseFunction(irFunction));
+        }
+        return new IrCompiledUnit(irFunctions.ToArray(), irCompiledUnit.mainFunctionInd);
     }
 
-    public IrCompiledUnit Analyse() {
-        BasicBlock[] blocks = irCompiledUnit.basicBlocks;
-        if (blocks.Length == 0) {
-            return irCompiledUnit;
-        }
+    public IrFunction AnalyseFunction(IrFunction irFunction) {
+        BasicBlock[] blocks = irFunction.basicBlocks;
+        FillIdToBlock(irFunction);
 
         var visited = new HashSet<int>();
         int head = 0;
@@ -71,12 +75,12 @@ class ControlFlowAnalyser {
                 diagnostics.Report(block.location, DiagnosticDescriptors.ConrolFlowUnreachableCode);
             }
         }
-
-        return new IrCompiledUnit(reached.ToArray(), irCompiledUnit.localCount, irCompiledUnit.maxVReg);
+        idToBlock.Clear();
+        return new IrFunction(reached.ToArray(), irFunction.localCount, irFunction.maxVReg, irFunction.paramCount);
     }
 
-    void FillIdToBlock() {
-        foreach (BasicBlock basic in irCompiledUnit.basicBlocks) {
+    void FillIdToBlock(IrFunction irFunction) {
+        foreach (BasicBlock basic in irFunction.basicBlocks) {
             idToBlock[basic.blockId] = basic;
         }
     }
