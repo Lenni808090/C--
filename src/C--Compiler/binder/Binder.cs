@@ -1,19 +1,22 @@
 using System.Linq.Expressions;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
+using Microsoft.VisualBasic;
 
 namespace CMinus.Compiler.Binding;
 
 class Binder {
-    List<BoundStmt> boundStmts;
     Stack<Dictionary<string, LocalSymbol>> scopes;
 
+    Dictionary<string, FunctionSymbol> functionsByName;
     int loopDepth;
     DiagnosticBag diagnostics;
-
+    List<BoundFunctionDeclaration> functions;
+    BoundFunctionDeclaration? mainFunc;
     int nextLocalIndex;
     Stmt[] stmtsToBind;
     private static readonly Dictionary<string, SymbolType> standardTypes =
@@ -26,26 +29,101 @@ class Binder {
 
     public Binder(CompilationUnit compilationUnit, CompilerContext compilerContext) {
         scopes = new();
+        functions = new();
+        functionsByName = new();
         diagnostics = compilerContext.diagnostics;
-        boundStmts = new();
         stmtsToBind = compilationUnit.stmts;
         loopDepth = 0;
     }
 
     public BoundCompiledUnit BindCompiledUnit() {
-        PushScope();
+        CollectFunctions();
+        return BindFunctions();
+    }
 
+    public void CollectFunctions() {
         foreach (Stmt stmt in stmtsToBind) {
-            var boundStmt = BindStmt(stmt);
-            boundStmts.Add(boundStmt);
+            if (stmt is not FunctionDeclarationStmt) {
+                throw new Exception("Cant have stmts outside functions");
+            }
+            var func = (FunctionDeclarationStmt)stmt;
+            AddFunc(func);
         }
-        PopScope();
+    }
+    void AddFunc(FunctionDeclarationStmt functionDeclaration) {
+        var name = functionDeclaration.functionName.Text;
+        if (functionsByName.TryGetValue(name, out _)) {
+            throw new Exception("function already declared choose different name");
+        }
 
-        int localCount = nextLocalIndex;
-        return new BoundCompiledUnit(boundStmts.ToArray(), localCount);
+        var returnType = InferTypeInTypedDecl(((IdentifierTypeSyntax)functionDeclaration.returnType).identifier);
+
+        List<SymbolType> argTypes = new();
+        HashSet<string> seenNames = new();
+        foreach (ParameterSyntax arg in functionDeclaration.@params) {
+            var type = InferTypeInTypedDecl(((IdentifierTypeSyntax)arg.type).identifier);
+            argTypes.Add(type);
+
+            if (!seenNames.Add(arg.name.Text)) {
+                throw new Exception("parameter names need to be unique");
+            }
+        }
+
+        FunctionSymbol functionSymbol = new FunctionSymbol(name, returnType, argTypes.ToArray());
+        functionsByName[name] = functionSymbol;
+    }
+
+    public BoundCompiledUnit BindFunctions() {
+
+        foreach (FunctionDeclarationStmt stmt in stmtsToBind) {
+            var boundStmt = BindFunction(stmt);
+            functions.Add(boundStmt);
+        }
+
+        if (mainFunc is null) {
+            throw new Exception("programm needs an entry Point");
+        }
+        return new BoundCompiledUnit(mainFunc, functions.ToArray());
     }
 
 
+    BoundFunctionDeclaration BindFunction(FunctionDeclarationStmt functionDeclaration) {
+        ResetLocalIndex();
+        PushScope();
+
+        AddParams(functionDeclaration);
+        var body = (BoundBlockStmt)BindBlockStmt(functionDeclaration.functionBody);
+        var name = functionDeclaration.functionName.Text;
+
+        functionsByName.TryGetValue(name, out FunctionSymbol? functionSymbol);
+
+        if (functionSymbol is null) {
+            throw new Exception("internal error unkown function after first pass");
+        }
+
+        functionSymbol.localCount = nextLocalIndex;
+        var func = new BoundFunctionDeclaration(functionSymbol, body, functionDeclaration.functionName.Location);
+
+        if (name == "Main") {
+            mainFunc = func;
+        }
+
+        PopScope();
+        return func;
+    }
+
+    void AddParams(FunctionDeclarationStmt functionDeclaration) {
+        foreach (var param in functionDeclaration.@params) {
+            string name = param.name.Text;
+
+            SymbolType type = InferTypeInTypedDecl(((IdentifierTypeSyntax)param.type).identifier);
+            BoundModifiers modifiers = BindModifiers(param.modifiers);
+
+            int index = AllocateLocalIndex();
+            LocalSymbol local = new LocalSymbol(name, type, modifiers, index);
+            scopes.Peek().Add(name, local);
+        }
+    }
     BoundStmt BindStmt(Stmt stmt) {
         return stmt switch {
             VarDeclarationStmt v => BindVarDeclarationStmt(v),
@@ -387,6 +465,10 @@ class Binder {
 
     void PopScope() {
         scopes.Pop();
+    }
+
+    void ResetLocalIndex() {
+        nextLocalIndex = 0;
     }
 
     int AllocateLocalIndex() {

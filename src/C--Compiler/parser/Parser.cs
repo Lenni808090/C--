@@ -264,7 +264,7 @@ class Parser {
         Expect(TokenType.OpenParentheses, "Expected Open Parentheses after Funciiton Name");
 
         List<ParameterSyntax> parameters = new();
-        while (Current.TokenType == TokenType.Identifier) {
+        while (Current.TokenType != TokenType.CloseParentheses && Current.TokenType != TokenType.EoF) {
             var paramName = NextToken();
 
             Expect(TokenType.Colon, "Colon expected after Param Name for Type Definition");
@@ -282,7 +282,7 @@ class Parser {
 
         var returnType = Expect(TokenType.Identifier, "Function Return Type Expected After Arrow");
 
-        var body = ParseBlockStmt();
+        var body = (BlockStmt)ParseBlockStmt();
 
         return new FunctionDeclarationStmt(functionName, parameters.ToArray(), new IdentifierTypeSyntax(returnType), body);
     }
@@ -352,6 +352,22 @@ class Parser {
         Token typeToken = Current;
         NextToken();
         return new IdentifierTypeSyntax(typeToken);
+    }
+    Expr ParseCallExpr(Expr callee) {
+        Expect(TokenType.OpenParentheses, "Expected '(' after callable expression");
+
+        List<Expr> args = new();
+
+        while (Current.TokenType != TokenType.CloseParentheses && Current.TokenType != TokenType.EoF) {
+            args.Add(ParseExpr());
+
+            if (Current.TokenType == TokenType.Comma) {
+                NextToken();
+            }
+        }
+
+        Expect(TokenType.CloseParentheses, "Expected ')' after arguments");
+        return new CallExpr(callee, args.ToArray());
     }
 
     Expr ParseExpr() {
@@ -462,25 +478,6 @@ class Parser {
         return expr;
     }
 
-    Expr ParseCallExpr(Expr callee) {
-        Expect(TokenType.OpenParentheses, "Expected '(' after callable expression");
-
-        List<Expr> args = new();
-
-        while (Current.TokenType != TokenType.CloseParentheses && Current.TokenType != TokenType.EoF) {
-            args.Add(ParseExpr());
-
-            if (Current.TokenType == TokenType.Comma) {
-                NextToken();
-                continue;
-            }
-
-            break;
-        }
-
-        Expect(TokenType.CloseParentheses, "Expected ')' after arguments");
-        return new CallExpr(callee, args.ToArray());
-    }
     Expr ParsePrimary() {
         Token token = Current;
         switch (token.TokenType) {

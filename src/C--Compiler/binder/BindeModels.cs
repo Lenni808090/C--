@@ -3,7 +3,9 @@ namespace CMinus.Compiler.Binding;
 using CMinus.Compiler;
 
 abstract class BoundStmt {
-    public SourceLocation location { get; }
+    public SourceLocation location {
+        get;
+    }
 
     protected BoundStmt(SourceLocation location) {
         this.location = location;
@@ -13,7 +15,9 @@ abstract class BoundExpr {
     public SymbolType type {
         get;
     }
-    public SourceLocation location { get; }
+    public SourceLocation location {
+        get;
+    }
     //nur die classe und andere inheriting ones are able to acess;
     protected BoundExpr(SymbolType type, SourceLocation location) {
         this.type = type;
@@ -21,15 +25,16 @@ abstract class BoundExpr {
     }
 };
 
-sealed class BoundCompiledUnit : BoundStmt {
-    public BoundStmt[] boundStmts;
-    public int localCount;
+sealed class BoundCompiledUnit {
+    public BoundFunctionDeclaration mainFunction;
+    public BoundFunctionDeclaration[] functions;
 
-    public BoundCompiledUnit(BoundStmt[] boundStmts, int localCount) : base(boundStmts.Length > 0 ? boundStmts[0].location : SourceLocation.None) {
-        this.boundStmts = boundStmts;
-        this.localCount = localCount;
+    public BoundCompiledUnit(BoundFunctionDeclaration mainFunction, BoundFunctionDeclaration[] functions) {
+        this.mainFunction = mainFunction;
+        this.functions = functions;
     }
 }
+
 
 sealed class BoundVarDeclarationStmt : BoundStmt {
     public LocalSymbol localSymbol;
@@ -38,6 +43,16 @@ sealed class BoundVarDeclarationStmt : BoundStmt {
     public BoundVarDeclarationStmt(LocalSymbol localSymbol, BoundExpr initializer, SourceLocation location) : base(location) {
         this.localSymbol = localSymbol;
         this.initializer = initializer;
+    }
+}
+
+sealed class BoundFunctionDeclaration : BoundStmt {
+    public FunctionSymbol functionSymbol;
+    public BoundBlockStmt functionBody;
+
+    public BoundFunctionDeclaration(FunctionSymbol functionSymbol, BoundBlockStmt functionBody, SourceLocation location) : base(location) {
+        this.functionSymbol = functionSymbol;
+        this.functionBody = functionBody;
     }
 }
 
@@ -192,6 +207,21 @@ sealed class LocalSymbol {
         string name = "&temp" + index;
 
         return new LocalSymbol(name, symbolType, new BoundModifiers(), index, true);
+    }
+}
+
+sealed class FunctionSymbol {
+    public string name;
+    public SymbolType returnType;
+    public int localCount;
+    public int argCount;
+    public SymbolType[] argTypes;
+
+    public FunctionSymbol(string name, SymbolType returnType, SymbolType[] argTypes) {
+        this.name = name;
+        this.returnType = returnType;
+        argCount = argTypes.Length;
+        this.argTypes = argTypes;
     }
 }
 

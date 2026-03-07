@@ -15,6 +15,8 @@ class Program {
 meth Add(x: int, y: int) -> int {
     return x + y;
 }
+
+Add(1 + 2,Add(9, 3));
 ";
 
         CompilerContext compilerContext = new();
@@ -200,6 +202,16 @@ meth Add(x: int, y: int) -> int {
         indent += isLast ? "   " : "|  ";
 
         switch (expr) {
+            case CallExpr call: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Callee");
+                    PrintSyntaxExpr(call.calle, indent + "   ", true);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Arguments");
+                    PrintSyntaxArguments(call.args, indent + "   ");
+                    break;
+                }
             case LiteralExpr lit: {
                     Console.Write(indent);
                     Console.WriteLine("value: " + lit.value.Text);
@@ -239,6 +251,18 @@ meth Add(x: int, y: int) -> int {
                     Console.WriteLine("Unhandled syntax expr: " + expr.GetType().Name);
                     break;
                 }
+        }
+    }
+
+    static void PrintSyntaxArguments(Expr[] args, string indent) {
+        if (args.Length == 0) {
+            Console.Write(indent);
+            Console.WriteLine("+--<none>");
+            return;
+        }
+
+        for (int i = 0; i < args.Length; i++) {
+            PrintSyntaxExpr(args[i], indent, i == args.Length - 1);
         }
     }
 
