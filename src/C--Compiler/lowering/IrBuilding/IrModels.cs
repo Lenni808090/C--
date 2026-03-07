@@ -3,14 +3,18 @@ namespace CMinus.Compiler.Lowering;
 using CMinus.Compiler;
 
 abstract class IrInstr {
-    public SourceLocation location { get; }
+    public SourceLocation location {
+        get;
+    }
 
     protected IrInstr(SourceLocation location) {
         this.location = location;
     }
 };
 abstract class Terminator {
-    public SourceLocation location { get; }
+    public SourceLocation location {
+        get;
+    }
 
     protected Terminator(SourceLocation location) {
         this.location = location;
@@ -18,15 +22,26 @@ abstract class Terminator {
 };
 
 sealed class IrCompiledUnit {
-    public BasicBlock[] basicBlocks;
+    public IrFunction[] irFunctions;
+    public int mainFunctionInd;
+    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd) {
+        this.irFunctions = irFunctions;
+        this.mainFunctionInd = mainFunctionInd;
+    }
+}
 
+sealed class IrFunction {
+    public BasicBlock[] basicBlocks;
     public int localCount;
+
+    public int paramCount;
     public int maxVReg;
 
-    public IrCompiledUnit(BasicBlock[] basicBlocks, int localCount, int maxVReg) {
+    public IrFunction(BasicBlock[] basicBlocks, int localCount, int maxVReg, int paramCount) {
         this.basicBlocks = basicBlocks;
         this.localCount = localCount;
         this.maxVReg = maxVReg;
+        this.paramCount = paramCount;
     }
 }
 

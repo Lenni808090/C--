@@ -18,24 +18,37 @@ class IrBuilder {
         basicBlocks = new();
         loopTarget = new();
         this.boundCompiledUnit = boundCompiledUnit;
-        nextTempLocalInd = boundCompiledUnit.localCount;
-
         currentBlock = MakeNewBlock();
-        basicBlocks.Add(currentBlock);
     }
 
     public IrCompiledUnit BuildCompiledUnit() {
-        var stmts = boundCompiledUnit.boundStmts;
+        var functionsToBuild = boundCompiledUnit.functions;
+        List<IrFunction> builtFunctions = new();
 
-        foreach (var stmt in stmts) {
-            if (currentBlock.terminator is not null) {
-                var unreachable = CreateUnreachableBlock();
-                SwitchCurrentBlock(unreachable);
+        int mainFunctionInd = -1;
+
+        for (int i = 0; i < functionsToBuild.Length; i++) {
+            var function = functionsToBuild[i];
+
+            if (ReferenceEquals(function, boundCompiledUnit.mainFunction)) {
+                mainFunctionInd = i;
             }
-            BuildStmt(stmt);
+
+            builtFunctions.Add(BuildFunction(function));
         }
 
-        return new IrCompiledUnit(basicBlocks.ToArray(), nextTempLocalInd, maxVReg);
+        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd);
+    }
+
+
+    public IrFunction BuildFunction(BoundFunctionDeclaration functionDeclaration) {
+        StartFunction(functionDeclaration);
+
+        var boundStmt = functionDeclaration.functionBody;
+        BuildStmt(boundStmt);
+        var irFunc = new IrFunction(basicBlocks.ToArray(), nextTempLocalInd, maxVReg, functionDeclaration.functionSymbol.argCount);
+
+        return irFunc;
     }
 
     void BuildStmt(BoundStmt boundStmt) {
@@ -428,6 +441,16 @@ class IrBuilder {
         return new LoopTarget(condBlock.blockId, endBlock.blockId);
     }
 
+    void StartFunction(BoundFunctionDeclaration functionDeclaration) {
+        basicBlocks.Clear();
+        loopTarget.Clear();
+        nextBlockId = 0;
+        nextVReg = 0;
+        maxVReg = 0;
+        nextTempLocalInd = functionDeclaration.functionSymbol.localCount;
+        currentBlock = MakeNewBlock();
+        basicBlocks.Add(currentBlock);
+    }
 
     Runtime.ValueType GetValueType(SymbolType symbolType) {
         return symbolType switch {
