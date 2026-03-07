@@ -22,6 +22,7 @@ class Lexer {
         { "continue", TokenType.Continue},
         { "for", TokenType.For},
         { "break", TokenType.Break},
+        {"mut", TokenType.Mut},
     };
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();

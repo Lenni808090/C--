@@ -6,6 +6,8 @@ enum TokenType {
     True,
     False,
 
+    Mut,
+
     Identifier,
     Number,
 

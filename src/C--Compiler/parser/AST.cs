@@ -115,12 +115,16 @@ sealed class BlockStmt : Stmt {
 
 sealed class VarDeclarationStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.VarDeclarationStmt;
+
+    Token[] modifiers;
+
     public TypeSyntax type;
     public Token name;
 
     public Expr declarementExpr;
 
-    public VarDeclarationStmt(TypeSyntax type, Token name, Expr declarementExpr) {
+    public VarDeclarationStmt(Token[] modifiers, TypeSyntax type, Token name, Expr declarementExpr) {
+        this.modifiers = modifiers;
         this.type = type;
         this.name = name;
         this.declarementExpr = declarementExpr;

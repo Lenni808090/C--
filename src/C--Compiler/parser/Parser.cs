@@ -87,19 +87,33 @@ class Parser {
                tokenType == TokenType.OpenParentheses;
     }
 
+    bool IsModifierToken(TokenType tokenType) {
+        return tokenType == TokenType.Mut;
+    }
+
     //int x = 100;
-    bool matchesDeclarationStmt() {
+    bool matchesDeclarationStmt(int offset = 0) {
         bool matches = true;
-        if (Current.TokenType != TokenType.Identifier) {
+        if (Peek(offset).TokenType != TokenType.Identifier) {
             matches = false;
         }
-        if (Peek(1).TokenType != TokenType.Identifier) {
+        if (Peek(offset + 1).TokenType != TokenType.Identifier) {
             matches = false;
         }
-        if (Peek(2).TokenType != TokenType.Equals) {
+        if (Peek(offset + 2).TokenType != TokenType.Equals) {
             matches = false;
         }
         return matches;
+    }
+
+    bool IsDeclarationStmt() {
+        int offset = 0;
+
+        while (IsModifierToken(Peek(offset).TokenType)) {
+            offset++;
+        }
+
+        return matchesDeclarationStmt(offset);
     }
 
     bool matchesAssignemntExpr() {
@@ -136,7 +150,9 @@ class Parser {
 
     Stmt ParseStmt() {
 
-        if (matchesDeclarationStmt()) {
+
+
+        if (IsDeclarationStmt()) {
             return ParseDeclarationStmt();
         }
 
@@ -170,19 +186,28 @@ class Parser {
         }
     }
 
+    Token[] ParseModifiers() {
+        List<Token> modifiers = new();
+        while (IsModifierToken(Current.TokenType)) {
+            modifiers.Add(NextToken());
+        }
+        return modifiers.ToArray();
+    }
+
     Stmt ParseDeclarationStmt() {
-        var decl = ParseVarDeclarationCore();
+        var modifiers = ParseModifiers();
+        var decl = ParseVarDeclarationCore(modifiers);
         Expect(TokenType.Semicolon, "missing ';' after declaration");
         return decl;
     }
 
 
-    VarDeclarationStmt ParseVarDeclarationCore() {
+    VarDeclarationStmt ParseVarDeclarationCore(Token[] modifiers) {
         var type = ParseType();
         Token identifier = NextToken();
         NextToken();
         Expr init = ParseExpr();
-        return new VarDeclarationStmt(type, identifier, init);
+        return new VarDeclarationStmt(modifiers, type, identifier, init);
     }
 
     Stmt ParseBlockStmt() {
@@ -246,8 +271,9 @@ class Parser {
         Expect(TokenType.OpenParentheses, "opening ( expected after for");
         Expr? initializerExpr = null;
         VarDeclarationStmt? declarationStmt = null;
-        if (matchesDeclarationStmt()) {
-            declarationStmt = ParseVarDeclarationCore();
+        if (IsDeclarationStmt()) {
+            var modifiers = ParseModifiers();
+            declarationStmt = ParseVarDeclarationCore(modifiers);
         }
         else if (matchesAssignemntExpr()) {
             initializerExpr = ParseAssignemntExpr();
