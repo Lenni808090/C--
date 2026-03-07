@@ -141,6 +141,22 @@ sealed class IrUnary : IrInstr {
     }
 }
 
+sealed class IrCallInstr : IrInstr {
+    public int dstReg;
+    public int argCount;
+
+    public int functionIndex;
+    public int[] argRegs;
+
+    public IrCallInstr(int dstReg, int argCount, int[] argRegs, int functionIndex, SourceLocation location) : base(location) {
+        this.dstReg = dstReg;
+        this.functionIndex = functionIndex;
+        this.argCount = argCount;
+        this.argRegs = argRegs;
+    }
+
+}
+
 
 sealed class IrGoto : Terminator {
     public int basicBlockId;

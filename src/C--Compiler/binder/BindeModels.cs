@@ -143,11 +143,14 @@ sealed class BoundVarAssignmentExpr : BoundExpr {
 
 sealed class BoundCallExpr : BoundExpr {
     public BoundExpr[] args;
+
+    public int argCount;
     public FunctionSymbol callee;
 
     public BoundCallExpr(BoundExpr[] args, FunctionSymbol calle, SymbolType type, SourceLocation location) : base(type, location) {
         this.callee = calle;
         this.args = args;
+        argCount = args.Length;
     }
 }
 

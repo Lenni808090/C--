@@ -6,6 +6,8 @@ namespace CMinus.Compiler.Lowering;
 class IrBuilder {
     List<BasicBlock> basicBlocks;
     Stack<LoopTarget> loopTarget;
+
+    Dictionary<FunctionSymbol, int> symbolToInd;
     BasicBlock currentBlock;
 
     BoundCompiledUnit boundCompiledUnit;
@@ -15,6 +17,7 @@ class IrBuilder {
     int maxVReg;
 
     public IrBuilder(BoundCompiledUnit boundCompiledUnit) {
+        symbolToInd = new();
         basicBlocks = new();
         loopTarget = new();
         this.boundCompiledUnit = boundCompiledUnit;
@@ -29,6 +32,7 @@ class IrBuilder {
 
         for (int i = 0; i < functionsToBuild.Length; i++) {
             var function = functionsToBuild[i];
+            symbolToInd[function.functionSymbol] = i;
 
             if (ReferenceEquals(function, boundCompiledUnit.mainFunction)) {
                 mainFunctionInd = i;
@@ -237,6 +241,9 @@ class IrBuilder {
             case BoundUnaryExpr b: {
                     return BuildUnaryExpr(b);
                 }
+            case BoundCallExpr c: {
+                    return BuildCallExpr(c);
+                }
             default: {
                     throw new Exception("Unkown Expr in Build Expr Ir" + boundExpr);
                 }
@@ -285,6 +292,15 @@ class IrBuilder {
         int operandResReg = BuildExpr(unaryExpr.operatedExpr);
 
         return EmitUnary(irUnaryOP, operandResReg, unaryExpr.location);
+    }
+
+    int BuildCallExpr(BoundCallExpr callExpr) {
+        List<int> argRegs = new();
+        foreach (BoundExpr arg in callExpr.args) {
+            argRegs.Add(BuildExpr(arg));
+        }
+        int functionInd = symbolToInd[callExpr.callee];
+        return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd, callExpr.location);
     }
 
     int BuildLogicalOrExpr(BoundBinaryExpr binaryExpr) {
@@ -423,6 +439,11 @@ class IrBuilder {
         return dstReg;
     }
 
+    int EmitCall(int argCount, int[] argRegs, int functionIndex, SourceLocation location) {
+        int dstReg = AllocVReg();
+        Emit(new IrCallInstr(dstReg, argCount, argRegs, functionIndex, location));
+        return dstReg;
+    }
     void TerminateReturn(int returnReg, SourceLocation location) {
         Terminate(new IrReturn(returnReg, location));
     }
