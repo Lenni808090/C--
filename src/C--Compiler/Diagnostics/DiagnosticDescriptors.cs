@@ -68,6 +68,14 @@ public static class DiagnosticDescriptors {
         new("BND021", "Binder", "unsupported statement in binder: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderUnexpectedExpression =
         new("BND022", "Binder", "unsupported expression in binder: {0}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderCallTargetMustBeFunctionName =
+        new("BND023", "Binder", "call target must be a function name", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderFunctionNotDeclared =
+        new("BND024", "Binder", "function is not declared: {0}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderCallArgumentCountMismatch =
+        new("BND025", "Binder", "function '{0}' expects {1} argument(s), got {2}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderCallArgumentTypeMismatch =
+        new("BND026", "Binder", "argument {1} of function '{0}' expects {2}, got {3}", Severity.Error);
 
 
     public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);

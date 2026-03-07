@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
@@ -309,6 +310,7 @@ class Binder {
     BoundExpr BindExpr(Expr expr) {
         return expr switch {
             VarAssignmentExpr a => BindVarAssignmentExpr(a),
+            CallExpr c => BindCallExpr(c),
             NameExpr n => BindNameExpr(n),
             LiteralExpr l => BindLiteralExpr(l),
             UnaryExpr u => BindUnaryExpr(u),
@@ -344,6 +346,53 @@ class Binder {
         }
 
         return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType, varAssignmentExpr.location);
+    }
+
+
+    BoundExpr BindCallExpr(CallExpr callExpr) {
+        List<BoundExpr> args = new();
+        foreach (Expr arg in callExpr.args) {
+            args.Add(BindExpr(arg));
+        }
+
+        if (callExpr.calle is not NameExpr nameExpr) {
+            ReportError(callExpr.calle.location, DiagnosticDescriptors.BinderCallTargetMustBeFunctionName);
+            return new BoundErrorExpr(callExpr.location);
+        }
+
+        string name = nameExpr.name.Text;
+
+        if (!functionsByName.TryGetValue(name, out FunctionSymbol? functionSymbol)) {
+            ReportError(nameExpr.location, DiagnosticDescriptors.BinderFunctionNotDeclared, name);
+            return new BoundErrorExpr(callExpr.location);
+        }
+
+        if (args.Count != functionSymbol.argCount) {
+            ReportError(callExpr.location, DiagnosticDescriptors.BinderCallArgumentCountMismatch, name, functionSymbol.argCount, args.Count);
+            return new BoundErrorExpr(callExpr.location);
+        }
+
+        bool hasError = false;
+        for (int i = 0; i < args.Count; i++) {
+            var expectedType = functionSymbol.argTypes[i];
+            var gotType = args[i].type;
+
+            if (!IsValidType(expectedType) || !IsValidType(gotType)) {
+                hasError = true;
+                continue;
+            }
+
+            if (expectedType != gotType) {
+                ReportError(callExpr.args[i].location, DiagnosticDescriptors.BinderCallArgumentTypeMismatch, name, i + 1, expectedType, gotType);
+                hasError = true;
+            }
+        }
+
+        if (hasError) {
+            return new BoundErrorExpr(callExpr.location);
+        }
+
+        return new BoundCallExpr(args.ToArray(), functionSymbol, functionSymbol.returnType, callExpr.location);
     }
 
     BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr, SourceLocation location) {
