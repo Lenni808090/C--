@@ -6,6 +6,7 @@ namespace CMinus.CodeGen;
 
 sealed class FunctionBuilder {
     public Emitter Emitter { get; } = new();
+    public Value[] Constants => constants.ToArray();
 
     private readonly Dictionary<Value, int> constantToIndex = new();
     private readonly List<Value> constants = new();
@@ -30,9 +31,9 @@ sealed class FunctionBuilder {
 
         return new CompiledFunction(
             Emitter.BytecodeToArray(),
-            constants.ToArray(),
             localCount,
-            maxRegCount
+            maxRegCount,
+            0
         );
     }
 }

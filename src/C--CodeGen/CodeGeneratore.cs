@@ -6,6 +6,7 @@ namespace CMinus.CodeGen;
 class CodeGenerator {
     FunctionBuilder functionBuilder;
     IrCompiledUnit irCompiledUnit;
+    public Value[] Constants => functionBuilder.Constants;
 
 
     Dictionary<int, Label> blockLabels;
@@ -27,6 +28,11 @@ class CodeGenerator {
         }
         int localCount = irCompiledUnit.localCount;
         return functionBuilder.Build(localCount, irCompiledUnit.maxVReg);
+    }
+
+    public CompiledProgram GenerateProgram() {
+        var entryFunction = GenerateFunction();
+        return new CompiledProgram(new[] { entryFunction }, 0);
     }
 
 

@@ -12,63 +12,9 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                            int total = 0;
-                            bool flip = false;
-                            int seed = -3;
-                            seed = -seed;
-
-                            int i = 0;
-                            while (i < 12) {
-                                if (i == 2) {
-                                    i += 1;
-                                    continue;
-                                }
-
-                                if (i == 9) {
-                                    break;
-                                }
-
-                                if ((i < 5 && !flip) || (i == 7)) {
-                                    total += i;
-                                }
-                                else {
-                                    total -= 1;
-                                }
-
-                                if (i == 4) {
-                                    flip = true;
-                                }
-
-                                i += 1;
-                            }
-
-                            for (int j = 6; j > 0; j -= 1) {
-                                total += j;
-                                if (j == 3) {
-                                    continue;
-                                }
-                                total += 1;
-                            }
-
-                            for (i = 0; i < 4; i = i + 1) {
-                                total += i * 2;
-                            }
-
-                            {
-                                int total = 100;
-                                if (total > 50) {
-                                    total -= 40;
-                                }
-                            }
-
-                            if ((total > 0 && flip) || false) {
-                                total += seed;
-                            }
-                            else {
-                                total = 0;
-                            }
-
-                            return total;
+                           mut int x = 1;
+                           x = 2;
+                           return x;
 ";
 
         CompilerContext compilerContext = new();
@@ -119,29 +65,16 @@ class Program {
             return;
         }
 
-        if (diagnostics.CheckForErrors()) {
-            diagnostics.PrintAllErrors();
-            return;
-        }
-
         CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
-        CompiledFunction compiledFunction = codeGenerator.GenerateFunction();
+        CompiledProgram compiledProgram = codeGenerator.GenerateProgram();
+        Value[] constants = codeGenerator.Constants;
 
         Console.WriteLine();
+        PrintBytecode(compiledProgram.compiledFunctions[0], constants);
 
-        PrintBytecode(compiledFunction);
-
-        Value[] regs = new Value[compiledFunction.maxRegCount];
-        VM vm = new VM(
-             regs,
-             compiledFunction.constants,
-             compiledFunction.localCount,
-             compiledFunction.bytecode
-         );
-
+        VM vm = new VM(compiledProgram, constants);
         Value result = vm.Run();
         Console.WriteLine("RESULT: " + result);
-
     }
     static void PrintSyntaxUnit(CompilationUnit unit) {
         Console.WriteLine("=== SYNTAX TREE ===");
@@ -160,6 +93,7 @@ class Program {
 
         switch (stmt) {
             case VarDeclarationStmt v: {
+                    PrintSyntaxModifiers(v.modifiers, indent, false);
                     PrintSyntaxType(v.type, indent, false);
                     PrintNameToken("name", v.name, indent, false);
                     PrintSyntaxExpr(v.declarementExpr, indent, true);
@@ -309,6 +243,22 @@ class Program {
         }
     }
 
+    static void PrintSyntaxModifiers(Token[] modifiers, string indent, bool isLast) {
+        if (modifiers.Length == 0) {
+            return;
+        }
+
+        string marker = isLast ? "+--" : "+--";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine("Modifiers");
+
+        string childIndent = indent + (isLast ? "   " : "ï¿½  ");
+        for (int i = 0; i < modifiers.Length; i++) {
+            PrintNameToken("modifier", modifiers[i], childIndent, i == modifiers.Length - 1);
+        }
+    }
+
     static void PrintNameToken(string label, Token tok, string indent, bool isLast) {
         string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
@@ -322,10 +272,10 @@ class Program {
         }
     }
 
-    static void PrintBytecode(CompiledFunction fn) {
+    static void PrintBytecode(CompiledFunction fn, Value[] constants) {
         Console.WriteLine("=== CONSTANT POOL ===");
-        for (int i = 0; i < fn.constants.Length; i++) {
-            Console.WriteLine($"[{i}] {fn.constants[i]}");
+        for (int i = 0; i < constants.Length; i++) {
+            Console.WriteLine($"[{i}] {constants[i]}");
         }
 
         Console.WriteLine();
@@ -386,12 +336,7 @@ class Program {
                         break;
                     }
                 case OpCode.NEG_INT:
-                case OpCode.NOT: {
-                        ushort dst = ReadU16();
-                        ushort src = ReadU16();
-                        Console.WriteLine($" r{dst}, r{src}");
-                        break;
-                    }
+                case OpCode.NOT:
                 case OpCode.MOVE: {
                         ushort dst = ReadU16();
                         ushort src = ReadU16();
@@ -412,6 +357,19 @@ class Program {
                         Console.WriteLine($" r{cond}, {offset}");
                         break;
                     }
+                case OpCode.CALL: {
+                        ushort dst = ReadU16();
+                        int functionIndex = BitConverter.ToInt32(code, ip);
+                        ip += 4;
+                        ushort argCount = ReadU16();
+                        Console.Write($" r{dst}, fn[{functionIndex}], argc={argCount}");
+                        for (int i = 0; i < argCount; i++) {
+                            ushort argReg = ReadU16();
+                            Console.Write($" r{argReg}");
+                        }
+                        Console.WriteLine();
+                        break;
+                    }
                 default: {
                         Console.WriteLine();
                         break;
@@ -421,6 +379,8 @@ class Program {
 
         Console.WriteLine();
         Console.WriteLine($"LocalCount = {fn.localCount}");
+        Console.WriteLine($"ParamCount = {fn.paramCount}");
+        Console.WriteLine($"MaxRegCount = {fn.maxRegCount}");
     }
     static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
         string marker = isLast ? "+--" : "+--";
