@@ -163,10 +163,12 @@ sealed class LocalSymbol {
     public string name;
     public SymbolType symbolType;
 
+    public BoundModifiers modifiers;
     public bool isCompilerGenerated;
     public int index;
 
-    public LocalSymbol(string name, SymbolType symbolType, int index, bool isCompilerGenerated = false) {
+    public LocalSymbol(string name, SymbolType symbolType, BoundModifiers modifiers, int index, bool isCompilerGenerated = false) {
+        this.modifiers = modifiers;
         this.name = name;
         this.symbolType = symbolType;
         this.index = index;
@@ -176,13 +178,16 @@ sealed class LocalSymbol {
     public static LocalSymbol generateTempLocal(SymbolType symbolType, int index) {
         string name = "&temp" + index;
 
-        return new LocalSymbol(name, symbolType, index, true);
+        return new LocalSymbol(name, symbolType, new BoundModifiers(), index, true);
     }
 }
 
 
 
+class BoundModifiers {
+    public bool isMutable = false;
 
+}
 enum SymbolType {
     Int,
     Bool,

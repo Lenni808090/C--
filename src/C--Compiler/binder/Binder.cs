@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
@@ -172,27 +173,30 @@ class Binder {
             return new BoundErrorStmt();
         }
 
+        BoundModifiers modifiers = BindModifiers(varDeclarationStmt.modifiers);
+
+
         SymbolType declared = InferTypeInTypedDecl(typeToken);
 
         if (!IsValidType(declared)) {
-            scopes.Peek().Add(name, CreateErrorLocal(name));
+            scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
             return new BoundErrorStmt();
         }
 
         if (!IsValidType(initBoundExpr.type)) {
-            scopes.Peek().Add(name, CreateErrorLocal(name));
+            scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
             return new BoundErrorStmt();
         }
 
         if (declared != initBoundExpr.type) {
-            scopes.Peek().Add(name, CreateErrorLocal(name));
+            scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
             ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
             return new BoundErrorStmt();
         }
 
 
         int index = AllocateLocalIndex();
-        LocalSymbol localSymbol = new LocalSymbol(name, declared, index);
+        LocalSymbol localSymbol = new LocalSymbol(name, declared, modifiers, index);
         scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
 
 
@@ -219,6 +223,11 @@ class Binder {
 
         if (local is null) {
             ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
+            return new BoundErrorExpr();
+        }
+
+        if (!local.modifiers.isMutable) {
+            ReportError(DiagnosticDescriptors.BinderInmutableAssignment);
             return new BoundErrorExpr();
         }
 
@@ -335,6 +344,35 @@ class Binder {
 
     }
 
+
+    BoundModifiers BindModifiers(Token[] modifiers) {
+        BoundModifiers modified = new();
+
+        foreach (Token token in modifiers) {
+            BindModifier(token, modified);
+        }
+
+        return modified;
+    }
+
+    void BindModifier(Token token, BoundModifiers modified) {
+        TokenType tkType = token.TokenType;
+
+        switch (tkType) {
+            case TokenType.Mut: {
+                    if (modified.isMutable) {
+                        ReportError(DiagnosticDescriptors.BinderDuplicateModifier);
+                        return;
+                    }
+                    modified.isMutable = true;
+                    break;
+                }
+            default:
+                ReportError(DiagnosticDescriptors.BinderUnkownModifier);
+                break;
+        }
+    }
+
     LocalSymbol? lookUpLocal(string name) {
         foreach (var scope in scopes) {
             if (scope.TryGetValue(name, out LocalSymbol? localSymbol)) {
@@ -407,8 +445,8 @@ class Binder {
             _ => null,
         };
     }
-    LocalSymbol CreateErrorLocal(string name) {
-        return new LocalSymbol(name, SymbolType.DiagnosticsError, -1);
+    LocalSymbol CreateErrorLocal(string name, BoundModifiers modifiers) {
+        return new LocalSymbol(name, SymbolType.DiagnosticsError, modifiers, -1);
     }
     void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
         diagnostics.Report(descriptor, args);

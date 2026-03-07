@@ -84,7 +84,8 @@ class Parser {
                tokenType == TokenType.Number ||
                tokenType == TokenType.True ||
                tokenType == TokenType.False ||
-               tokenType == TokenType.OpenParentheses;
+               tokenType == TokenType.OpenParentheses ||
+               tokenType == TokenType.Mut;
     }
 
     bool IsModifierToken(TokenType tokenType) {
@@ -113,7 +114,8 @@ class Parser {
             offset++;
         }
 
-        return matchesDeclarationStmt(offset);
+        bool isDecl = matchesDeclarationStmt(offset);
+        return isDecl;
     }
 
     bool matchesAssignemntExpr() {
@@ -149,8 +151,10 @@ class Parser {
 
 
     Stmt ParseStmt() {
-
-
+        if (IsModifierToken(Current.TokenType) && !IsDeclarationStmt()) {
+            ReportError(DiagnosticDescriptors.ParserDeclarationExpectedAfterModifiers);
+            ParseModifiers();
+        }
 
         if (IsDeclarationStmt()) {
             return ParseDeclarationStmt();

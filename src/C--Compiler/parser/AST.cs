@@ -116,7 +116,7 @@ sealed class BlockStmt : Stmt {
 sealed class VarDeclarationStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.VarDeclarationStmt;
 
-    Token[] modifiers;
+    public Token[] modifiers;
 
     public TypeSyntax type;
     public Token name;

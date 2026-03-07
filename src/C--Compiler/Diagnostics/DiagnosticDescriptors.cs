@@ -14,8 +14,10 @@ public static class DiagnosticDescriptors {
         new("PAR002", "Parser", "closing brace expected after body", Severity.Error);
     public static readonly DiagnosticDescriptor ParserExpectedPrimaryExpression =
         new("PAR003", "Parser", "Expected primary expression, got {0} '{1}'", Severity.Error);
+    public static readonly DiagnosticDescriptor ParserDeclarationExpectedAfterModifiers =
+        new("PAR004", "Parser", "Expected a declaration stmt after modifiers", Severity.Error);
     public static readonly DiagnosticDescriptor ParserForLoopNeedsAssignmentOrDeclaration =
-        new("PAR004", "Parser", "A For Loop needs a Declarratrion or Assignment.Can not be empty", Severity.Error);
+        new("PAR005", "Parser", "A For Loop needs a Declarratrion or Assignment.Can not be empty", Severity.Error);
 
 
 
@@ -42,6 +44,13 @@ public static class DiagnosticDescriptors {
     public static readonly DiagnosticDescriptor BinderNotInLoopBreak =
         new("BND011", "Binder", "usage of break outside of a loop", Severity.Error);
 
+    public static readonly DiagnosticDescriptor BinderDuplicateModifier =
+        new("BND012", "Binder", "only one modifier of each kind per decl", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderUnkownModifier =
+        new("BND013", "Binder", "Unkown modifier used infront of declaration", Severity.Error);
+
+    public static readonly DiagnosticDescriptor BinderInmutableAssignment =
+        new("BND014", "Binder", "Cant assign new value to inmutable var try addding mut ", Severity.Error);
 
 
     public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Warning);
