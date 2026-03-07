@@ -62,59 +62,59 @@ class Binder {
     }
 
     BoundStmt BindExpressionStmt(ExpressionStmt expressionStmt) {
-        return new BoundExpressionStmt(BindExpr(expressionStmt.Expression));
+        return new BoundExpressionStmt(BindExpr(expressionStmt.Expression), expressionStmt.location);
     }
 
     BoundStmt BindReturnStmt(ReturnStmt returnStmt) {
         var boundReturnedExpr = BindExpr(returnStmt.returnExpr);
-        return new BoundReturnStmt(boundReturnedExpr);
+        return new BoundReturnStmt(boundReturnedExpr, returnStmt.location);
     }
 
     BoundStmt BindIfStmt(IfStmt ifStmt) {
         BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
 
         if (boundConditionExpr.type != SymbolType.Bool && IsValidType(boundConditionExpr.type)) {
-            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
+            ReportError(ifStmt.condition.location, DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
         BoundStmt thenStmt = BindStmt(ifStmt.thenStmt);
 
         if (ifStmt.elseStmt is null) {
-            return new BoundIfStmt(boundConditionExpr, thenStmt);
+            return new BoundIfStmt(boundConditionExpr, thenStmt, ifStmt.location);
         }
 
         BoundStmt elseStmt = BindStmt(ifStmt.elseStmt);
 
-        return new BoundIfStmt(boundConditionExpr, thenStmt, elseStmt);
+        return new BoundIfStmt(boundConditionExpr, thenStmt, ifStmt.location, elseStmt);
     }
 
     BoundStmt BindContinueStmt(ContinueStmt continueStmt) {
         if (!isInLoop()) {
-            ReportError(DiagnosticDescriptors.BinderNotInLoopContinue);
+            ReportError(continueStmt.location, DiagnosticDescriptors.BinderNotInLoopContinue);
         }
-        return new BoundContinueStmt();
+        return new BoundContinueStmt(continueStmt.location);
     }
 
 
     BoundStmt BindBreakStmt(BreakStmt breakStmt) {
         if (!isInLoop()) {
-            ReportError(DiagnosticDescriptors.BinderNotInLoopBreak);
+            ReportError(breakStmt.location, DiagnosticDescriptors.BinderNotInLoopBreak);
         }
-        return new BoundBreakStmt();
+        return new BoundBreakStmt(breakStmt.location);
     }
     BoundStmt BindWhileStmt(WhileStmt whileStmt) {
 
         BoundExpr boundConditionExpr = BindExpr(whileStmt.condition);
 
         if (boundConditionExpr.type != SymbolType.Bool && IsValidType(boundConditionExpr.type)) {
-            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
+            ReportError(whileStmt.condition.location, DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
         EnterLoop();
         BoundStmt body = BindStmt(whileStmt.body);
         ExitLoop();
 
-        return new BoundWhileStmt(boundConditionExpr, body);
+        return new BoundWhileStmt(boundConditionExpr, body, whileStmt.location);
     }
 
 
@@ -128,13 +128,13 @@ class Binder {
         }
         else {
             var initializerExpr = BindExpr(forStmt.initializeExpr!);
-            initializer = new BoundExpressionStmt(initializerExpr);
+            initializer = new BoundExpressionStmt(initializerExpr, forStmt.initializeExpr!.location);
         }
 
         var condition = BindExpr(forStmt.condition);
 
         if (condition.type != SymbolType.Bool && IsValidType(condition.type)) {
-            ReportError(DiagnosticDescriptors.BinderConditionMustBeBool);
+            ReportError(forStmt.condition.location, DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
         var iteration = BindExpr(forStmt.iteration);
@@ -145,7 +145,7 @@ class Binder {
 
         PopScope();
 
-        return new BoundForStmt(initializer, condition, iteration, body);
+        return new BoundForStmt(initializer, condition, iteration, body, forStmt.location);
     }
 
     BoundStmt BindBlockStmt(BlockStmt blockStmt) {
@@ -157,7 +157,7 @@ class Binder {
         }
 
         PopScope();
-        return new BoundBlockStmt(boundStmts.ToArray());
+        return new BoundBlockStmt(boundStmts.ToArray(), blockStmt.location);
     }
     BoundStmt BindVarDeclarationStmt(VarDeclarationStmt varDeclarationStmt) {
         string name = varDeclarationStmt.name.Text;
@@ -169,8 +169,8 @@ class Binder {
 
         bool isAlreadyInScope = scopes.Peek().ContainsKey(name);
         if (isAlreadyInScope) {
-            ReportError(DiagnosticDescriptors.BinderVarAlreadyDeclared, name);
-            return new BoundErrorStmt();
+            ReportError(varDeclarationStmt.location, DiagnosticDescriptors.BinderVarAlreadyDeclared, name);
+            return new BoundErrorStmt(varDeclarationStmt.location);
         }
 
         BoundModifiers modifiers = BindModifiers(varDeclarationStmt.modifiers);
@@ -180,18 +180,18 @@ class Binder {
 
         if (!IsValidType(declared)) {
             scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
-            return new BoundErrorStmt();
+            return new BoundErrorStmt(varDeclarationStmt.location);
         }
 
         if (!IsValidType(initBoundExpr.type)) {
             scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
-            return new BoundErrorStmt();
+            return new BoundErrorStmt(varDeclarationStmt.location);
         }
 
         if (declared != initBoundExpr.type) {
             scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
-            return new BoundErrorStmt();
+            ReportError(varDeclarationStmt.location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorStmt(varDeclarationStmt.location);
         }
 
 
@@ -200,7 +200,7 @@ class Binder {
         scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
 
 
-        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr);
+        return new BoundVarDeclarationStmt(localSymbol, initBoundExpr, varDeclarationStmt.location);
     }
 
 
@@ -222,55 +222,55 @@ class Binder {
         var assignedExpr = BindExpr(varAssignmentExpr.assignmentExpr);
 
         if (local is null) {
-            ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
-            return new BoundErrorExpr();
+            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
+            return new BoundErrorExpr(varAssignmentExpr.location);
         }
 
         if (!local.modifiers.isMutable) {
-            ReportError(DiagnosticDescriptors.BinderInmutableAssignment);
-            return new BoundErrorExpr();
+            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderInmutableAssignment);
+            return new BoundErrorExpr(varAssignmentExpr.location);
         }
 
         var assignmentOperatorType = varAssignmentExpr.assignmentOperator.TokenType;
 
         if (assignmentOperatorType == TokenType.Equals) {
-            return BindSimpleVarAssignment(local, assignedExpr);
+            return BindSimpleVarAssignment(local, assignedExpr, varAssignmentExpr.location);
         }
 
-        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType);
+        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType, varAssignmentExpr.location);
     }
 
-    BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr) {
+    BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr, SourceLocation location) {
         if (!IsValidType(assignedExpr.type) || !IsValidType(local.symbolType)) {
-            return new BoundErrorExpr();
+            return new BoundErrorExpr(location);
         }
 
         if (assignedExpr.type != local.symbolType) {
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
-            return new BoundErrorExpr();
+            ReportError(location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorExpr(location);
         }
 
-        return new BoundVarAssignmentExpr(local, assignedExpr, local.symbolType);
+        return new BoundVarAssignmentExpr(local, assignedExpr, local.symbolType, location);
     }
 
-    BoundExpr BindCompoundVarAssignment(LocalSymbol local, BoundExpr assignedExpr, TokenType assignmentOperatorType) {
+    BoundExpr BindCompoundVarAssignment(LocalSymbol local, BoundExpr assignedExpr, TokenType assignmentOperatorType, SourceLocation location) {
         if (!IsValidType(assignedExpr.type) || !IsValidType(local.symbolType)) {
-            return new BoundErrorExpr();
+            return new BoundErrorExpr(location);
         }
 
         var boundOp = MapCompoundAssignmentToBinaryOperator(assignmentOperatorType, local.symbolType, assignedExpr.type);
         if (boundOp is null) {
-            ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
-            return new BoundErrorExpr();
+            ReportError(location, DiagnosticDescriptors.BinderBinaryTypeMismatch);
+            return new BoundErrorExpr(location);
         }
 
-        var compoundExpr = new BoundBinaryExpr(new BoundNameExpr(local), assignedExpr, boundOp, boundOp.resultType);
+        var compoundExpr = new BoundBinaryExpr(new BoundNameExpr(local, location), assignedExpr, boundOp, boundOp.resultType, location);
         if (compoundExpr.type != local.symbolType) {
-            ReportError(DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
-            return new BoundErrorExpr();
+            ReportError(location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorExpr(location);
         }
 
-        return new BoundVarAssignmentExpr(local, compoundExpr, local.symbolType);
+        return new BoundVarAssignmentExpr(local, compoundExpr, local.symbolType, location);
     }
 
 
@@ -278,10 +278,10 @@ class Binder {
         string name = nameExpr.name.Text;
         LocalSymbol? localSymbol = lookUpLocal(name);
         if (localSymbol is not null) {
-            return new BoundNameExpr(localSymbol);
+            return new BoundNameExpr(localSymbol, nameExpr.location);
         }
-        ReportError(DiagnosticDescriptors.BinderVariableNotDeclared, name);
-        return new BoundErrorExpr();
+        ReportError(nameExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
+        return new BoundErrorExpr(nameExpr.location);
 
     }
 
@@ -292,21 +292,21 @@ class Binder {
 
         if (type == SymbolType.Int) {
             if (!literalExpr.value.hasValue) {
-                ReportError(DiagnosticDescriptors.BinderNumberLiteralMissingValue);
-                return new BoundErrorExpr();
+                ReportError(literalExpr.location, DiagnosticDescriptors.BinderNumberLiteralMissingValue);
+                return new BoundErrorExpr(literalExpr.location);
             }
 
             long v = literalExpr.value.Value;
-            return new BoundLiteralExpr(v, type);
+            return new BoundLiteralExpr(v, type, literalExpr.location);
         }
 
         if (type == SymbolType.Bool) {
             long v = tokenType == TokenType.True ? 1 : 0;
-            return new BoundLiteralExpr(v, type);
+            return new BoundLiteralExpr(v, type, literalExpr.location);
         }
 
-        ReportError(DiagnosticDescriptors.BinderUnexpectedLiteralType, type);
-        return new BoundErrorExpr();
+        ReportError(literalExpr.location, DiagnosticDescriptors.BinderUnexpectedLiteralType, type);
+        return new BoundErrorExpr(literalExpr.location);
     }
 
     BoundExpr BindUnaryExpr(UnaryExpr unaryExpr) {
@@ -314,15 +314,15 @@ class Binder {
         var boundUnaryOperator = BoundUnaryOperator.GetUnaryOperator(unaryExpr.Operator.TokenType, boundOperatedExpr.type);
 
         if (boundUnaryOperator is not null) {
-            return new BoundUnaryExpr(boundOperatedExpr, boundUnaryOperator, boundUnaryOperator.resultType);
+            return new BoundUnaryExpr(boundOperatedExpr, boundUnaryOperator, boundUnaryOperator.resultType, unaryExpr.location);
         }
 
         if (!IsValidType(boundOperatedExpr.type)) {
-            return new BoundErrorExpr();
+            return new BoundErrorExpr(unaryExpr.location);
         }
 
-        ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
-        return new BoundErrorExpr();
+        ReportError(unaryExpr.location, DiagnosticDescriptors.BinderBinaryTypeMismatch);
+        return new BoundErrorExpr(unaryExpr.location);
     }
 
     BoundExpr BindBinaryExpr(BinaryExpr binaryExpr) {
@@ -332,15 +332,15 @@ class Binder {
         var op = binaryExpr.Operator.TokenType;
         BoundBinaryOperator? boundBinaryOperator = BoundBinaryOperator.GetBinaryOperator(op, boundLeftExpr.type, boundRightExpr.type);
         if (boundBinaryOperator is not null) {
-            return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundBinaryOperator.resultType);
+            return new BoundBinaryExpr(boundLeftExpr, boundRightExpr, boundBinaryOperator, boundBinaryOperator.resultType, binaryExpr.location);
         }
 
         if (!IsValidType(boundLeftExpr.type) || !IsValidType(boundRightExpr.type)) {
-            return new BoundErrorExpr();
+            return new BoundErrorExpr(binaryExpr.location);
         }
 
-        ReportError(DiagnosticDescriptors.BinderBinaryTypeMismatch);
-        return new BoundErrorExpr();
+        ReportError(binaryExpr.location, DiagnosticDescriptors.BinderBinaryTypeMismatch);
+        return new BoundErrorExpr(binaryExpr.location);
 
     }
 
@@ -361,14 +361,14 @@ class Binder {
         switch (tkType) {
             case TokenType.Mut: {
                     if (modified.isMutable) {
-                        ReportError(DiagnosticDescriptors.BinderDuplicateModifier);
+                        ReportError(token.Location, DiagnosticDescriptors.BinderDuplicateModifier);
                         return;
                     }
                     modified.isMutable = true;
                     break;
                 }
             default:
-                ReportError(DiagnosticDescriptors.BinderUnkownModifier);
+                ReportError(token.Location, DiagnosticDescriptors.BinderUnkownModifier);
                 break;
         }
     }
@@ -414,7 +414,7 @@ class Binder {
             return type;
         }
 
-        ReportError(DiagnosticDescriptors.BinderUnknownTypeToken, typeToken.Text);
+        ReportError(typeToken.Location, DiagnosticDescriptors.BinderUnknownTypeToken, typeToken.Text);
         return SymbolType.DiagnosticsError;
     }
 
@@ -429,7 +429,7 @@ class Binder {
                     return SymbolType.Int;
                 }
             default: {
-                    ReportError(DiagnosticDescriptors.BinderUnknownTokenType, tokenType);
+                    ReportError(token.Location, DiagnosticDescriptors.BinderUnknownTokenType, tokenType);
                     return SymbolType.DiagnosticsError;
                 }
         }
@@ -448,8 +448,8 @@ class Binder {
     LocalSymbol CreateErrorLocal(string name, BoundModifiers modifiers) {
         return new LocalSymbol(name, SymbolType.DiagnosticsError, modifiers, -1);
     }
-    void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
-        diagnostics.Report(descriptor, args);
+    void ReportError(SourceLocation location, DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Report(location, descriptor, args);
     }
 }
 

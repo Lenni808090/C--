@@ -8,6 +8,7 @@ class Emitter {
     List<Fixup> fixups;
     Dictionary<Label, int> labelPos;
     int pos => emittedBytecode.Count;
+    public int Position => pos;
 
     public Emitter() {
         fixups = new();

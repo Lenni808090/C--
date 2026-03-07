@@ -1,5 +1,7 @@
 namespace CMinus.Compiler.Diagnostics;
 
+using CMinus.Compiler;
+
 public sealed class DiagnosticDescriptor {
     public string Code { get; }
     public string Category { get; }
@@ -19,12 +21,14 @@ public class Diagnostic {
     public string category;
     public string message;
     public Severity severity;
+    public SourceLocation? location;
 
     public Diagnostic(string message, Severity severity) {
         this.code = "GEN000";
         this.category = "General";
         this.message = message;
         this.severity = severity;
+        location = null;
     }
 
     public Diagnostic(DiagnosticDescriptor descriptor, params object[] args) {
@@ -32,9 +36,18 @@ public class Diagnostic {
         category = descriptor.Category;
         message = string.Format(descriptor.MessageFormat, args);
         severity = descriptor.Severity;
+        location = null;
+    }
+
+    internal Diagnostic(SourceLocation location, DiagnosticDescriptor descriptor, params object[] args) : this(descriptor, args) {
+        this.location = location;
     }
 
     public string ToDisplayString() {
+        if (location is SourceLocation sourceLocation && sourceLocation.IsValid) {
+            return severity + " " + code + " at " + sourceLocation + ": " + message;
+        }
+
         return severity + " " + code + ": " + message;
     }
 

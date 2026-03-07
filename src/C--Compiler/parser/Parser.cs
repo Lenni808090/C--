@@ -38,13 +38,13 @@ class Parser {
         }
 
         Token unexpected = Current;
-        ReportError(DiagnosticDescriptors.ParserUnexpectedToken, message, unexpected.TokenType);
+        ReportError(unexpected, DiagnosticDescriptors.ParserUnexpectedToken, message, unexpected.TokenType);
 
         if (ShouldConsumeUnexpectedToken(type, unexpected.TokenType)) {
             NextToken();
         }
 
-        return new Token(string.Empty, type);
+        return new Token(string.Empty, type, unexpected.Location);
     }
 
     bool Match(TokenType type) {
@@ -152,7 +152,7 @@ class Parser {
 
     Stmt ParseStmt() {
         if (IsModifierToken(Current.TokenType) && !IsDeclarationStmt()) {
-            ReportError(DiagnosticDescriptors.ParserDeclarationExpectedAfterModifiers);
+            ReportError(Current, DiagnosticDescriptors.ParserDeclarationExpectedAfterModifiers);
             ParseModifiers();
         }
 
@@ -215,7 +215,7 @@ class Parser {
     }
 
     Stmt ParseBlockStmt() {
-        NextToken();
+        Token openBrace = NextToken();
 
         List<Stmt> body = new();
         while (Current.TokenType != TokenType.CloseBrace && Current.TokenType != TokenType.EoF) {
@@ -226,27 +226,27 @@ class Parser {
             NextToken();
         }
         else {
-            ReportError(DiagnosticDescriptors.ParserMissingClosingBrace);
+            ReportError(openBrace, DiagnosticDescriptors.ParserMissingClosingBrace);
         }
 
-        return new BlockStmt(body.ToArray());
+        return new BlockStmt(openBrace, body.ToArray());
     }
 
     Stmt ParseContinueStmt() {
-        NextToken();
+        Token keyword = NextToken();
         Expect(TokenType.Semicolon, "Missing ';' after continue");
-        return new ContinueStmt();
+        return new ContinueStmt(keyword);
     }
     Stmt ParseBreakStmt() {
-        NextToken();
+        Token keyword = NextToken();
         Expect(TokenType.Semicolon, "Missing ';' after break");
-        return new BreakStmt();
+        return new BreakStmt(keyword);
     }
     Stmt ParseReturmStmt() {
-        NextToken();
+        Token keyword = NextToken();
         Expr returnExpr = ParseExpr();
         Expect(TokenType.Semicolon, "Missing ';' after return");
-        return new ReturnStmt(returnExpr);
+        return new ReturnStmt(keyword, returnExpr);
     }
 
     Stmt ParseIfStmt() {
@@ -283,7 +283,7 @@ class Parser {
             initializerExpr = ParseAssignemntExpr();
         }
         else {
-            ReportError(DiagnosticDescriptors.ParserForLoopNeedsAssignmentOrDeclaration);
+            ReportError(Current, DiagnosticDescriptors.ParserForLoopNeedsAssignmentOrDeclaration);
         }
         Expect(TokenType.Semicolon, "Semnicolon expected after Decl or Assign in For");
 
@@ -435,17 +435,17 @@ class Parser {
                     return expr;
                 }
             default: {
-                    ReportError(DiagnosticDescriptors.ParserExpectedPrimaryExpression, token.TokenType, token.Text);
+                    ReportError(token, DiagnosticDescriptors.ParserExpectedPrimaryExpression, token.TokenType, token.Text);
                     if (Current.TokenType != TokenType.EoF) {
                         NextToken();
                     }
-                    return new LiteralExpr(new Token("0", TokenType.Number, 0));
+                    return new LiteralExpr(new Token("0", TokenType.Number, token.Location, 0));
                 }
         }
     }
 
-    void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
-        diagnostics.Report(descriptor, args);
+    void ReportError(Token token, DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Report(token, descriptor, args);
     }
 
 }

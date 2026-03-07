@@ -62,17 +62,20 @@ sealed class Token {
     public string Text;
 
     public TokenType TokenType;
+    public SourceLocation Location;
     public long Value;
     public bool hasValue;
-    public Token(string text, TokenType tokenType) {
+    public Token(string text, TokenType tokenType, SourceLocation location) {
         Text = text;
         TokenType = tokenType;
+        Location = location;
         hasValue = false;
     }
 
-    public Token(string text, TokenType tokenType, long value) {
+    public Token(string text, TokenType tokenType, SourceLocation location, long value) {
         Text = text;
         TokenType = tokenType;
+        Location = location;
         Value = value;
         hasValue = true;
     }

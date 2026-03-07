@@ -8,6 +8,10 @@ abstract class SyntaxNode {
     public abstract SyntaxKind syntaxKind {
         get;
     }
+
+    public abstract SourceLocation location {
+        get;
+    }
 }
 abstract class TypeSyntax : SyntaxNode { };
 abstract class Stmt : SyntaxNode { };
@@ -16,6 +20,7 @@ abstract class Expr : SyntaxNode { };
 //seperated for expandability later;
 sealed class IdentifierTypeSyntax : TypeSyntax {
     public override SyntaxKind syntaxKind => SyntaxKind.IdentifierType;
+    public override SourceLocation location => identifier.Location;
 
     public Token identifier;
 
@@ -27,7 +32,7 @@ sealed class IdentifierTypeSyntax : TypeSyntax {
 
 sealed class CompilationUnit : SyntaxNode {
     public Stmt[] stmts;
-
+    public override SourceLocation location => stmts.Length > 0 ? stmts[0].location : SourceLocation.None;
 
     public override SyntaxKind syntaxKind => SyntaxKind.CompilationUnit;
     public CompilationUnit(Stmt[] stmts) {
@@ -37,6 +42,7 @@ sealed class CompilationUnit : SyntaxNode {
 
 sealed class ExpressionStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ExpressionStmt;
+    public override SourceLocation location => Expression.location;
     public Expr Expression;
 
     public ExpressionStmt(Expr expression) {
@@ -45,9 +51,12 @@ sealed class ExpressionStmt : Stmt {
 }
 sealed class ReturnStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ReturnStmt;
+    public override SourceLocation location => keyword.Location;
+    public Token keyword;
     public Expr returnExpr;
 
-    public ReturnStmt(Expr returnExpr) {
+    public ReturnStmt(Token keyword, Expr returnExpr) {
+        this.keyword = keyword;
         this.returnExpr = returnExpr;
     }
 
@@ -55,6 +64,7 @@ sealed class ReturnStmt : Stmt {
 
 sealed class IfStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
+    public override SourceLocation location => condition.location;
     public Expr condition;
     public Stmt thenStmt;
     public Stmt? elseStmt;
@@ -69,6 +79,7 @@ sealed class IfStmt : Stmt {
 
 sealed class WhileStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.WhileStmt;
+    public override SourceLocation location => condition.location;
     public Expr condition;
     public Stmt body;
 
@@ -81,6 +92,7 @@ sealed class WhileStmt : Stmt {
 
 sealed class ForStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ForStmt;
+    public override SourceLocation location => declarationStmt?.location ?? initializeExpr?.location ?? condition.location;
 
     public VarDeclarationStmt? declarationStmt;
 
@@ -100,21 +112,37 @@ sealed class ForStmt : Stmt {
 
 sealed class ContinueStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.ContinueStmt;
+    public override SourceLocation location => keyword.Location;
+    public Token keyword;
+
+    public ContinueStmt(Token keyword) {
+        this.keyword = keyword;
+    }
 }
 sealed class BreakStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.BreakStmt;
+    public override SourceLocation location => keyword.Location;
+    public Token keyword;
+
+    public BreakStmt(Token keyword) {
+        this.keyword = keyword;
+    }
 }
 sealed class BlockStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.BlockStmt;
+    public override SourceLocation location => stmts.Length > 0 ? stmts[0].location : openBrace.Location;
+    public Token openBrace;
     public Stmt[] stmts;
 
-    public BlockStmt(Stmt[] stmts) {
+    public BlockStmt(Token openBrace, Stmt[] stmts) {
+        this.openBrace = openBrace;
         this.stmts = stmts;
     }
 }
 
 sealed class VarDeclarationStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.VarDeclarationStmt;
+    public override SourceLocation location => modifiers.Length > 0 ? modifiers[0].Location : type.location;
 
     public Token[] modifiers;
 
@@ -133,6 +161,7 @@ sealed class VarDeclarationStmt : Stmt {
 
 sealed class VarAssignmentExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
+    public override SourceLocation location => variable.Location;
 
     public Token variable;
 
@@ -149,6 +178,7 @@ sealed class VarAssignmentExpr : Expr {
 
 sealed class LiteralExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.LiteralExpr;
+    public override SourceLocation location => value.Location;
     public Token value;
 
 
@@ -159,6 +189,7 @@ sealed class LiteralExpr : Expr {
 
 sealed class NameExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.NameExpr;
+    public override SourceLocation location => name.Location;
     public Token name;
 
     public NameExpr(Token name) {
@@ -173,6 +204,7 @@ sealed class BinaryExpr : Expr {
 
     public Token Operator;
     public override SyntaxKind syntaxKind => SyntaxKind.BinaryExpr;
+    public override SourceLocation location => Operator.Location;
 
     public BinaryExpr(Expr leftExpr, Token Operator, Expr rightExpr) {
         this.leftExpr = leftExpr;
@@ -184,6 +216,7 @@ sealed class BinaryExpr : Expr {
 
 sealed class UnaryExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.UnaryExpr;
+    public override SourceLocation location => Operator.Location;
 
     public Token Operator;
     public Expr operatedExpr;

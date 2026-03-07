@@ -100,19 +100,23 @@ class CodeGenerator {
     }
 
     void EmitLoadConst(IrLoadConst loadConst) {
+        functionBuilder.RecordLocation(loadConst.location);
         int constInd = newConst(loadConst.valueType, loadConst.rawValue);
         functionBuilder.Emitter.EmitLoadConstant((ushort)loadConst.dstReg, (ushort)constInd);
     }
 
     void EmitStoreLocal(IrStoreLocal storeLocal) {
+        functionBuilder.RecordLocation(storeLocal.location);
         functionBuilder.Emitter.EmitStoreLocal((ushort)storeLocal.srcReg, (ushort)storeLocal.localIndex);
     }
 
     void EmitLoadLocal(IrLoadLocal loadLocal) {
+        functionBuilder.RecordLocation(loadLocal.location);
         functionBuilder.Emitter.EmitLoadLocal((ushort)loadLocal.dstReg, (ushort)loadLocal.localIndex);
     }
 
     void EmitBinaryOp(IrBinaryOp binaryOp) {
+        functionBuilder.RecordLocation(binaryOp.location);
         var dst = (ushort)binaryOp.dstReg;
         var left = (ushort)binaryOp.leftReg;
         var right = (ushort)binaryOp.rightReg;
@@ -167,6 +171,7 @@ class CodeGenerator {
     }
 
     void EmitUnary(IrUnary unary) {
+        functionBuilder.RecordLocation(unary.location);
         var dst = (ushort)unary.dstReg;
         var opearand = (ushort)unary.operandReg;
 
@@ -186,14 +191,17 @@ class CodeGenerator {
     }
 
     void EmitReturn(IrReturn @return) {
+        functionBuilder.RecordLocation(@return.location);
         functionBuilder.Emitter.EmitReturn((ushort)@return.returnReg);
     }
 
     void EmitGoto(IrGoto @goto) {
+        functionBuilder.RecordLocation(@goto.location);
         var gotoLabel = blockLabels[@goto.basicBlockId];
         functionBuilder.Emitter.EmitJump(gotoLabel);
     }
     void EmitBranch(IrBranch branch) {
+        functionBuilder.RecordLocation(branch.location);
         var thenLabel = blockLabels[branch.thenBlockId];
         var elseLabel = blockLabels[branch.elseBlockId];
 

@@ -1,4 +1,5 @@
 using System.Linq;
+using CMinus.Compiler;
 
 namespace CMinus.Compiler.Diagnostics;
 
@@ -14,6 +15,14 @@ public class DiagnosticBag {
 
     public void Report(DiagnosticDescriptor descriptor, params object[] args) {
         diagnostics.Add(new Diagnostic(descriptor, args));
+    }
+
+    internal void Report(SourceLocation location, DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Add(new Diagnostic(location, descriptor, args));
+    }
+
+    internal void Report(Token token, DiagnosticDescriptor descriptor, params object[] args) {
+        Report(token.Location, descriptor, args);
     }
 
     public bool CheckForErrors() {

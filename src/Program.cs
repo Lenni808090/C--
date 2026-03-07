@@ -55,6 +55,7 @@ class Program {
         IrBuilder irBuilder = new IrBuilder(bound);
         IrCompiledUnit irCompiledUnit = irBuilder.BuildCompiledUnit();
         PrintIrCompiledUnit(irCompiledUnit);
+
         ControlFlowAnalyser controlFlowAnalyser = new ControlFlowAnalyser(irCompiledUnit, compilerContext);
         irCompiledUnit = controlFlowAnalyser.Analyse();
 
@@ -76,6 +77,7 @@ class Program {
         Value result = vm.Run();
         Console.WriteLine("RESULT: " + result);
     }
+
     static void PrintSyntaxUnit(CompilationUnit unit) {
         Console.WriteLine("=== SYNTAX TREE ===");
         for (int i = 0; i < unit.stmts.Length; i++) {
@@ -89,7 +91,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine(stmt.syntaxKind);
 
-        indent += isLast ? "   " : "�  ";
+        indent += isLast ? "   " : "|  ";
 
         switch (stmt) {
             case VarDeclarationStmt v: {
@@ -110,7 +112,7 @@ class Program {
             case IfStmt i: {
                     Console.Write(indent);
                     Console.WriteLine("+--Condition");
-                    PrintSyntaxExpr(i.condition, indent + "�  ", true);
+                    PrintSyntaxExpr(i.condition, indent + "|  ", true);
 
                     Console.Write(indent);
                     Console.WriteLine("+--Then");
@@ -182,7 +184,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine(expr.syntaxKind);
 
-        indent += isLast ? "   " : "�  ";
+        indent += isLast ? "   " : "|  ";
 
         switch (expr) {
             case LiteralExpr lit: {
@@ -200,7 +202,7 @@ class Program {
 
                     Console.Write(indent);
                     Console.WriteLine("+--Operator");
-                    Console.Write(indent + "�  ");
+                    Console.Write(indent + "|  ");
                     Console.WriteLine("symbol: " + bin.Operator.Text);
 
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
@@ -219,7 +221,6 @@ class Program {
                     PrintSyntaxExpr(unary.operatedExpr, indent, true);
                     break;
                 }
-
             default: {
                     Console.Write(indent);
                     Console.WriteLine("Unhandled syntax expr: " + expr.GetType().Name);
@@ -236,7 +237,7 @@ class Program {
 
         switch (type) {
             case IdentifierTypeSyntax id: {
-                    Console.Write(indent + (isLast ? "   " : "�  "));
+                    Console.Write(indent + (isLast ? "   " : "|  "));
                     Console.WriteLine("type: " + id.identifier.Text);
                     break;
                 }
@@ -253,7 +254,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine("Modifiers");
 
-        string childIndent = indent + (isLast ? "   " : "ï¿½  ");
+        string childIndent = indent + (isLast ? "   " : "|  ");
         for (int i = 0; i < modifiers.Length; i++) {
             PrintNameToken("modifier", modifiers[i], childIndent, i == modifiers.Length - 1);
         }
@@ -265,6 +266,7 @@ class Program {
         Console.Write(marker);
         Console.WriteLine(label + ": " + tok.Text);
     }
+
     static void PrintBoundUnit(BoundCompiledUnit unit) {
         Console.WriteLine("=== BOUND TREE ===");
         for (int i = 0; i < unit.boundStmts.Length; i++) {
@@ -382,13 +384,14 @@ class Program {
         Console.WriteLine($"ParamCount = {fn.paramCount}");
         Console.WriteLine($"MaxRegCount = {fn.maxRegCount}");
     }
+
     static void PrintBoundStmt(BoundStmt stmt, string indent, bool isLast) {
         string marker = isLast ? "+--" : "+--";
         Console.Write(indent);
         Console.Write(marker);
         Console.WriteLine(stmt.GetType().Name);
 
-        indent += isLast ? "   " : "�  ";
+        indent += isLast ? "   " : "|  ";
 
         switch (stmt) {
             case BoundVarDeclarationStmt v: {
@@ -401,7 +404,6 @@ class Program {
                     PrintBoundExpr(r.boundReturnedExpr, indent, true);
                     break;
                 }
-
             case BoundExpressionStmt e: {
                     PrintBoundExpr(e.boundExpr, indent, true);
                     break;
@@ -474,14 +476,14 @@ class Program {
                 }
             case BoundBinaryExpr bin: {
                     Console.WriteLine($"BoundBinaryExpr : {bin.type}  op={bin.boundBinaryOperator.operatorKind}");
-                    indent += isLast ? "   " : "�  ";
+                    indent += isLast ? "   " : "|  ";
                     PrintBoundExpr(bin.leftBoundExpr, indent, false);
                     PrintBoundExpr(bin.rightBoundExpr, indent, true);
                     break;
                 }
             case BoundUnaryExpr unary: {
                     Console.WriteLine($"BoundUnaryExpr : {unary.type}  op={unary.boundUnaryOperator.unaryOperatorKind}");
-                    indent += isLast ? "   " : "�  ";
+                    indent += isLast ? "   " : "|  ";
                     PrintBoundExpr(unary.operatedExpr, indent, true);
                     break;
                 }
@@ -544,8 +546,4 @@ class Program {
             }
         }
     }
-
 }
-
-
-

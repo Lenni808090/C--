@@ -64,11 +64,11 @@ class ControlFlowAnalyser {
                 reached.Add(block);
 
                 if (block.terminator is null) {
-                    diagnostics.Report(DiagnosticDescriptors.ControlFLowAllPathsNeedReturn);
+                    diagnostics.Report(block.location, DiagnosticDescriptors.ControlFLowAllPathsNeedReturn);
                 }
             }
             else {
-                diagnostics.Report(DiagnosticDescriptors.ConrolFlowUnreachableCode);
+                diagnostics.Report(block.location, DiagnosticDescriptors.ConrolFlowUnreachableCode);
             }
         }
 

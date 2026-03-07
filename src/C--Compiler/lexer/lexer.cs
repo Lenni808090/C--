@@ -8,6 +8,8 @@ class Lexer {
 
     char[] data;
     int position;
+    int line;
+    int column;
 
     DiagnosticBag diagnostics;
     private static readonly Dictionary<string, TokenType> keywords =
@@ -27,7 +29,8 @@ class Lexer {
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
         diagnostics = context.diagnostics;
-
+        line = 1;
+        column = 1;
     }
 
     public char Peek() {
@@ -49,6 +52,13 @@ class Lexer {
     public char Next() {
         char current = At();
         position++;
+        if (current == '\n') {
+            line++;
+            column = 1;
+        }
+        else {
+            column++;
+        }
         return current;
     }
 
@@ -63,7 +73,7 @@ class Lexer {
             char c = At();
 
             if (c == '\0') {
-                tokens.Add(newToken(TokenType.EoF, "EoF"));
+                tokens.Add(new Token("EoF", TokenType.EoF, new SourceLocation(line, column, position, 0)));
                 break;
             }
 
@@ -74,143 +84,190 @@ class Lexer {
 
             switch (c) {
                 case '+': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.PlusEquals, "+="));
+                            tokens.Add(newToken(TokenType.PlusEquals, "+=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.Plus, "+"));
+                            tokens.Add(newToken(TokenType.Plus, "+", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '-': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.MinusEquals, "-="));
+                            tokens.Add(newToken(TokenType.MinusEquals, "-=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.Minus, "-"));
+                            tokens.Add(newToken(TokenType.Minus, "-", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '*': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.MultiplyEquals, "*="));
+                            tokens.Add(newToken(TokenType.MultiplyEquals, "*=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.Multiply, "*"));
+                            tokens.Add(newToken(TokenType.Multiply, "*", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '/': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.DivideEquals, "/="));
+                            tokens.Add(newToken(TokenType.DivideEquals, "/=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.Divide, "/"));
+                            tokens.Add(newToken(TokenType.Divide, "/", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '|': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '|') {
                             Next();
-                            tokens.Add(newToken(TokenType.Or, "||"));
+                            tokens.Add(newToken(TokenType.Or, "||", start, startLine, startColumn));
                         }
                         else {
-                            ReportError(DiagnosticDescriptors.LexerUnexpectedSinglePipe);
+                            ReportError(CurrentLocation(start, startLine, startColumn), DiagnosticDescriptors.LexerUnexpectedSinglePipe);
                         }
                         break;
                     }
                 case '&': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '&') {
                             Next();
-                            tokens.Add(newToken(TokenType.And, "&&"));
+                            tokens.Add(newToken(TokenType.And, "&&", start, startLine, startColumn));
                         }
                         else {
-                            ReportError(DiagnosticDescriptors.LexerUnexpectedSingleAmpersand);
+                            ReportError(CurrentLocation(start, startLine, startColumn), DiagnosticDescriptors.LexerUnexpectedSingleAmpersand);
                         }
                         break;
                     }
                 case ';': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
-                        tokens.Add(newToken(TokenType.Semicolon, ";"));
+                        tokens.Add(newToken(TokenType.Semicolon, ";", start, startLine, startColumn));
                         break;
                     }
                 case '=': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.EqualsEquals, "=="));
+                            tokens.Add(newToken(TokenType.EqualsEquals, "==", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.Equals, "="));
+                            tokens.Add(newToken(TokenType.Equals, "=", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '!': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.NotEquals, "!="));
+                            tokens.Add(newToken(TokenType.NotEquals, "!=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.Bang, "!"));
+                            tokens.Add(newToken(TokenType.Bang, "!", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '<': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.LessThenEquals, "<="));
+                            tokens.Add(newToken(TokenType.LessThenEquals, "<=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.LessThen, "<"));
+                            tokens.Add(newToken(TokenType.LessThen, "<", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '>': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
                         if (At() == '=') {
                             Next();
-                            tokens.Add(newToken(TokenType.MoreThenEquals, ">="));
+                            tokens.Add(newToken(TokenType.MoreThenEquals, ">=", start, startLine, startColumn));
                         }
                         else {
-                            tokens.Add(newToken(TokenType.MoreThen, ">"));
+                            tokens.Add(newToken(TokenType.MoreThen, ">", start, startLine, startColumn));
                         }
                         break;
                     }
                 case '(': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
-                        tokens.Add(newToken(TokenType.OpenParentheses, "("));
+                        tokens.Add(newToken(TokenType.OpenParentheses, "(", start, startLine, startColumn));
                         break;
                     }
                 case ')': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
-                        tokens.Add(newToken(TokenType.CloseParentheses, ")"));
+                        tokens.Add(newToken(TokenType.CloseParentheses, ")", start, startLine, startColumn));
                         break;
                     }
                 case '{': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
-                        tokens.Add(newToken(TokenType.OpenBrace, "{"));
+                        tokens.Add(newToken(TokenType.OpenBrace, "{", start, startLine, startColumn));
                         break;
                     }
                 case '}': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
                         Next();
-                        tokens.Add(newToken(TokenType.CloseBrace, "}"));
+                        tokens.Add(newToken(TokenType.CloseBrace, "}", start, startLine, startColumn));
                         break;
                     }
                 default: {
                         if (char.IsNumber(c)) {
                             int start = position;
+                            int startLine = line;
+                            int startColumn = column;
 
                             Next();
 
@@ -220,10 +277,12 @@ class Lexer {
                             int length = position - start;
                             string number = new string(data, start, length);
                             long parsedLong = long.Parse(number);
-                            tokens.Add(newToken(TokenType.Number, number, parsedLong));
+                            tokens.Add(newToken(TokenType.Number, number, start, startLine, startColumn, parsedLong));
                         }
                         else if (char.IsLetter(c)) {
                             int start = position;
+                            int startLine = line;
+                            int startColumn = column;
 
                             Next();
 
@@ -233,13 +292,14 @@ class Lexer {
                             int length = position - start;
                             string text = new string(data, start, length);
                             if (keywords.TryGetValue(text, out TokenType keywordType)) {
-                                tokens.Add(newToken(keywordType, text));
+                                tokens.Add(newToken(keywordType, text, start, startLine, startColumn));
                                 continue;
                             }
-                            tokens.Add(newToken(TokenType.Identifier, text));
+                            tokens.Add(newToken(TokenType.Identifier, text, start, startLine, startColumn));
                         }
                         else {
-                            ReportError(DiagnosticDescriptors.LexerUnknownCharacter, c);
+                            var location = new SourceLocation(line, column, position, 1);
+                            ReportError(location, DiagnosticDescriptors.LexerUnknownCharacter, c);
                             Next();
                         }
                         break;
@@ -252,15 +312,20 @@ class Lexer {
         return tokens.ToArray();
     }
 
-    public Token newToken(TokenType tokenType, string text, long? value = null) {
-        if (value is long v) {
-            return new Token(text, tokenType, v);
-        }
-
-        return new Token(text, tokenType);
+    SourceLocation CurrentLocation(int start, int startLine, int startColumn) {
+        return new SourceLocation(startLine, startColumn, start, position - start);
     }
 
-    void ReportError(DiagnosticDescriptor descriptor, params object[] args) {
-        diagnostics.Report(descriptor, args);
+    public Token newToken(TokenType tokenType, string text, int start, int startLine, int startColumn, long? value = null) {
+        SourceLocation location = CurrentLocation(start, startLine, startColumn);
+        if (value is long v) {
+            return new Token(text, tokenType, location, v);
+        }
+
+        return new Token(text, tokenType, location);
+    }
+
+    void ReportError(SourceLocation location, DiagnosticDescriptor descriptor, params object[] args) {
+        diagnostics.Report(location, descriptor, args);
     }
 }
