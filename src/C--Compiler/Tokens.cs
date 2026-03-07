@@ -53,6 +53,10 @@ enum TokenType {
     Or,
     And,
 
+    Meth,
+    Arrow,
+
+    Colon,
 
     EoF,
 }

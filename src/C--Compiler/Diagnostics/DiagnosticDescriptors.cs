@@ -53,6 +53,6 @@ public static class DiagnosticDescriptors {
         new("BND014", "Binder", "Cant assign new value to inmutable var try addding mut ", Severity.Error);
 
 
-    public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Warning);
+    public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);
     public static readonly DiagnosticDescriptor ControlFLowAllPathsNeedReturn = new("CFA002", "Control Flow Analysis", "all paths need to return a value", Severity.Error);
 }

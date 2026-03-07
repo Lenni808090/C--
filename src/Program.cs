@@ -11,10 +11,9 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"
-                           mut int x = 1;
-                           x = 2;
-                           return x;
+        string code = @"mut x: int = 1;
+                        x = 2;
+                        return x;
 ";
 
         CompilerContext compilerContext = new();

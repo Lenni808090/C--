@@ -98,10 +98,13 @@ class Parser {
         if (Peek(offset).TokenType != TokenType.Identifier) {
             matches = false;
         }
-        if (Peek(offset + 1).TokenType != TokenType.Identifier) {
+        if (Peek(offset + 1).TokenType != TokenType.Colon) {
             matches = false;
         }
-        if (Peek(offset + 2).TokenType != TokenType.Equals) {
+        if (Peek(offset + 2).TokenType != TokenType.Identifier) {
+            matches = false;
+        }
+        if (Peek(offset + 3).TokenType != TokenType.Equals) {
             matches = false;
         }
         return matches;
@@ -207,8 +210,9 @@ class Parser {
 
 
     VarDeclarationStmt ParseVarDeclarationCore(Token[] modifiers) {
-        var type = ParseType();
         Token identifier = NextToken();
+        NextToken();
+        var type = ParseType();
         NextToken();
         Expr init = ParseExpr();
         return new VarDeclarationStmt(modifiers, type, identifier, init);

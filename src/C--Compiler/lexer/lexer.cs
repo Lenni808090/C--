@@ -111,6 +111,15 @@ class Lexer {
                         }
                         break;
                     }
+                case ':': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
+
+                        tokens.Add(newToken(TokenType.Colon, ":", start, startLine, startColumn));
+                        Next();
+                        break;
+                    }
                 case '*': {
                         int start = position;
                         int startLine = line;
