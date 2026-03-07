@@ -13,6 +13,9 @@ class Binder {
     Stack<Dictionary<string, LocalSymbol>> scopes;
 
     Dictionary<string, FunctionSymbol> functionsByName;
+    List<FunctionDeclarationStmt> functionDeclarationsToBind;
+
+    SymbolType currentReturnType;
     int loopDepth;
     DiagnosticBag diagnostics;
     List<BoundFunctionDeclaration> functions;
@@ -31,9 +34,11 @@ class Binder {
         scopes = new();
         functions = new();
         functionsByName = new();
+        functionDeclarationsToBind = new();
         diagnostics = compilerContext.diagnostics;
         stmtsToBind = compilationUnit.stmts;
         loopDepth = 0;
+        currentReturnType = SymbolType.DiagnosticsError;
     }
 
     public BoundCompiledUnit BindCompiledUnit() {
@@ -43,17 +48,18 @@ class Binder {
 
     public void CollectFunctions() {
         foreach (Stmt stmt in stmtsToBind) {
-            if (stmt is not FunctionDeclarationStmt) {
-                throw new Exception("Cant have stmts outside functions");
+            if (stmt is not FunctionDeclarationStmt func) {
+                ReportError(stmt.location, DiagnosticDescriptors.BinderTopLevelStmtMustBeFunction);
+                continue;
             }
-            var func = (FunctionDeclarationStmt)stmt;
             AddFunc(func);
         }
     }
     void AddFunc(FunctionDeclarationStmt functionDeclaration) {
         var name = functionDeclaration.functionName.Text;
         if (functionsByName.TryGetValue(name, out _)) {
-            throw new Exception("function already declared choose different name");
+            ReportError(functionDeclaration.location, DiagnosticDescriptors.BinderFunctionAlreadyDeclared, name);
+            return;
         }
 
         var returnType = InferTypeInTypedDecl(((IdentifierTypeSyntax)functionDeclaration.returnType).identifier);
@@ -65,23 +71,25 @@ class Binder {
             argTypes.Add(type);
 
             if (!seenNames.Add(arg.name.Text)) {
-                throw new Exception("parameter names need to be unique");
+                ReportError(arg.location, DiagnosticDescriptors.BinderDuplicateParameterName, arg.name.Text);
             }
         }
 
         FunctionSymbol functionSymbol = new FunctionSymbol(name, returnType, argTypes.ToArray());
         functionsByName[name] = functionSymbol;
+        functionDeclarationsToBind.Add(functionDeclaration);
     }
 
     public BoundCompiledUnit BindFunctions() {
 
-        foreach (FunctionDeclarationStmt stmt in stmtsToBind) {
+        foreach (FunctionDeclarationStmt stmt in functionDeclarationsToBind) {
             var boundStmt = BindFunction(stmt);
             functions.Add(boundStmt);
         }
 
         if (mainFunc is null) {
-            throw new Exception("programm needs an entry Point");
+            ReportError(GetCompilationLocation(), DiagnosticDescriptors.BinderProgramNeedsEntryPoint);
+            mainFunc = CreateErrorMainFunction();
         }
         return new BoundCompiledUnit(mainFunc, functions.ToArray());
     }
@@ -91,16 +99,18 @@ class Binder {
         ResetLocalIndex();
         PushScope();
 
-        AddParams(functionDeclaration);
-        var body = (BoundBlockStmt)BindBlockStmt(functionDeclaration.functionBody);
         var name = functionDeclaration.functionName.Text;
-
         functionsByName.TryGetValue(name, out FunctionSymbol? functionSymbol);
 
         if (functionSymbol is null) {
-            throw new Exception("internal error unkown function after first pass");
+            ReportError(functionDeclaration.location, DiagnosticDescriptors.BinderFunctionResolutionFailed, name);
+            functionSymbol = CreateErrorFunctionSymbol(name);
         }
 
+        currentReturnType = functionSymbol.returnType;
+
+        AddParams(functionDeclaration);
+        var body = (BoundBlockStmt)BindBlockStmt(functionDeclaration.functionBody);
         functionSymbol.localCount = nextLocalIndex;
         var func = new BoundFunctionDeclaration(functionSymbol, body, functionDeclaration.functionName.Location);
 
@@ -119,6 +129,11 @@ class Binder {
             SymbolType type = InferTypeInTypedDecl(((IdentifierTypeSyntax)param.type).identifier);
             BoundModifiers modifiers = BindModifiers(param.modifiers);
 
+            if (scopes.Peek().ContainsKey(name)) {
+                ReportError(param.location, DiagnosticDescriptors.BinderDuplicateParameterName, name);
+                continue;
+            }
+
             int index = AllocateLocalIndex();
             LocalSymbol local = new LocalSymbol(name, type, modifiers, index);
             scopes.Peek().Add(name, local);
@@ -135,8 +150,13 @@ class Binder {
             ForStmt f => BindForStmt(f),
             BlockStmt b => BindBlockStmt(b),
             ExpressionStmt e => BindExpressionStmt(e),
-            _ => throw new Exception($"Unexpected stmt: {stmt.syntaxKind}"),
+            _ => BindUnexpectedStmt(stmt),
         };
+    }
+
+    BoundStmt BindUnexpectedStmt(Stmt stmt) {
+        ReportError(stmt.location, DiagnosticDescriptors.BinderUnexpectedStatement, stmt.syntaxKind);
+        return new BoundErrorStmt(stmt.location);
     }
 
     BoundStmt BindExpressionStmt(ExpressionStmt expressionStmt) {
@@ -145,6 +165,9 @@ class Binder {
 
     BoundStmt BindReturnStmt(ReturnStmt returnStmt) {
         var boundReturnedExpr = BindExpr(returnStmt.returnExpr);
+        if (IsValidType(boundReturnedExpr.type) && currentReturnType != boundReturnedExpr.type) {
+            ReportError(returnStmt.location, DiagnosticDescriptors.BinderReturnTypeMismatch, currentReturnType, boundReturnedExpr.type);
+        }
         return new BoundReturnStmt(boundReturnedExpr, returnStmt.location);
     }
 
@@ -290,8 +313,13 @@ class Binder {
             LiteralExpr l => BindLiteralExpr(l),
             UnaryExpr u => BindUnaryExpr(u),
             BinaryExpr b => BindBinaryExpr(b),
-            _ => throw new Exception($"Unexpected expr: {expr.syntaxKind}"),
+            _ => BindUnexpectedExpr(expr),
         };
+    }
+
+    BoundExpr BindUnexpectedExpr(Expr expr) {
+        ReportError(expr.location, DiagnosticDescriptors.BinderUnexpectedExpression, expr.syntaxKind);
+        return new BoundErrorExpr(expr.location);
     }
 
     BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
@@ -529,6 +557,17 @@ class Binder {
     }
     LocalSymbol CreateErrorLocal(string name, BoundModifiers modifiers) {
         return new LocalSymbol(name, SymbolType.DiagnosticsError, modifiers, -1);
+    }
+    FunctionSymbol CreateErrorFunctionSymbol(string name) {
+        return new FunctionSymbol(name, SymbolType.DiagnosticsError, Array.Empty<SymbolType>());
+    }
+    BoundFunctionDeclaration CreateErrorMainFunction() {
+        var functionSymbol = CreateErrorFunctionSymbol("Main");
+        var body = new BoundBlockStmt(Array.Empty<BoundStmt>(), GetCompilationLocation());
+        return new BoundFunctionDeclaration(functionSymbol, body, GetCompilationLocation());
+    }
+    SourceLocation GetCompilationLocation() {
+        return stmtsToBind.Length > 0 ? stmtsToBind[0].location : SourceLocation.None;
     }
     void ReportError(SourceLocation location, DiagnosticDescriptor descriptor, params object[] args) {
         diagnostics.Report(location, descriptor, args);

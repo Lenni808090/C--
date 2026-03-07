@@ -52,6 +52,23 @@ public static class DiagnosticDescriptors {
     public static readonly DiagnosticDescriptor BinderInmutableAssignment =
         new("BND014", "Binder", "Cant assign new value to inmutable var try addding mut ", Severity.Error);
 
+    public static readonly DiagnosticDescriptor BinderTopLevelStmtMustBeFunction =
+        new("BND015", "Binder", "top-level statements must be function declarations", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderFunctionAlreadyDeclared =
+        new("BND016", "Binder", "function already declared: {0}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderDuplicateParameterName =
+        new("BND017", "Binder", "parameter names must be unique: {0}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderProgramNeedsEntryPoint =
+        new("BND018", "Binder", "program needs an entry point named Main", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderFunctionResolutionFailed =
+        new("BND019", "Binder", "function could not be resolved after collection: {0}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderReturnTypeMismatch =
+        new("BND020", "Binder", "return type mismatch. expected {0}, got {1}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderUnexpectedStatement =
+        new("BND021", "Binder", "unsupported statement in binder: {0}", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderUnexpectedExpression =
+        new("BND022", "Binder", "unsupported expression in binder: {0}", Severity.Error);
+
 
     public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);
     public static readonly DiagnosticDescriptor ControlFLowAllPathsNeedReturn = new("CFA002", "Control Flow Analysis", "all paths need to return a value", Severity.Error);
