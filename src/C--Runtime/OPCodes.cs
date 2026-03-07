@@ -29,6 +29,8 @@ enum OpCode : byte {
     CMP_NEQ,
 
 
-    MOVE
+    MOVE,
+
+    CALL,
 
 }
