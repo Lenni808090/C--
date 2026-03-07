@@ -1,5 +1,6 @@
 using CMinus.Compiler.Lowering;
 using CMinus.Runtime;
+using Microsoft.VisualBasic;
 
 namespace CMinus.CodeGen;
 
@@ -35,6 +36,7 @@ class CodeGenerator {
             EmitBlock(block);
         }
         int localCount = irFunction.localCount;
+        blockLabels.Clear();
         return functionBuilder.BuildAndReset(localCount, irFunction.maxVReg);
     }
 
@@ -72,6 +74,10 @@ class CodeGenerator {
                 }
             case IrUnary unary: {
                     EmitUnary(unary);
+                    break;
+                }
+            case IrCallInstr call: {
+                    EmitCall(call);
                     break;
                 }
             default: {
@@ -190,6 +196,17 @@ class CodeGenerator {
                     throw new Exception($"Unknown IrUnaryOPKind: {unary.irUnaryOp}");
                 }
         }
+    }
+
+    void EmitCall(IrCallInstr irCallInstr) {
+        functionBuilder.RecordLocation(irCallInstr.location);
+
+        ushort dst = (ushort)irCallInstr.dstReg;
+        ushort[] argRegs = irCallInstr.argRegs.Select(a => (ushort)a).ToArray();
+        ushort argCount = (ushort)irCallInstr.argCount;
+        ushort functionIndex = (ushort)irCallInstr.functionIndex;
+
+        functionBuilder.Emitter.EmitCall(dst, functionIndex, argCount, argRegs);
     }
 
     void EmitReturn(IrReturn @return) {

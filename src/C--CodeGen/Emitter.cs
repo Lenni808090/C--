@@ -56,7 +56,15 @@ class Emitter {
         byte[] conValue = BitConverter.GetBytes(value);
         emittedBytecode.AddRange(conValue);
     }
-
+    public void EmitCall(ushort dstReg, int functionIndex, ushort argCount, ushort[] argRegs) {
+        EmitOp(OpCode.CALL);
+        EmitU16(dstReg);
+        EmitI32(functionIndex);
+        EmitU16(argCount);
+        foreach (ushort argReg in argRegs) {
+            EmitU16(argReg);
+        }
+    }
     public void EmitLoadConstant(UInt16 dstReg, UInt16 constIndex) {
         EmitOp(OpCode.LOAD_CONST);
         EmitU16(dstReg);
