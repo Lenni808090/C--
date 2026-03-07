@@ -16,7 +16,20 @@ abstract class SyntaxNode {
 abstract class TypeSyntax : SyntaxNode { };
 abstract class Stmt : SyntaxNode { };
 abstract class Expr : SyntaxNode { };
+sealed class ParameterSyntax : SyntaxNode {
+    public Token name;
+    public TypeSyntax type;
+    public Token[] modifiers;
+    public ParameterSyntax(Token name, TypeSyntax type, Token[] modifiers) {
+        this.name = name;
+        this.type = type;
+        this.modifiers = modifiers;
+    }
 
+    public override SyntaxKind syntaxKind => SyntaxKind.ParameterSyntax;
+
+    public override SourceLocation location => name.Location;
+}
 //seperated for expandability later;
 sealed class IdentifierTypeSyntax : TypeSyntax {
     public override SyntaxKind syntaxKind => SyntaxKind.IdentifierType;
@@ -61,7 +74,25 @@ sealed class ReturnStmt : Stmt {
     }
 
 }
+sealed class FunctionDeclarationStmt : Stmt {
+    public override SyntaxKind syntaxKind => SyntaxKind.FunctionDeclaratioStmt;
 
+    public override SourceLocation location => functionName.Location;
+
+    public Token functionName;
+
+    public ParameterSyntax[] @params;
+
+    public TypeSyntax returnType;
+    public Stmt functionBody;
+
+    public FunctionDeclarationStmt(Token functionName, ParameterSyntax[] @params, TypeSyntax returnType, Stmt functionBody) {
+        this.functionName = functionName;
+        this.@params = @params;
+        this.returnType = returnType;
+        this.functionBody = functionBody;
+    }
+}
 sealed class IfStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.IfStmt;
     public override SourceLocation location => condition.location;
@@ -228,7 +259,9 @@ sealed class UnaryExpr : Expr {
 }
 
 enum SyntaxKind {
+    ParameterSyntax,
     ReturnStmt,
+    FunctionDeclaratioStmt,
     VarDeclarationStmt,
     VarAssignmentStmt,
     IfStmt,

@@ -11,9 +11,10 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        string code = @"mut x: int = 1;
-                        x = 2;
-                        return x;
+        string code = @"
+meth Add(x: int, y: int) -> int {
+    return x + y;
+}
 ";
 
         CompilerContext compilerContext = new();
@@ -93,6 +94,19 @@ class Program {
         indent += isLast ? "   " : "|  ";
 
         switch (stmt) {
+            case FunctionDeclarationStmt f: {
+                    PrintNameToken("name", f.functionName, indent, false);
+                    Console.Write(indent);
+                    Console.WriteLine("+--Parameters");
+                    PrintSyntaxParameters(f.@params, indent + "|  ");
+                    Console.Write(indent);
+                    Console.WriteLine("+--ReturnType");
+                    PrintSyntaxType(f.returnType, indent + "|  ", false);
+                    Console.Write(indent);
+                    Console.WriteLine("+--Body");
+                    PrintSyntaxStmt(f.functionBody, indent + "   ", true);
+                    break;
+                }
             case VarDeclarationStmt v: {
                     PrintSyntaxModifiers(v.modifiers, indent, false);
                     PrintSyntaxType(v.type, indent, false);
@@ -257,6 +271,30 @@ class Program {
         for (int i = 0; i < modifiers.Length; i++) {
             PrintNameToken("modifier", modifiers[i], childIndent, i == modifiers.Length - 1);
         }
+    }
+
+    static void PrintSyntaxParameters(ParameterSyntax[] parameters, string indent) {
+        if (parameters.Length == 0) {
+            Console.Write(indent);
+            Console.WriteLine("+--<none>");
+            return;
+        }
+
+        for (int i = 0; i < parameters.Length; i++) {
+            PrintSyntaxParameter(parameters[i], indent, i == parameters.Length - 1);
+        }
+    }
+
+    static void PrintSyntaxParameter(ParameterSyntax parameter, string indent, bool isLast) {
+        string marker = isLast ? "+--" : "+--";
+        Console.Write(indent);
+        Console.Write(marker);
+        Console.WriteLine(parameter.syntaxKind);
+
+        string childIndent = indent + (isLast ? "   " : "|  ");
+        PrintSyntaxModifiers(parameter.modifiers, childIndent, false);
+        PrintSyntaxType(parameter.type, childIndent, false);
+        PrintNameToken("name", parameter.name, childIndent, true);
     }
 
     static void PrintNameToken(string label, Token tok, string indent, bool isLast) {

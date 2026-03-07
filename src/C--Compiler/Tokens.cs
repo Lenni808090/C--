@@ -21,7 +21,8 @@ enum TokenType {
     CloseBrace,
 
     Semicolon,
-
+    Colon,
+    Comma,
     If,
     Else,
 
@@ -55,8 +56,6 @@ enum TokenType {
 
     Meth,
     Arrow,
-
-    Colon,
 
     EoF,
 }

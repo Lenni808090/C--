@@ -25,6 +25,7 @@ class Lexer {
         { "for", TokenType.For},
         { "break", TokenType.Break},
         {"mut", TokenType.Mut},
+        {"meth", TokenType.Meth},
     };
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
@@ -106,6 +107,10 @@ class Lexer {
                             Next();
                             tokens.Add(newToken(TokenType.MinusEquals, "-=", start, startLine, startColumn));
                         }
+                        else if (At() == '>') {
+                            Next();
+                            tokens.Add(newToken(TokenType.Arrow, "->", start, startLine, startColumn));
+                        }
                         else {
                             tokens.Add(newToken(TokenType.Minus, "-", start, startLine, startColumn));
                         }
@@ -117,6 +122,15 @@ class Lexer {
                         int startColumn = column;
 
                         tokens.Add(newToken(TokenType.Colon, ":", start, startLine, startColumn));
+                        Next();
+                        break;
+                    }
+                case ',': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
+
+                        tokens.Add(newToken(TokenType.Comma, ",", start, startLine, startColumn));
                         Next();
                         break;
                     }

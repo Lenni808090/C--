@@ -167,6 +167,9 @@ class Parser {
             case TokenType.Return: {
                     return ParseReturmStmt();
                 }
+            case TokenType.Meth: {
+                    return ParseFunctionDeclarationStmt();
+                }
             case TokenType.If: {
                     return ParseIfStmt();
                 }
@@ -219,7 +222,7 @@ class Parser {
     }
 
     Stmt ParseBlockStmt() {
-        Token openBrace = NextToken();
+        Token openBrace = Expect(TokenType.OpenBrace, "Open Brace Expected in Block Stmt");
 
         List<Stmt> body = new();
         while (Current.TokenType != TokenType.CloseBrace && Current.TokenType != TokenType.EoF) {
@@ -251,6 +254,37 @@ class Parser {
         Expr returnExpr = ParseExpr();
         Expect(TokenType.Semicolon, "Missing ';' after return");
         return new ReturnStmt(keyword, returnExpr);
+    }
+
+    Stmt ParseFunctionDeclarationStmt() {
+        NextToken();
+
+        var functionName = Expect(TokenType.Identifier, "Function Name after meth keyword expected");
+
+        Expect(TokenType.OpenParentheses, "Expected Open Parentheses after Funciiton Name");
+
+        List<ParameterSyntax> parameters = new();
+        while (Current.TokenType == TokenType.Identifier) {
+            var paramName = NextToken();
+
+            Expect(TokenType.Colon, "Colon expected after Param Name for Type Definition");
+
+            var parameterType = Expect(TokenType.Identifier, "Type Expexted after Colon when declaring params");
+            parameters.Add(new ParameterSyntax(paramName, new IdentifierTypeSyntax(parameterType), new Token[0]));
+            if (Current.TokenType == TokenType.Comma) {
+                NextToken();
+            }
+        }
+
+        Expect(TokenType.CloseParentheses, "Expected Close Parentheses after Params");
+
+        Expect(TokenType.Arrow, "Arrow Expected After Params for Function Return Type");
+
+        var returnType = Expect(TokenType.Identifier, "Function Return Type Expected After Arrow");
+
+        var body = ParseBlockStmt();
+
+        return new FunctionDeclarationStmt(functionName, parameters.ToArray(), new IdentifierTypeSyntax(returnType), body);
     }
 
     Stmt ParseIfStmt() {
