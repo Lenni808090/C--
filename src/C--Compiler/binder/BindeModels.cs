@@ -12,14 +12,14 @@ abstract class BoundStmt {
     }
 };
 abstract class BoundExpr {
-    public SymbolType type {
+    public TypeSymbol type {
         get;
     }
     public SourceLocation location {
         get;
     }
     //nur die classe und andere inheriting ones are able to acess;
-    protected BoundExpr(SymbolType type, SourceLocation location) {
+    protected BoundExpr(TypeSymbol type, SourceLocation location) {
         this.type = type;
         this.location = location;
     }
@@ -135,9 +135,17 @@ sealed class BoundVarAssignmentExpr : BoundExpr {
     public LocalSymbol localSymbol;
     public BoundExpr assignmentExpr;
 
-    public BoundVarAssignmentExpr(LocalSymbol localSymbol, BoundExpr assignmentExpr, SymbolType type, SourceLocation location) : base(type, location) {
+    public BoundVarAssignmentExpr(LocalSymbol localSymbol, BoundExpr assignmentExpr, TypeSymbol type, SourceLocation location) : base(type, location) {
         this.localSymbol = localSymbol;
         this.assignmentExpr = assignmentExpr;
+    }
+}
+
+sealed class BoundArrayCreationExpr : BoundExpr {
+    public BoundExpr length;
+
+    public BoundArrayCreationExpr(BoundExpr length, TypeSymbol type, SourceLocation location) : base(type, location) {
+        this.length = length;
     }
 }
 
@@ -147,7 +155,7 @@ sealed class BoundCallExpr : BoundExpr {
     public int argCount;
     public FunctionSymbol callee;
 
-    public BoundCallExpr(BoundExpr[] args, FunctionSymbol calle, SymbolType type, SourceLocation location) : base(type, location) {
+    public BoundCallExpr(BoundExpr[] args, FunctionSymbol calle, TypeSymbol type, SourceLocation location) : base(type, location) {
         this.callee = calle;
         this.args = args;
         argCount = args.Length;
@@ -157,7 +165,7 @@ sealed class BoundCallExpr : BoundExpr {
 sealed class BoundLiteralExpr : BoundExpr {
     public long value;
 
-    public BoundLiteralExpr(long value, SymbolType type, SourceLocation location) : base(type, location) {
+    public BoundLiteralExpr(long value, TypeSymbol type, SourceLocation location) : base(type, location) {
         this.value = value;
     }
 }
@@ -174,7 +182,7 @@ sealed class BoundBinaryExpr : BoundExpr {
     public BoundExpr leftBoundExpr;
     public BoundExpr rightBoundExpr;
     public BoundBinaryOperator boundBinaryOperator;
-    public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperator boundBinaryOperatorKind, SymbolType symbolType, SourceLocation location) : base(symbolType, location) {
+    public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperator boundBinaryOperatorKind, TypeSymbol symbolType, SourceLocation location) : base(symbolType, location) {
         this.leftBoundExpr = leftBoundExpr;
         this.rightBoundExpr = rightBoundExpr;
         this.boundBinaryOperator = boundBinaryOperatorKind;
@@ -185,14 +193,14 @@ sealed class BoundUnaryExpr : BoundExpr {
     public BoundExpr operatedExpr;
     public BoundUnaryOperator boundUnaryOperator;
 
-    public BoundUnaryExpr(BoundExpr operatedExpr, BoundUnaryOperator boundUnaryOperator, SymbolType symbolType, SourceLocation location) : base(symbolType, location) {
+    public BoundUnaryExpr(BoundExpr operatedExpr, BoundUnaryOperator boundUnaryOperator, TypeSymbol symbolType, SourceLocation location) : base(symbolType, location) {
         this.operatedExpr = operatedExpr;
         this.boundUnaryOperator = boundUnaryOperator;
     }
 }
 
 sealed class BoundErrorExpr : BoundExpr {
-    public BoundErrorExpr(SourceLocation location) : base(SymbolType.DiagnosticsError, location) { }
+    public BoundErrorExpr(SourceLocation location) : base(new ErrorSymbolType(), location) { }
 }
 
 sealed class BoundErrorStmt : BoundStmt {
@@ -202,13 +210,13 @@ sealed class BoundErrorStmt : BoundStmt {
 
 sealed class LocalSymbol {
     public string name;
-    public SymbolType symbolType;
+    public TypeSymbol symbolType;
 
     public BoundModifiers modifiers;
     public bool isCompilerGenerated;
     public int index;
 
-    public LocalSymbol(string name, SymbolType symbolType, BoundModifiers modifiers, int index, bool isCompilerGenerated = false) {
+    public LocalSymbol(string name, TypeSymbol symbolType, BoundModifiers modifiers, int index, bool isCompilerGenerated = false) {
         this.modifiers = modifiers;
         this.name = name;
         this.symbolType = symbolType;
@@ -216,7 +224,7 @@ sealed class LocalSymbol {
         this.isCompilerGenerated = isCompilerGenerated;
     }
 
-    public static LocalSymbol generateTempLocal(SymbolType symbolType, int index) {
+    public static LocalSymbol generateTempLocal(TypeSymbol symbolType, int index) {
         string name = "&temp" + index;
 
         return new LocalSymbol(name, symbolType, new BoundModifiers(), index, true);
@@ -225,12 +233,12 @@ sealed class LocalSymbol {
 
 sealed class FunctionSymbol {
     public string name;
-    public SymbolType returnType;
+    public TypeSymbol returnType;
     public int localCount;
     public int argCount;
-    public SymbolType[] argTypes;
+    public TypeSymbol[] argTypes;
 
-    public FunctionSymbol(string name, SymbolType returnType, SymbolType[] argTypes) {
+    public FunctionSymbol(string name, TypeSymbol returnType, TypeSymbol[] argTypes) {
         this.name = name;
         this.returnType = returnType;
         argCount = argTypes.Length;
@@ -244,9 +252,31 @@ class BoundModifiers {
     public bool isMutable = false;
 
 }
-enum SymbolType {
-    Int,
-    Bool,
-    Char,
-    DiagnosticsError,
+
+
+abstract class TypeSymbol {
+    public string name;
+
+    protected TypeSymbol(string name) {
+        this.name = name;
+    }
+}
+
+class PrimitiveSymbolType : TypeSymbol {
+    public PrimitiveSymbolType(string name) : base(name) { }
+}
+
+class ArraySymbolType : TypeSymbol {
+    public TypeSymbol elementType;
+
+    public ArraySymbolType(string name, TypeSymbol elementType) : base(name) {
+        this.elementType = elementType;
+    }
+
+}
+
+class ErrorSymbolType : TypeSymbol {
+    public ErrorSymbolType() : base("Error") {
+    }
+
 }

@@ -244,7 +244,7 @@ sealed class IndexExpr : Expr {
     }
 }
 sealed class VarAssignmentExpr : Expr {
-    public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
+    public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentExpr;
     public override SourceLocation location => variable.Location;
 
     public Token variable;
@@ -316,7 +316,6 @@ enum SyntaxKind {
     ReturnStmt,
     FunctionDeclaratioStmt,
     VarDeclarationStmt,
-    VarAssignmentStmt,
     IfStmt,
     WhileStmt,
     ForStmt,
@@ -332,6 +331,7 @@ enum SyntaxKind {
     BinaryExpr,
     ArrayCreationExpr,
     UnaryExpr,
+    VarAssignmentExpr,
     ExpressionStmt,
     CallExpr,
 

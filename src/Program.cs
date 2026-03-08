@@ -15,7 +15,10 @@ class Program {
                         meth Main() -> char {
                             x: char = 'a';
                             y: char = 'b';
-                            return x;
+                            for(mut i: int = 0; i < 10; i += 1){
+                                i = i;
+                            }
+                            return 'l';
                         }
 ";
 
@@ -24,7 +27,6 @@ class Program {
 
         Lexer lexer = new Lexer(code, compilerContext);
         Token[] tokens = lexer.Lex();
-
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
             return;
