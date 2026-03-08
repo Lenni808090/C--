@@ -3,6 +3,7 @@ namespace CMinus.Runtime;
 enum ValueType {
     Int,
     Bool,
+    Char,
 }
 
 

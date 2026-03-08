@@ -10,6 +10,7 @@ enum TokenType {
 
     Identifier,
     Number,
+    Char,
 
     Equals,
 

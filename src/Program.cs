@@ -13,11 +13,12 @@ class Program {
     static void Main() {
         string code = @"
             meth isEven(x: int) -> bool{
-                return x % 2 == 0;
+                modX: int = x % 2;
+                return modX == 0;
             }
 
             meth Main() -> bool {
-                return isEven(2);
+                return isEven(3);
             }
 
 
