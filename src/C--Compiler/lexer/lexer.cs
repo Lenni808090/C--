@@ -148,6 +148,20 @@ class Lexer {
                         }
                         break;
                     }
+                case '%': {
+                        int start = position;
+                        int startLine = line;
+                        int startColumn = column;
+                        Next();
+                        if (At() == '=') {
+                            Next();
+                            tokens.Add(newToken(TokenType.ModulusEquals, "%=", start, startLine, startColumn));
+                        }
+                        else {
+                            tokens.Add(newToken(TokenType.Modulus, "%", start, startLine, startColumn));
+                        }
+                        break;
+                    }
                 case '/': {
                         int start = position;
                         int startLine = line;

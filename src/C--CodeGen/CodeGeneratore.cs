@@ -148,7 +148,10 @@ class CodeGenerator {
                     functionBuilder.Emitter.EmitDivideInt(dst, left, right);
                     break;
                 }
-
+            case IrBinaryOPKind.ModulusInt: {
+                    functionBuilder.Emitter.EmitModulusInt(dst, left, right);
+                    break;
+                }
             case IrBinaryOPKind.CmpLtInt: {
                     functionBuilder.Emitter.EmitCmpLTInt(dst, left, right);
                     break;

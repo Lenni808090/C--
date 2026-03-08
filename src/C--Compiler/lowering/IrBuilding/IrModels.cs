@@ -187,6 +187,7 @@ enum IrBinaryOPKind {
     AddInt,
     SubtractInt,
     MultiplyInt,
+    ModulusInt,
     DivideInt,
 
     CmpEq,

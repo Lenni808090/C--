@@ -12,13 +12,15 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-meth Add(x: int, y: int) -> int {
-    return x + y;
-}
+            meth isEven(x: int) -> bool{
+                return x % 2 == 0;
+            }
 
-meth Main() -> int {
-    return Add(1 + 2, Add(9, 3));
-}
+            meth Main() -> bool {
+                return isEven(2);
+            }
+
+
 ";
 
         CompilerContext compilerContext = new();
@@ -357,19 +359,24 @@ meth Main() -> int {
     }
 
     static void PrintBytecode(CompiledFunction fn, Value[] constants) {
-        Console.WriteLine("=== CONSTANT POOL ===");
-        for (int i = 0; i < constants.Length; i++) {
-            Console.WriteLine($"[{i}] {constants[i]}");
-        }
-
-        Console.WriteLine();
         Console.WriteLine("=== BYTECODE ===");
 
         byte[] code = fn.bytecode;
         int ip = 0;
         ushort ReadU16() {
+            if (ip + sizeof(ushort) > code.Length) {
+                throw new InvalidOperationException($"Truncated bytecode while reading u16 at offset {ip}.");
+            }
             ushort value = BitConverter.ToUInt16(code, ip);
             ip += 2;
+            return value;
+        }
+        int ReadI32() {
+            if (ip + sizeof(int) > code.Length) {
+                throw new InvalidOperationException($"Truncated bytecode while reading i32 at offset {ip}.");
+            }
+            int value = BitConverter.ToInt32(code, ip);
+            ip += 4;
             return value;
         }
 
@@ -407,6 +414,7 @@ meth Main() -> int {
                 case OpCode.SUBTRACT_INT:
                 case OpCode.MULTIPLY_INT:
                 case OpCode.DIVIDE_INT:
+                case OpCode.MODULUS_INT:
                 case OpCode.CMP_EQ:
                 case OpCode.CMP_LT_INT:
                 case OpCode.CMP_MT_INT:
@@ -428,23 +436,20 @@ meth Main() -> int {
                         break;
                     }
                 case OpCode.JUMP: {
-                        int offset = BitConverter.ToInt32(code, ip);
-                        ip += 4;
+                        int offset = ReadI32();
                         Console.WriteLine($" {offset}");
                         break;
                     }
                 case OpCode.JUMP_IF_FALSE:
                 case OpCode.JUMP_IF_TRUE: {
                         ushort cond = ReadU16();
-                        int offset = BitConverter.ToInt32(code, ip);
-                        ip += 4;
+                        int offset = ReadI32();
                         Console.WriteLine($" r{cond}, {offset}");
                         break;
                     }
                 case OpCode.CALL: {
                         ushort dst = ReadU16();
-                        int functionIndex = BitConverter.ToInt32(code, ip);
-                        ip += 4;
+                        int functionIndex = ReadI32();
                         ushort argCount = ReadU16();
                         Console.Write($" r{dst}, fn[{functionIndex}], argc={argCount}");
                         for (int i = 0; i < argCount; i++) {
@@ -455,8 +460,8 @@ meth Main() -> int {
                         break;
                     }
                 default: {
-                        Console.WriteLine();
-                        break;
+                        Console.WriteLine(" <unknown opcode>");
+                        return;
                     }
             }
         }
@@ -468,6 +473,12 @@ meth Main() -> int {
     }
 
     static void PrintProgramBytecode(CompiledProgram program, Value[] constants) {
+        Console.WriteLine("=== CONSTANT POOL ===");
+        for (int i = 0; i < constants.Length; i++) {
+            Console.WriteLine($"[{i}] {constants[i]}");
+        }
+
+        Console.WriteLine();
         for (int i = 0; i < program.compiledFunctions.Length; i++) {
             Console.WriteLine($"=== FUNCTION {i} (entry={i == program.entryFuncInd}) ===");
             PrintBytecode(program.compiledFunctions[i], constants);
@@ -598,57 +609,57 @@ meth Main() -> int {
             IrFunction irFunction = irCompiledUnit.irFunctions[functionIndex];
             Console.WriteLine($"Function {functionIndex} (entry={functionIndex == irCompiledUnit.mainFunctionInd}, locals={irFunction.localCount}, params={irFunction.paramCount}, maxRegs={irFunction.maxVReg})");
             foreach (BasicBlock block in irFunction.basicBlocks) {
-            Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable})");
+                Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable})");
 
-            foreach (IrInstr irInstr in block.irInstrs) {
-                switch (irInstr) {
-                    case IrLoadConst c:
-                        Console.WriteLine($"  load_const r{c.dstReg} <- {c.valueType}({c.rawValue})");
-                        break;
-                    case IrStoreLocal s:
-                        Console.WriteLine($"  store_local local[{s.localIndex}] <- r{s.srcReg}");
-                        break;
-                    case IrLoadLocal l:
-                        Console.WriteLine($"  load_local r{l.dstReg} <- local[{l.localIndex}]");
-                        break;
-                    case IrMove m:
-                        Console.WriteLine($"  move r{m.dstReg} <- r{m.srcReg}");
-                        break;
-                    case IrBinaryOp b:
-                        Console.WriteLine($"  binary {b.irBinaryOP} r{b.dstReg} <- r{b.leftReg}, r{b.rightReg}");
-                        break;
-                    case IrUnary u:
-                        Console.WriteLine($"  unary {u.irUnaryOp} r{u.dstReg} <- r{u.operandReg}");
-                        break;
-                    case IrCallInstr c:
-                        Console.WriteLine($"  call r{c.dstReg} <- fn[{c.functionIndex}]({string.Join(", ", c.argRegs.Select(static r => $"r{r}"))})");
-                        break;
-                    default:
-                        Console.WriteLine("  <unknown instr>");
-                        break;
+                foreach (IrInstr irInstr in block.irInstrs) {
+                    switch (irInstr) {
+                        case IrLoadConst c:
+                            Console.WriteLine($"  load_const r{c.dstReg} <- {c.valueType}({c.rawValue})");
+                            break;
+                        case IrStoreLocal s:
+                            Console.WriteLine($"  store_local local[{s.localIndex}] <- r{s.srcReg}");
+                            break;
+                        case IrLoadLocal l:
+                            Console.WriteLine($"  load_local r{l.dstReg} <- local[{l.localIndex}]");
+                            break;
+                        case IrMove m:
+                            Console.WriteLine($"  move r{m.dstReg} <- r{m.srcReg}");
+                            break;
+                        case IrBinaryOp b:
+                            Console.WriteLine($"  binary {b.irBinaryOP} r{b.dstReg} <- r{b.leftReg}, r{b.rightReg}");
+                            break;
+                        case IrUnary u:
+                            Console.WriteLine($"  unary {u.irUnaryOp} r{u.dstReg} <- r{u.operandReg}");
+                            break;
+                        case IrCallInstr c:
+                            Console.WriteLine($"  call r{c.dstReg} <- fn[{c.functionIndex}]({string.Join(", ", c.argRegs.Select(static r => $"r{r}"))})");
+                            break;
+                        default:
+                            Console.WriteLine("  <unknown instr>");
+                            break;
+                    }
+                }
+
+                if (block.terminator is null) {
+                    Console.WriteLine("  terminator: <none>");
+                }
+                else {
+                    switch (block.terminator) {
+                        case IrReturn r:
+                            Console.WriteLine($"  terminator: return r{r.returnReg}");
+                            break;
+                        case IrGoto g:
+                            Console.WriteLine($"  terminator: goto block {g.basicBlockId}");
+                            break;
+                        case IrBranch b:
+                            Console.WriteLine($"  terminator: branch r{b.condReg} ? block {b.thenBlockId} : block {b.elseBlockId}");
+                            break;
+                        default:
+                            Console.WriteLine("  terminator: <unknown>");
+                            break;
+                    }
                 }
             }
-
-            if (block.terminator is null) {
-                Console.WriteLine("  terminator: <none>");
-            }
-            else {
-                switch (block.terminator) {
-                    case IrReturn r:
-                        Console.WriteLine($"  terminator: return r{r.returnReg}");
-                        break;
-                    case IrGoto g:
-                        Console.WriteLine($"  terminator: goto block {g.basicBlockId}");
-                        break;
-                    case IrBranch b:
-                        Console.WriteLine($"  terminator: branch r{b.condReg} ? block {b.thenBlockId} : block {b.elseBlockId}");
-                        break;
-                    default:
-                        Console.WriteLine("  terminator: <unknown>");
-                        break;
-                }
-            }
-        }
         }
     }
 }

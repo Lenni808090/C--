@@ -601,7 +601,8 @@ class Binder {
             TokenType.MinusEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Minus, leftSide, rightSide),
             TokenType.MultiplyEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Multiply, leftSide, rightSide),
             TokenType.DivideEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Divide, leftSide, rightSide),
-            _ => null,
+            TokenType.ModulusEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Modulus, leftSide, rightSide),
+            _ => throw new Exception("unkown compound assignment operator"),
         };
     }
     LocalSymbol CreateErrorLocal(string name, BoundModifiers modifiers) {

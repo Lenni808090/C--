@@ -494,6 +494,7 @@ class IrBuilder {
             BoundBinaryOperatorKind.AddInt => IrBinaryOPKind.AddInt,
             BoundBinaryOperatorKind.SubtractInt => IrBinaryOPKind.SubtractInt,
             BoundBinaryOperatorKind.MultiplyInt => IrBinaryOPKind.MultiplyInt,
+            BoundBinaryOperatorKind.ModulusInt => IrBinaryOPKind.ModulusInt,
             BoundBinaryOperatorKind.DivideInt => IrBinaryOPKind.DivideInt,
 
             BoundBinaryOperatorKind.Equals => IrBinaryOPKind.CmpEq,

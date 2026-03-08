@@ -39,6 +39,7 @@ sealed class BoundBinaryOperator : BinaryOperator {
         new BoundBinaryOperator(TokenType.Minus, BoundBinaryOperatorKind.SubtractInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
         new BoundBinaryOperator(TokenType.Multiply, BoundBinaryOperatorKind.MultiplyInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
         new BoundBinaryOperator(TokenType.Divide, BoundBinaryOperatorKind.DivideInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
+        new BoundBinaryOperator(TokenType.Modulus, BoundBinaryOperatorKind.ModulusInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
 
         new BoundBinaryOperator(TokenType.LessThen, BoundBinaryOperatorKind.LessThanInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
         new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
@@ -90,6 +91,7 @@ enum BoundBinaryOperatorKind {
     AddInt,
     SubtractInt,
     MultiplyInt,
+    ModulusInt,
     DivideInt,
 
     Equals,

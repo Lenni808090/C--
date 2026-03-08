@@ -27,7 +27,7 @@ enum OpCode : byte {
     CMP_MT_INT,
     CMP_MTE_INT,
     CMP_NEQ,
-
+    MODULUS_INT,
 
     MOVE,
 

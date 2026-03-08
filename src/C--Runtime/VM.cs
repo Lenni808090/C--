@@ -118,6 +118,15 @@ class VM {
                         frame.regs[dstReg] = new Value(ValueType.Int, -toBeNegged);
                         break;
                     }
+                case OpCode.MODULUS_INT: {
+                        ushort dstReg = getu16();
+                        ushort leftReg = getu16();
+                        ushort rightReg = getu16();
+                        int left = (int)frame.regs[leftReg].RawData;
+                        int right = (int)frame.regs[rightReg].RawData;
+                        frame.regs[dstReg] = new Value(ValueType.Int, left % right);
+                        break;
+                    }
 
                 case OpCode.NOT: {
                         ushort dstReg = getu16();
@@ -238,6 +247,7 @@ class VM {
         var callFrame = functions[functionIndex].AsCallFrame(dstReg, functionIndex);
         var callerFrame = callFrames.Peek();
 
+        //possible because binder adds params first as locals
         for (int i = 0; i < argRegs.Length; i++) {
             callFrame.locals[i] = callerFrame.regs[argRegs[i]];
         }

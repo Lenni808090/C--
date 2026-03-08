@@ -140,7 +140,8 @@ class Parser {
                || tokenType == TokenType.PlusEquals
                || tokenType == TokenType.MinusEquals
                || tokenType == TokenType.MultiplyEquals
-               || tokenType == TokenType.DivideEquals;
+               || tokenType == TokenType.DivideEquals
+               || tokenType == TokenType.ModulusEquals;
     }
     public CompilationUnit ParseUnit() {
         List<Stmt> stmts = new();
@@ -449,7 +450,8 @@ class Parser {
 
     Expr ParseMultiplyExpr() {
         Expr left = ParseUnaryExpr();
-        while (Current.TokenType == TokenType.Multiply || Current.TokenType == TokenType.Divide) {
+
+        while (Current.TokenType == TokenType.Multiply || Current.TokenType == TokenType.Divide || Current.TokenType == TokenType.Modulus) {
             Token op = NextToken();
             Expr right = ParseUnaryExpr();
             left = new BinaryExpr(left, op, right);

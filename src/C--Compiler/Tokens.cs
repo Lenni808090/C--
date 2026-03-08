@@ -38,11 +38,13 @@ enum TokenType {
     Minus,
     Multiply,
     Divide,
+    Modulus,
 
     PlusEquals,
     MinusEquals,
     MultiplyEquals,
     DivideEquals,
+    ModulusEquals,
 
     EqualsEquals,
     NotEquals,
