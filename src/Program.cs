@@ -240,6 +240,26 @@ class Program {
                     PrintSyntaxExpr(va.assignmentExpr, indent, true);
                     break;
                 }
+            case ArrayCreationExpr arrayCreation: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Type");
+                    PrintSyntaxType(arrayCreation.typeSyntax, indent + "   ", false);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Length");
+                    PrintSyntaxExpr(arrayCreation.length, indent + "   ", true);
+                    break;
+                }
+            case IndexExpr indexExpr: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Target");
+                    PrintSyntaxExpr(indexExpr.target, indent + "   ", false);
+
+                    Console.Write(indent);
+                    Console.WriteLine("+--Index");
+                    PrintSyntaxExpr(indexExpr.index, indent + "   ", true);
+                    break;
+                }
             case UnaryExpr unary: {
                     Console.Write(indent);
                     Console.WriteLine("+--Operator");
@@ -278,6 +298,10 @@ class Program {
             case IdentifierTypeSyntax id: {
                     Console.Write(indent + (isLast ? "   " : "|  "));
                     Console.WriteLine("type: " + id.identifier.Text);
+                    break;
+                }
+            case ArrayTypeSyntax arrayType: {
+                    PrintSyntaxType(arrayType.elementType, indent + (isLast ? "   " : "|  "), true);
                     break;
                 }
         }
@@ -571,6 +595,19 @@ class Program {
                     Console.Write(indent);
                     Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.typeSymbol} (index {va.localSymbol.index})");
                     PrintBoundExpr(va.assignmentExpr, indent, true);
+                    break;
+                }
+            case BoundArrayCreationExpr arrayCreation: {
+                    Console.WriteLine($"BoundArrayCreationExpr : {arrayCreation.type}");
+                    indent += isLast ? "   " : "|  ";
+                    PrintBoundExpr(arrayCreation.length, indent, true);
+                    break;
+                }
+            case BoundIndexExpr indexExpr: {
+                    Console.WriteLine($"BoundIndexExpr : {indexExpr.type}");
+                    indent += isLast ? "   " : "|  ";
+                    PrintBoundExpr(indexExpr.target, indent, false);
+                    PrintBoundExpr(indexExpr.index, indent, true);
                     break;
                 }
             case BoundBinaryExpr bin: {
