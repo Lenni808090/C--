@@ -12,16 +12,9 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-            meth isEven(x: int) -> bool{
-                modX: int = x % 2;
-                return modX == 0;
+            meth Main() -> char {
+                return 'h';
             }
-
-            meth Main() -> bool {
-                return isEven(3);
-            }
-
-
 ";
 
         CompilerContext compilerContext = new();

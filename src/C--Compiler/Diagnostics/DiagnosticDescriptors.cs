@@ -32,14 +32,10 @@ public static class DiagnosticDescriptors {
         new("BND004", "Binder", "this var is not declared: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderNumberLiteralMissingValue =
         new("BND005", "Binder", "number literal needs to have a value", Severity.Error);
-    public static readonly DiagnosticDescriptor BinderUnexpectedLiteralType =
-        new("BND006", "Binder", "unexpected literal type: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderBinaryTypeMismatch =
         new("BND007", "Binder", "type mismatch in binary operation", Severity.Error);
     public static readonly DiagnosticDescriptor BinderUnknownTypeToken =
         new("BND008", "Binder", "unknown type {0}", Severity.Error);
-    public static readonly DiagnosticDescriptor BinderUnknownTokenType =
-        new("BND009", "Binder", "unkown type {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderNotInLoopContinue =
         new("BND010", "Binder", "usage of continue outside of a loop", Severity.Error);
     public static readonly DiagnosticDescriptor BinderNotInLoopBreak =
@@ -65,10 +61,6 @@ public static class DiagnosticDescriptors {
         new("BND019", "Binder", "function could not be resolved after collection: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderReturnTypeMismatch =
         new("BND020", "Binder", "return type mismatch. expected {0}, got {1}", Severity.Error);
-    public static readonly DiagnosticDescriptor BinderUnexpectedStatement =
-        new("BND021", "Binder", "unsupported statement in binder: {0}", Severity.Error);
-    public static readonly DiagnosticDescriptor BinderUnexpectedExpression =
-        new("BND022", "Binder", "unsupported expression in binder: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderCallTargetMustBeFunctionName =
         new("BND023", "Binder", "call target must be a function name", Severity.Error);
     public static readonly DiagnosticDescriptor BinderFunctionNotDeclared =

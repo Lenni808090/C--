@@ -28,6 +28,9 @@ struct Value {
             case ValueType.Bool: {
                     return $"Bool({(RawData == 1 ? "true" : "false")})";
                 }
+            case ValueType.Char: {
+                    return $"Char({(char)RawData})";
+                }
             default: {
                     throw new InvalidOperationException("Unknown ValueType: " + ValueType);
                 }

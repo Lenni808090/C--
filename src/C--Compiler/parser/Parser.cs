@@ -483,6 +483,7 @@ class Parser {
     Expr ParsePrimary() {
         Token token = Current;
         switch (token.TokenType) {
+            case TokenType.Char:
             case TokenType.Number:
             case TokenType.True:
             case TokenType.False: {

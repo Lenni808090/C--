@@ -45,6 +45,10 @@ sealed class BoundBinaryOperator : BinaryOperator {
         new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
         new BoundBinaryOperator(TokenType.MoreThen, BoundBinaryOperatorKind.GreaterThanInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
         new BoundBinaryOperator(TokenType.MoreThenEquals, BoundBinaryOperatorKind.GreaterThanOrEqualInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
+        new BoundBinaryOperator(TokenType.LessThen, BoundBinaryOperatorKind.LessThanInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
+        new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
+        new BoundBinaryOperator(TokenType.MoreThen, BoundBinaryOperatorKind.GreaterThanInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
+        new BoundBinaryOperator(TokenType.MoreThenEquals, BoundBinaryOperatorKind.GreaterThanOrEqualInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
 
         new BoundBinaryOperator(TokenType.And, BoundBinaryOperatorKind.LogicalAnd, SymbolType.Bool, SymbolType.Bool, SymbolType.Bool),
         new BoundBinaryOperator(TokenType.Or, BoundBinaryOperatorKind.LogicalOr, SymbolType.Bool, SymbolType.Bool, SymbolType.Bool),
@@ -82,6 +86,7 @@ sealed class BoundBinaryOperator : BinaryOperator {
         return type switch {
             SymbolType.Int => true,
             SymbolType.Bool => true,
+            SymbolType.Char => true,
             _ => false,
         };
     }

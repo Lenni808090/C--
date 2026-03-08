@@ -247,6 +247,6 @@ class BoundModifiers {
 enum SymbolType {
     Int,
     Bool,
-
+    Char,
     DiagnosticsError,
 }

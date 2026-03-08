@@ -1,4 +1,5 @@
 using System.Data;
+using System.Runtime.CompilerServices;
 using CMinus.Compiler.Binding;
 
 namespace CMinus.Compiler.Lowering;
@@ -484,6 +485,7 @@ class IrBuilder {
         return symbolType switch {
             SymbolType.Int => Runtime.ValueType.Int,
             SymbolType.Bool => Runtime.ValueType.Bool,
+            SymbolType.Char => Runtime.ValueType.Char,
             _ => throw new Exception("Unkown symbol type in get value type" + symbolType),
         };
     }

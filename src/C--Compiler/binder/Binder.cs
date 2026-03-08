@@ -28,6 +28,7 @@ class Binder {
     {
         { "int", SymbolType.Int },
         { "bool", SymbolType.Bool },
+        { "char", SymbolType.Char},
     };
 
 
@@ -156,8 +157,7 @@ class Binder {
     }
 
     BoundStmt BindUnexpectedStmt(Stmt stmt) {
-        ReportError(stmt.location, DiagnosticDescriptors.BinderUnexpectedStatement, stmt.syntaxKind);
-        return new BoundErrorStmt(stmt.location);
+        throw new Exception("unsupported statement in binder: " + stmt.syntaxKind);
     }
 
     BoundStmt BindExpressionStmt(ExpressionStmt expressionStmt) {
@@ -320,8 +320,7 @@ class Binder {
     }
 
     BoundExpr BindUnexpectedExpr(Expr expr) {
-        ReportError(expr.location, DiagnosticDescriptors.BinderUnexpectedExpression, expr.syntaxKind);
-        return new BoundErrorExpr(expr.location);
+        throw new Exception("unsupported expression in binder: " + expr.syntaxKind);
     }
 
     BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
@@ -445,23 +444,26 @@ class Binder {
         TokenType tokenType = literalToken.TokenType;
         SymbolType type = InferType(literalToken);
 
-        if (type == SymbolType.Int) {
-            if (!literalExpr.value.hasValue) {
-                ReportError(literalExpr.location, DiagnosticDescriptors.BinderNumberLiteralMissingValue);
-                return new BoundErrorExpr(literalExpr.location);
-            }
+        switch (type) {
+            case SymbolType.Char:
+            case SymbolType.Int: {
+                    if (!literalExpr.value.hasValue) {
+                        ReportError(literalExpr.location, DiagnosticDescriptors.BinderNumberLiteralMissingValue);
+                        return new BoundErrorExpr(literalExpr.location);
+                    }
 
-            long v = literalExpr.value.Value;
-            return new BoundLiteralExpr(v, type, literalExpr.location);
+                    long v = literalExpr.value.Value;
+                    return new BoundLiteralExpr(v, type, literalExpr.location);
+                }
+            case SymbolType.Bool: {
+
+                    long v = tokenType == TokenType.True ? 1 : 0;
+                    return new BoundLiteralExpr(v, type, literalExpr.location);
+                }
+            default: {
+                    throw new Exception("unexpected literal type: " + type);
+                }
         }
-
-        if (type == SymbolType.Bool) {
-            long v = tokenType == TokenType.True ? 1 : 0;
-            return new BoundLiteralExpr(v, type, literalExpr.location);
-        }
-
-        ReportError(literalExpr.location, DiagnosticDescriptors.BinderUnexpectedLiteralType, type);
-        return new BoundErrorExpr(literalExpr.location);
     }
 
     BoundExpr BindUnaryExpr(UnaryExpr unaryExpr) {
@@ -587,9 +589,11 @@ class Binder {
             case TokenType.Number: {
                     return SymbolType.Int;
                 }
+            case TokenType.Char: {
+                    return SymbolType.Char;
+                }
             default: {
-                    ReportError(token.Location, DiagnosticDescriptors.BinderUnknownTokenType, tokenType);
-                    return SymbolType.DiagnosticsError;
+                    throw new Exception("unkown type " + tokenType);
                 }
         }
 
