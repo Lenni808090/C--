@@ -13,7 +13,7 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            x: int[] = 1;
+                            x: int[][] = new int[5][];
                         }
 ";
 

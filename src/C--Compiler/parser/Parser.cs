@@ -347,18 +347,30 @@ class Parser {
         return new WhileStmt(condition, body);
     }
 
-    Expr ParseObjectCreation() {
+    Expr ParseObjectCreationExpr() {
         NextToken();
 
-        var typeIndentifier = Expect(TokenType.Identifier, "Type identifier expected after new keyword for obj creation");
-        var typeSyntax = new ArrayTypeSyntax(new IdentifierTypeSyntax(typeIndentifier));
-
+        TypeSyntax arrayTypeSyntax = new ArrayTypeSyntax(ParseIdentifierType());
         Expect(TokenType.OpenBracket, "opening bracket expected after array type");
         Expr length = ParseExpr();
-        Expect(TokenType.CloseBracket, "closing bracket expected after array length");
+        Expect(TokenType.CloseBracket, "closing bracket expected after length in array creation");
 
+        while (Current.TokenType == TokenType.OpenBracket) {
+            NextToken();
 
-        return new ArrayCreationExpr(typeSyntax, length);
+            if (Current.TokenType == TokenType.CloseBracket) {
+                NextToken();
+                arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
+                continue;
+            }
+
+            ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
+            ParseExpr();
+            Expect(TokenType.CloseBracket, "closing bracket expected after length in array creation");
+            arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
+        }
+
+        return new ArrayCreationExpr(arrayTypeSyntax, length);
     }
 
     TypeSyntax ParseType() {
@@ -398,7 +410,7 @@ class Parser {
 
         Expect(TokenType.OpenBracket, "Expected '[' after indexed expression");
         Expr index = ParseExpr();
-        Expect(TokenType.OpenBracket, "Expected ']' after indexed expression");
+        Expect(TokenType.CloseBracket, "Expected ']' after indexed expression");
 
         return new IndexExpr(target, index);
     }
@@ -528,7 +540,7 @@ class Parser {
                     return new LiteralExpr(token);
                 }
             case TokenType.New: {
-                    var objCreationExpr = ParseObjectCreation();
+                    var objCreationExpr = ParseObjectCreationExpr();
                     return objCreationExpr;
                 }
             case TokenType.Identifier: {

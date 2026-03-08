@@ -270,6 +270,10 @@ abstract class TypeSymbol {
     protected TypeSymbol(string name) {
         this.name = name;
     }
+
+    public override string ToString() {
+        return name;
+    }
 }
 
 class PrimitiveSymbolType : TypeSymbol {

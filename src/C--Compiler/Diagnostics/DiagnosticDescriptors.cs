@@ -22,6 +22,8 @@ public static class DiagnosticDescriptors {
         new("PAR004", "Parser", "Expected a declaration stmt after modifiers", Severity.Error);
     public static readonly DiagnosticDescriptor ParserForLoopNeedsAssignmentOrDeclaration =
         new("PAR005", "Parser", "A For Loop needs a Declarratrion or Assignment.Can not be empty", Severity.Error);
+    public static readonly DiagnosticDescriptor ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized =
+        new("PAR006", "Parser", "only the first jagged array dimension may specify a length during creation", Severity.Error);
 
 
 
