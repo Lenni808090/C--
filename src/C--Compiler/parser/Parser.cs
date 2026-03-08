@@ -94,22 +94,19 @@ class Parser {
     }
 
     //int x = 100;
-    bool matchesDeclarationStmt(int offset = 0) {
-        bool matches = true;
+    bool MatchesDeclarationStmt(int offset = 0) {
         if (Peek(offset).TokenType != TokenType.Identifier) {
-            matches = false;
+            return false;
         }
+
         if (Peek(offset + 1).TokenType != TokenType.Colon) {
-            matches = false;
+            return false;
         }
-        if (Peek(offset + 2).TokenType != TokenType.Identifier) {
-            matches = false;
-        }
-        if (Peek(offset + 3).TokenType != TokenType.Equals) {
-            matches = false;
-        }
-        return matches;
+
+        return true;
     }
+
+
 
     bool IsDeclarationStmt() {
         int offset = 0;
@@ -118,7 +115,7 @@ class Parser {
             offset++;
         }
 
-        bool isDecl = matchesDeclarationStmt(offset);
+        bool isDecl = MatchesDeclarationStmt(offset);
         return isDecl;
     }
 
@@ -218,7 +215,7 @@ class Parser {
         Token identifier = NextToken();
         NextToken();
         var type = ParseType();
-        NextToken();
+        Expect(TokenType.Equals, "Equals expected after type declaration in var declaration");
         Expr init = ParseExpr();
         return new VarDeclarationStmt(modifiers, type, identifier, init);
     }

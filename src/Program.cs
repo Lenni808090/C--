@@ -12,13 +12,8 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                        meth Main() -> char {
-                            x: char = 'a';
-                            y: char = 'b';
-                            for(mut i: int = 0; i < 10; i += 1){
-                                i = i;
-                            }
-                            return 'l';
+                        meth Main() -> int {
+                            x: int[] = 1;
                         }
 ";
 
