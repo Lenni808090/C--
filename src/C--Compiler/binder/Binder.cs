@@ -64,12 +64,12 @@ class Binder {
             return;
         }
 
-        var returnType = InferTypeInTypedDecl(functionDeclaration.returnType);
+        var returnType = BindTypeSyntax(functionDeclaration.returnType);
 
         List<TypeSymbol> argTypes = new();
         HashSet<string> seenNames = new();
         foreach (ParameterSyntax arg in functionDeclaration.@params) {
-            var type = InferTypeInTypedDecl(arg.type);
+            var type = BindTypeSyntax(arg.type);
             argTypes.Add(type);
 
             if (!seenNames.Add(arg.name.Text)) {
@@ -128,7 +128,7 @@ class Binder {
         foreach (var param in functionDeclaration.@params) {
             string name = param.name.Text;
 
-            TypeSymbol type = InferTypeInTypedDecl(param.type);
+            TypeSymbol type = BindTypeSyntax(param.type);
             BoundModifiers modifiers = BindModifiers(param.modifiers);
 
             if (scopes.Peek().ContainsKey(name)) {
@@ -278,7 +278,7 @@ class Binder {
         BoundModifiers modifiers = BindModifiers(varDeclarationStmt.modifiers);
 
 
-        TypeSymbol declared = InferTypeInTypedDecl(typeToken);
+        TypeSymbol declared = BindTypeSyntax(typeToken);
 
         if (!IsValidType(declared)) {
             scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
@@ -311,6 +311,8 @@ class Binder {
         return expr switch {
             VarAssignmentExpr a => BindVarAssignmentExpr(a),
             CallExpr c => BindCallExpr(c),
+            ArrayCreationExpr a => BindArrayCreationExpr(a),
+            IndexExpr i => BindIndexExpr(i),
             NameExpr n => BindNameExpr(n),
             LiteralExpr l => BindLiteralExpr(l),
             UnaryExpr u => BindUnaryExpr(u),
@@ -323,29 +325,6 @@ class Binder {
         throw new Exception("unsupported expression in binder: " + expr.syntaxKind);
     }
 
-    BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
-        var name = varAssignmentExpr.variable.Text;
-        var local = lookUpLocal(name);
-        var assignedExpr = BindExpr(varAssignmentExpr.assignmentExpr);
-
-        if (local is null) {
-            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
-            return new BoundErrorExpr(varAssignmentExpr.location);
-        }
-
-        if (!local.modifiers.isMutable) {
-            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderInmutableAssignment);
-            return new BoundErrorExpr(varAssignmentExpr.location);
-        }
-
-        var assignmentOperatorType = varAssignmentExpr.assignmentOperator.TokenType;
-
-        if (assignmentOperatorType == TokenType.Equals) {
-            return BindSimpleVarAssignment(local, assignedExpr, varAssignmentExpr.location);
-        }
-
-        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType, varAssignmentExpr.location);
-    }
 
 
     BoundExpr BindCallExpr(CallExpr callExpr) {
@@ -394,6 +373,83 @@ class Binder {
         return new BoundCallExpr(args.ToArray(), functionSymbol, functionSymbol.returnType, callExpr.location);
     }
 
+    BoundExpr BindArrayCreationExpr(ArrayCreationExpr arrayCreationExpr) {
+        TypeSymbol type = BindTypeSyntax(arrayCreationExpr.typeSyntax);
+
+        if (!IsValidType(type)) {
+            return new BoundErrorExpr(arrayCreationExpr.location);
+        }
+
+        if (type is not ArraySymbolType) {
+            ReportError(arrayCreationExpr.typeSyntax.location, DiagnosticDescriptors.BinderArrayCreationTypeMustBeArray);
+            return new BoundErrorExpr(arrayCreationExpr.location);
+        }
+
+        BoundExpr length = BindExpr(arrayCreationExpr.length);
+
+        if (!IsValidType(length.type)) {
+            return new BoundErrorExpr(arrayCreationExpr.location);
+        }
+
+        if (!length.type.IsSameType(BuiltInTypes.Int)) {
+            ReportError(arrayCreationExpr.length.location, DiagnosticDescriptors.BinderArrayLengthMustBeInt);
+            return new BoundErrorExpr(arrayCreationExpr.location);
+        }
+
+        return new BoundArrayCreationExpr(length, type, arrayCreationExpr.location);
+    }
+
+    BoundExpr BindIndexExpr(IndexExpr indexExpr) {
+        BoundExpr target = BindExpr(indexExpr.target);
+
+        if (!IsValidType(target.type)) {
+            return new BoundErrorExpr(indexExpr.location);
+        }
+
+        if (target.type is not ArraySymbolType) {
+            ReportError(indexExpr.target.location, DiagnosticDescriptors.BinderIndexTargetMustBeArray);
+            return new BoundErrorExpr(indexExpr.location);
+        }
+
+        BoundExpr index = BindExpr(indexExpr.index);
+
+        if (!IsValidType(index.type)) {
+            return new BoundErrorExpr(indexExpr.location);
+        }
+
+        if (!index.type.IsSameType(BuiltInTypes.Int)) {
+            ReportError(indexExpr.index.location, DiagnosticDescriptors.BinderArrayIndexMustBeInt);
+            return new BoundErrorExpr(indexExpr.location);
+        }
+
+        var type = ((ArraySymbolType)target.type).elementType;
+
+        return new BoundIndexExpr(index, target, type, indexExpr.location);
+    }
+
+    BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
+        var name = varAssignmentExpr.variable.Text;
+        var local = lookUpLocal(name);
+        var assignedExpr = BindExpr(varAssignmentExpr.assignmentExpr);
+
+        if (local is null) {
+            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
+            return new BoundErrorExpr(varAssignmentExpr.location);
+        }
+
+        if (!local.modifiers.isMutable) {
+            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderInmutableAssignment);
+            return new BoundErrorExpr(varAssignmentExpr.location);
+        }
+
+        var assignmentOperatorType = varAssignmentExpr.assignmentOperator.TokenType;
+
+        if (assignmentOperatorType == TokenType.Equals) {
+            return BindSimpleVarAssignment(local, assignedExpr, varAssignmentExpr.location);
+        }
+
+        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType, varAssignmentExpr.location);
+    }
     BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr, SourceLocation location) {
         if (!IsValidType(assignedExpr.type) || !IsValidType(local.typeSymbol)) {
             return new BoundErrorExpr(location);
@@ -442,7 +498,7 @@ class Binder {
     BoundExpr BindLiteralExpr(LiteralExpr literalExpr) {
         Token literalToken = literalExpr.value;
         TokenType tokenType = literalToken.TokenType;
-        TypeSymbol type = InferType(literalToken);
+        TypeSymbol type = InferLiteralType(literalToken);
 
         if (type.IsSameType(BuiltInTypes.Char) || type.IsSameType(BuiltInTypes.Int)) {
             if (!literalExpr.value.hasValue) {
@@ -566,16 +622,16 @@ class Binder {
         return !symbolType.IsSameType(BuiltInTypes.Error);
     }
 
-    TypeSymbol InferTypeInTypedDecl(TypeSyntax typeSyntax) {
+    TypeSymbol BindTypeSyntax(TypeSyntax typeSyntax) {
         switch (typeSyntax) {
             case IdentifierTypeSyntax identifierType: {
-                    if (ReferType(identifierType, out TypeSymbol? typeSymbol)) {
+                    if (TryResolveNamedType(identifierType, out TypeSymbol? typeSymbol)) {
                         return typeSymbol!;
                     }
                     break;
                 }
             case ArrayTypeSyntax arrayTypeSyntax: {
-                    TypeSymbol elementType = InferTypeInTypedDecl(arrayTypeSyntax.elementType);
+                    TypeSymbol elementType = BindTypeSyntax(arrayTypeSyntax.elementType);
                     return new ArraySymbolType(elementType);
                 }
 
@@ -590,7 +646,7 @@ class Binder {
         return BuiltInTypes.Error;
     }
 
-    bool ReferType(IdentifierTypeSyntax identifierTypeSyntax, out TypeSymbol? typeSymbol) {
+    bool TryResolveNamedType(IdentifierTypeSyntax identifierTypeSyntax, out TypeSymbol? typeSymbol) {
         string name = identifierTypeSyntax.identifier.Text;
         if (standardTypes.TryGetValue(name, out TypeSymbol? type)) {
             typeSymbol = type;
@@ -603,7 +659,7 @@ class Binder {
     }
 
 
-    TypeSymbol InferType(Token token) {
+    TypeSymbol InferLiteralType(Token token) {
         TokenType tokenType = token.TokenType;
         switch (tokenType) {
             case TokenType.True:
