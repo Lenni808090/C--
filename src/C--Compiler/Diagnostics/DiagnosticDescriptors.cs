@@ -38,7 +38,7 @@ public static class DiagnosticDescriptors {
     public static readonly DiagnosticDescriptor BinderBinaryTypeMismatch =
         new("BND007", "Binder", "type mismatch in binary operation", Severity.Error);
     public static readonly DiagnosticDescriptor BinderUnknownTypeToken =
-        new("BND008", "Binder", "unknown type {0}", Severity.Error);
+        new("BND008", "Binder", "unknown type", Severity.Error);
     public static readonly DiagnosticDescriptor BinderNotInLoopContinue =
         new("BND010", "Binder", "usage of continue outside of a loop", Severity.Error);
     public static readonly DiagnosticDescriptor BinderNotInLoopBreak =

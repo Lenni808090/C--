@@ -482,15 +482,15 @@ class IrBuilder {
     }
 
     Runtime.ValueType GetValueType(TypeSymbol typeSymbol) {
-        if (typeSymbol == BuiltInTypes.Int) {
+        if (typeSymbol.IsSameType(BuiltInTypes.Int)) {
             return Runtime.ValueType.Int;
         }
 
-        if (typeSymbol == BuiltInTypes.Bool) {
+        if (typeSymbol.IsSameType(BuiltInTypes.Bool)) {
             return Runtime.ValueType.Bool;
         }
 
-        if (typeSymbol == BuiltInTypes.Char) {
+        if (typeSymbol.IsSameType(BuiltInTypes.Char)) {
             return Runtime.ValueType.Char;
         }
 

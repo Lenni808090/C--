@@ -279,7 +279,7 @@ class PrimitiveSymbolType : TypeSymbol {
 class ArraySymbolType : TypeSymbol {
     public TypeSymbol elementType;
 
-    public ArraySymbolType(string name, TypeSymbol elementType) : base(name) {
+    public ArraySymbolType(TypeSymbol elementType) : base(elementType.name + "[]") {
         this.elementType = elementType;
     }
 
@@ -289,6 +289,32 @@ class ErrorSymbolType : TypeSymbol {
     public ErrorSymbolType() : base("Error") {
     }
 
+}
+
+static class TypeSymbolExtensions {
+    public static bool IsSameType(this TypeSymbol type1, TypeSymbol type2) {
+        if (ReferenceEquals(type1, type2)) {
+            return true;
+        }
+
+        if (type1.GetType() != type2.GetType()) {
+            return false;
+        }
+
+        switch (type1) {
+            case PrimitiveSymbolType primitive1: {
+                    var primitive2 = (PrimitiveSymbolType)type2;
+                    return primitive1.name == primitive2.name;
+                }
+            case ArraySymbolType array1: {
+                    var array2 = (ArraySymbolType)type2;
+                    return IsSameType(array1.elementType, array2.elementType);
+                }
+            default: {
+                    throw new Exception("Unkown type in type comparission");
+                }
+        }
+    }
 }
 
 static class BuiltInTypes {

@@ -56,7 +56,7 @@ sealed class BoundBinaryOperator : BinaryOperator {
 
     public static BoundBinaryOperator? GetBinaryOperator(TokenType tokenType, TypeSymbol leftType, TypeSymbol rightType) {
         var equalityOperatorKind = GetEqualityOperatorKind(tokenType);
-        if (equalityOperatorKind is not null && leftType == rightType && IsEqualityComparable(leftType)) {
+        if (equalityOperatorKind is not null && leftType.IsSameType(rightType) && IsEqualityComparable(leftType)) {
             return new BoundBinaryOperator(
                 tokenType,
                 equalityOperatorKind.Value,
@@ -67,7 +67,7 @@ sealed class BoundBinaryOperator : BinaryOperator {
         }
 
         foreach (var op in operators) {
-            if (tokenType == op.tokenType && leftType == op.leftType && rightType == op.rightType) {
+            if (tokenType == op.tokenType && leftType.IsSameType(op.leftType) && rightType.IsSameType(op.rightType)) {
                 return op;
             }
         }
@@ -83,9 +83,9 @@ sealed class BoundBinaryOperator : BinaryOperator {
     }
 
     static bool IsEqualityComparable(TypeSymbol type) {
-        return ReferenceEquals(type, BuiltInTypes.Int)
-            || ReferenceEquals(type, BuiltInTypes.Bool)
-            || ReferenceEquals(type, BuiltInTypes.Char);
+        return type.IsSameType(BuiltInTypes.Int)
+            || type.IsSameType(BuiltInTypes.Bool)
+            || type.IsSameType(BuiltInTypes.Char);
     }
 }
 
@@ -133,7 +133,7 @@ sealed class BoundUnaryOperator : BinaryOperator {
 
     public static BoundUnaryOperator? GetUnaryOperator(TokenType tokenType, TypeSymbol operandType) {
         foreach (var op in boundUnaryOperators) {
-            if (op.tokenType == tokenType && op.operandType == operandType) {
+            if (op.tokenType == tokenType && op.operandType.IsSameType(operandType)) {
                 return op;
             }
         }
