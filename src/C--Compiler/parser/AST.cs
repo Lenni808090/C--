@@ -229,6 +229,20 @@ sealed class CallExpr : Expr {
         this.args = args;
     }
 }
+
+sealed class IndexExpr : Expr {
+    public Expr target;
+    public Expr index;
+
+    public override SyntaxKind syntaxKind => SyntaxKind.IndexExpr;
+
+    public override SourceLocation location => target.location;
+
+    public IndexExpr(Expr target, Expr index) {
+        this.target = target;
+        this.index = index;
+    }
+}
 sealed class VarAssignmentExpr : Expr {
     public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentStmt;
     public override SourceLocation location => variable.Location;
@@ -313,6 +327,7 @@ enum SyntaxKind {
 
 
     LiteralExpr,
+    IndexExpr,
     NameExpr,
     BinaryExpr,
     ArrayCreationExpr,

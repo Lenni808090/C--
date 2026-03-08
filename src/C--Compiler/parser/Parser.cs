@@ -386,6 +386,15 @@ class Parser {
         return new CallExpr(callee, args.ToArray());
     }
 
+    Expr ParseIndexExpr(Expr target) {
+
+        Expect(TokenType.OpenBracket, "Expected '[' after indexed expression");
+        Expr index = ParseExpr();
+        Expect(TokenType.OpenBracket, "Expected ']' after indexed expression");
+
+        return new IndexExpr(target, index);
+    }
+
     Expr ParseExpr() {
         return ParseAssignemntExpr();
     }
@@ -488,8 +497,13 @@ class Parser {
     Expr ParsePostfix() {
         Expr expr = ParsePrimary();
 
-        while (Current.TokenType == TokenType.OpenParentheses) {
-            expr = ParseCallExpr(expr);
+        while (Current.TokenType == TokenType.OpenParentheses || Current.TokenType == TokenType.OpenBracket) {
+            if (Current.TokenType == TokenType.OpenParentheses) {
+                expr = ParseCallExpr(expr);
+            }
+            else {
+                expr = ParseIndexExpr(expr);
+            }
         }
 
         return expr;
