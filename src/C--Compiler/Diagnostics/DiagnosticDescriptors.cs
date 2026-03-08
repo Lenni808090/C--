@@ -9,6 +9,9 @@ public static class DiagnosticDescriptors {
         new("LEX003", "Lexer", "Unknown character in input: '{0}'", Severity.Error);
     public static readonly DiagnosticDescriptor LexerCharLiteratureTooLong =
         new("LEX003", "Lexer", "Char literature either only one char or Valid Escape Code'", Severity.Error);
+
+    public static readonly DiagnosticDescriptor LexerCharLiteratureNotClosed =
+        new("LEX003", "Lexer", "Char literature needs closing ' ", Severity.Error);
     public static readonly DiagnosticDescriptor ParserUnexpectedToken =
         new("PAR001", "Parser", "{0} got {1}", Severity.Error);
     public static readonly DiagnosticDescriptor ParserMissingClosingBrace =

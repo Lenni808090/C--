@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
@@ -293,6 +294,11 @@ class Lexer {
                             value = Next();
                         }
                         if (At() != '\'') {
+                            if (!SkipUntilCLosingQuote(start)) {
+                                continue;
+                            }
+
+                            Next();
                             ReportError(CurrentLocation(start), DiagnosticDescriptors.LexerCharLiteratureTooLong);
                             continue;
                         }
@@ -353,6 +359,16 @@ class Lexer {
         return new SourceLocation(start.Line, start.Column, start.Position, position - start.Position);
     }
 
+    bool SkipUntilCLosingQuote(TokenStart start) {
+        while (At() != '\'') {
+            if (At() == '\0') {
+                ReportError(CurrentLocation(start), DiagnosticDescriptors.LexerCharLiteratureNotClosed);
+                return false;
+            }
+            Next();
+        }
+        return true;
+    }
     bool TryReadEscapedChar(out char value) {
         switch (At()) {
             case 'n':

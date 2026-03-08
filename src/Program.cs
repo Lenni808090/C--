@@ -12,9 +12,10 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-            meth Main() -> char {
-                return 'h';
-            }
+                        meth Main() -> int {
+                            x: char = 'ab;
+                            return 0;
+                        }
 ";
 
         CompilerContext compilerContext = new();
