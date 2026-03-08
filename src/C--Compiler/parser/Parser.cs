@@ -365,9 +365,20 @@ class Parser {
     }
 
     TypeSyntax ParseType() {
-        Token typeToken = Current;
-        NextToken();
-        return new IdentifierTypeSyntax(typeToken);
+        TypeSyntax type = ParseIdentifierType();
+
+        while (Current.TokenType == TokenType.OpenBracket) {
+            NextToken();
+            Expect(TokenType.CloseBracket, "closing bracket expected after '[' in type");
+            type = new ArrayTypeSyntax(type);
+        }
+
+        return type;
+    }
+
+    TypeSyntax ParseIdentifierType() {
+        Token type = Expect(TokenType.Identifier, "type identifier expected");
+        return new IdentifierTypeSyntax(type);
     }
     Expr ParseCallExpr(Expr callee) {
         Expect(TokenType.OpenParentheses, "Expected '(' after callable expression");

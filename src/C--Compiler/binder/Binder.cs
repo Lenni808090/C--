@@ -16,21 +16,20 @@ class Binder {
     Dictionary<string, FunctionSymbol> functionsByName;
     List<FunctionDeclarationStmt> functionDeclarationsToBind;
 
-    SymbolType currentReturnType;
+    TypeSymbol currentReturnType;
     int loopDepth;
     DiagnosticBag diagnostics;
     List<BoundFunctionDeclaration> functions;
     BoundFunctionDeclaration? mainFunc;
     int nextLocalIndex;
     Stmt[] stmtsToBind;
-    private static readonly Dictionary<string, SymbolType> standardTypes =
+    private static readonly Dictionary<string, TypeSymbol> standardTypes =
       new()
     {
-        { "int", SymbolType.Int },
-        { "bool", SymbolType.Bool },
-        { "char", SymbolType.Char},
+        { "int", BuiltInTypes.Int },
+        { "bool", BuiltInTypes.Bool },
+        { "char", BuiltInTypes.Char},
     };
-
 
     public Binder(CompilationUnit compilationUnit, CompilerContext compilerContext) {
         scopes = new();
@@ -40,7 +39,7 @@ class Binder {
         diagnostics = compilerContext.diagnostics;
         stmtsToBind = compilationUnit.stmts;
         loopDepth = 0;
-        currentReturnType = SymbolType.DiagnosticsError;
+        currentReturnType = BuiltInTypes.Error;
     }
 
     public BoundCompiledUnit BindCompiledUnit() {
@@ -66,7 +65,7 @@ class Binder {
 
         var returnType = InferTypeInTypedDecl(((IdentifierTypeSyntax)functionDeclaration.returnType).identifier);
 
-        List<SymbolType> argTypes = new();
+        List<TypeSymbol> argTypes = new();
         HashSet<string> seenNames = new();
         foreach (ParameterSyntax arg in functionDeclaration.@params) {
             var type = InferTypeInTypedDecl(((IdentifierTypeSyntax)arg.type).identifier);
@@ -128,7 +127,7 @@ class Binder {
         foreach (var param in functionDeclaration.@params) {
             string name = param.name.Text;
 
-            SymbolType type = InferTypeInTypedDecl(((IdentifierTypeSyntax)param.type).identifier);
+            TypeSymbol type = InferTypeInTypedDecl(((IdentifierTypeSyntax)param.type).identifier);
             BoundModifiers modifiers = BindModifiers(param.modifiers);
 
             if (scopes.Peek().ContainsKey(name)) {
@@ -175,7 +174,7 @@ class Binder {
     BoundStmt BindIfStmt(IfStmt ifStmt) {
         BoundExpr boundConditionExpr = BindExpr(ifStmt.condition);
 
-        if (boundConditionExpr.type != SymbolType.Bool && IsValidType(boundConditionExpr.type)) {
+        if (boundConditionExpr.type != BuiltInTypes.Bool && IsValidType(boundConditionExpr.type)) {
             ReportError(ifStmt.condition.location, DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
@@ -208,7 +207,7 @@ class Binder {
 
         BoundExpr boundConditionExpr = BindExpr(whileStmt.condition);
 
-        if (boundConditionExpr.type != SymbolType.Bool && IsValidType(boundConditionExpr.type)) {
+        if (boundConditionExpr.type != BuiltInTypes.Bool && IsValidType(boundConditionExpr.type)) {
             ReportError(whileStmt.condition.location, DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
@@ -235,7 +234,7 @@ class Binder {
 
         var condition = BindExpr(forStmt.condition);
 
-        if (condition.type != SymbolType.Bool && IsValidType(condition.type)) {
+        if (condition.type != BuiltInTypes.Bool && IsValidType(condition.type)) {
             ReportError(forStmt.condition.location, DiagnosticDescriptors.BinderConditionMustBeBool);
         }
 
@@ -278,7 +277,7 @@ class Binder {
         BoundModifiers modifiers = BindModifiers(varDeclarationStmt.modifiers);
 
 
-        SymbolType declared = InferTypeInTypedDecl(typeToken);
+        TypeSymbol declared = InferTypeInTypedDecl(typeToken);
 
         if (!IsValidType(declared)) {
             scopes.Peek().Add(name, CreateErrorLocal(name, modifiers));
@@ -395,36 +394,36 @@ class Binder {
     }
 
     BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr, SourceLocation location) {
-        if (!IsValidType(assignedExpr.type) || !IsValidType(local.symbolType)) {
+        if (!IsValidType(assignedExpr.type) || !IsValidType(local.typeSymbol)) {
             return new BoundErrorExpr(location);
         }
 
-        if (assignedExpr.type != local.symbolType) {
+        if (assignedExpr.type != local.typeSymbol) {
             ReportError(location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
             return new BoundErrorExpr(location);
         }
 
-        return new BoundVarAssignmentExpr(local, assignedExpr, local.symbolType, location);
+        return new BoundVarAssignmentExpr(local, assignedExpr, local.typeSymbol, location);
     }
 
     BoundExpr BindCompoundVarAssignment(LocalSymbol local, BoundExpr assignedExpr, TokenType assignmentOperatorType, SourceLocation location) {
-        if (!IsValidType(assignedExpr.type) || !IsValidType(local.symbolType)) {
+        if (!IsValidType(assignedExpr.type) || !IsValidType(local.typeSymbol)) {
             return new BoundErrorExpr(location);
         }
 
-        var boundOp = MapCompoundAssignmentToBinaryOperator(assignmentOperatorType, local.symbolType, assignedExpr.type);
+        var boundOp = MapCompoundAssignmentToBinaryOperator(assignmentOperatorType, local.typeSymbol, assignedExpr.type);
         if (boundOp is null) {
             ReportError(location, DiagnosticDescriptors.BinderBinaryTypeMismatch);
             return new BoundErrorExpr(location);
         }
 
         var compoundExpr = new BoundBinaryExpr(new BoundNameExpr(local, location), assignedExpr, boundOp, boundOp.resultType, location);
-        if (compoundExpr.type != local.symbolType) {
+        if (compoundExpr.type != local.typeSymbol) {
             ReportError(location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
             return new BoundErrorExpr(location);
         }
 
-        return new BoundVarAssignmentExpr(local, compoundExpr, local.symbolType, location);
+        return new BoundVarAssignmentExpr(local, compoundExpr, local.typeSymbol, location);
     }
 
 
@@ -442,28 +441,24 @@ class Binder {
     BoundExpr BindLiteralExpr(LiteralExpr literalExpr) {
         Token literalToken = literalExpr.value;
         TokenType tokenType = literalToken.TokenType;
-        SymbolType type = InferType(literalToken);
+        TypeSymbol type = InferType(literalToken);
 
-        switch (type) {
-            case SymbolType.Char:
-            case SymbolType.Int: {
-                    if (!literalExpr.value.hasValue) {
-                        ReportError(literalExpr.location, DiagnosticDescriptors.BinderNumberLiteralMissingValue);
-                        return new BoundErrorExpr(literalExpr.location);
-                    }
+        if (type == BuiltInTypes.Char || type == BuiltInTypes.Int) {
+            if (!literalExpr.value.hasValue) {
+                ReportError(literalExpr.location, DiagnosticDescriptors.BinderNumberLiteralMissingValue);
+                return new BoundErrorExpr(literalExpr.location);
+            }
 
-                    long v = literalExpr.value.Value;
-                    return new BoundLiteralExpr(v, type, literalExpr.location);
-                }
-            case SymbolType.Bool: {
-
-                    long v = tokenType == TokenType.True ? 1 : 0;
-                    return new BoundLiteralExpr(v, type, literalExpr.location);
-                }
-            default: {
-                    throw new Exception("unexpected literal type: " + type);
-                }
+            long v = literalExpr.value.Value;
+            return new BoundLiteralExpr(v, type, literalExpr.location);
         }
+
+        if (type == BuiltInTypes.Bool) {
+            long v = tokenType == TokenType.True ? 1 : 0;
+            return new BoundLiteralExpr(v, type, literalExpr.location);
+        }
+
+        throw new Exception("unexpected literal type: " + type);
     }
 
     BoundExpr BindUnaryExpr(UnaryExpr unaryExpr) {
@@ -566,31 +561,31 @@ class Binder {
         return loopDepth > 0;
     }
 
-    bool IsValidType(SymbolType symbolType) {
-        return symbolType != SymbolType.DiagnosticsError;
+    bool IsValidType(TypeSymbol symbolType) {
+        return symbolType != BuiltInTypes.Error;
     }
 
-    SymbolType InferTypeInTypedDecl(Token typeToken) {
-        if (standardTypes.TryGetValue(typeToken.Text, out SymbolType type)) {
+    TypeSymbol InferTypeInTypedDecl(Token typeToken) {
+        if (standardTypes.TryGetValue(typeToken.Text, out TypeSymbol? type)) {
             return type;
         }
 
         ReportError(typeToken.Location, DiagnosticDescriptors.BinderUnknownTypeToken, typeToken.Text);
-        return SymbolType.DiagnosticsError;
+        return BuiltInTypes.Error;
     }
 
-    SymbolType InferType(Token token) {
+    TypeSymbol InferType(Token token) {
         TokenType tokenType = token.TokenType;
         switch (tokenType) {
             case TokenType.True:
             case TokenType.False: {
-                    return SymbolType.Bool;
+                    return BuiltInTypes.Bool;
                 }
             case TokenType.Number: {
-                    return SymbolType.Int;
+                    return BuiltInTypes.Int;
                 }
             case TokenType.Char: {
-                    return SymbolType.Char;
+                    return BuiltInTypes.Char;
                 }
             default: {
                     throw new Exception("unkown type " + tokenType);
@@ -599,7 +594,7 @@ class Binder {
 
     }
 
-    BoundBinaryOperator? MapCompoundAssignmentToBinaryOperator(TokenType tokenType, SymbolType leftSide, SymbolType rightSide) {
+    BoundBinaryOperator? MapCompoundAssignmentToBinaryOperator(TokenType tokenType, TypeSymbol leftSide, TypeSymbol rightSide) {
         return tokenType switch {
             TokenType.PlusEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Plus, leftSide, rightSide),
             TokenType.MinusEquals => BoundBinaryOperator.GetBinaryOperator(TokenType.Minus, leftSide, rightSide),
@@ -610,10 +605,10 @@ class Binder {
         };
     }
     LocalSymbol CreateErrorLocal(string name, BoundModifiers modifiers) {
-        return new LocalSymbol(name, SymbolType.DiagnosticsError, modifiers, -1);
+        return new LocalSymbol(name, BuiltInTypes.Error, modifiers, -1);
     }
     FunctionSymbol CreateErrorFunctionSymbol(string name) {
-        return new FunctionSymbol(name, SymbolType.DiagnosticsError, Array.Empty<SymbolType>());
+        return new FunctionSymbol(name, BuiltInTypes.Error, Array.Empty<TypeSymbol>());
     }
     BoundFunctionDeclaration CreateErrorMainFunction() {
         var functionSymbol = CreateErrorFunctionSymbol("Main");

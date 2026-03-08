@@ -15,17 +15,17 @@ sealed class BoundBinaryOperator : BinaryOperator {
         get;
     }
     public BoundBinaryOperatorKind operatorKind;
-    public SymbolType leftType;
-    public SymbolType rightType;
+    public TypeSymbol leftType;
+    public TypeSymbol rightType;
 
-    public SymbolType resultType;
+    public TypeSymbol resultType;
 
     public BoundBinaryOperator(
         TokenType tokenType,
         BoundBinaryOperatorKind operatorKind,
-        SymbolType leftType,
-        SymbolType rightType,
-        SymbolType resultType) {
+        TypeSymbol leftType,
+        TypeSymbol rightType,
+        TypeSymbol resultType) {
         this.tokenType = tokenType;
         this.operatorKind = operatorKind;
         this.leftType = leftType;
@@ -35,26 +35,26 @@ sealed class BoundBinaryOperator : BinaryOperator {
 
     private static readonly BoundBinaryOperator[] operators = new[]
     {
-        new BoundBinaryOperator(TokenType.Plus, BoundBinaryOperatorKind.AddInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
-        new BoundBinaryOperator(TokenType.Minus, BoundBinaryOperatorKind.SubtractInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
-        new BoundBinaryOperator(TokenType.Multiply, BoundBinaryOperatorKind.MultiplyInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
-        new BoundBinaryOperator(TokenType.Divide, BoundBinaryOperatorKind.DivideInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
-        new BoundBinaryOperator(TokenType.Modulus, BoundBinaryOperatorKind.ModulusInt, SymbolType.Int, SymbolType.Int, SymbolType.Int),
+        new BoundBinaryOperator(TokenType.Plus, BoundBinaryOperatorKind.AddInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Int),
+        new BoundBinaryOperator(TokenType.Minus, BoundBinaryOperatorKind.SubtractInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Int),
+        new BoundBinaryOperator(TokenType.Multiply, BoundBinaryOperatorKind.MultiplyInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Int),
+        new BoundBinaryOperator(TokenType.Divide, BoundBinaryOperatorKind.DivideInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Int),
+        new BoundBinaryOperator(TokenType.Modulus, BoundBinaryOperatorKind.ModulusInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Int),
 
-        new BoundBinaryOperator(TokenType.LessThen, BoundBinaryOperatorKind.LessThanInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.MoreThen, BoundBinaryOperatorKind.GreaterThanInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.MoreThenEquals, BoundBinaryOperatorKind.GreaterThanOrEqualInt, SymbolType.Int, SymbolType.Int, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.LessThen, BoundBinaryOperatorKind.LessThanInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.MoreThen, BoundBinaryOperatorKind.GreaterThanInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.MoreThenEquals, BoundBinaryOperatorKind.GreaterThanOrEqualInt, SymbolType.Char, SymbolType.Char, SymbolType.Bool),
+        new BoundBinaryOperator(TokenType.LessThen, BoundBinaryOperatorKind.LessThanInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.MoreThen, BoundBinaryOperatorKind.GreaterThanInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.MoreThenEquals, BoundBinaryOperatorKind.GreaterThanOrEqualInt, BuiltInTypes.Int, BuiltInTypes.Int, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.LessThen, BoundBinaryOperatorKind.LessThanInt, BuiltInTypes.Char, BuiltInTypes.Char, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.LessThenEquals, BoundBinaryOperatorKind.LessThanOrEqualInt, BuiltInTypes.Char, BuiltInTypes.Char, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.MoreThen, BoundBinaryOperatorKind.GreaterThanInt, BuiltInTypes.Char, BuiltInTypes.Char, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.MoreThenEquals, BoundBinaryOperatorKind.GreaterThanOrEqualInt, BuiltInTypes.Char, BuiltInTypes.Char, BuiltInTypes.Bool),
 
-        new BoundBinaryOperator(TokenType.And, BoundBinaryOperatorKind.LogicalAnd, SymbolType.Bool, SymbolType.Bool, SymbolType.Bool),
-        new BoundBinaryOperator(TokenType.Or, BoundBinaryOperatorKind.LogicalOr, SymbolType.Bool, SymbolType.Bool, SymbolType.Bool),
+        new BoundBinaryOperator(TokenType.And, BoundBinaryOperatorKind.LogicalAnd, BuiltInTypes.Bool, BuiltInTypes.Bool, BuiltInTypes.Bool),
+        new BoundBinaryOperator(TokenType.Or, BoundBinaryOperatorKind.LogicalOr, BuiltInTypes.Bool, BuiltInTypes.Bool, BuiltInTypes.Bool),
     };
 
-    public static BoundBinaryOperator? GetBinaryOperator(TokenType tokenType, SymbolType leftType, SymbolType rightType) {
+    public static BoundBinaryOperator? GetBinaryOperator(TokenType tokenType, TypeSymbol leftType, TypeSymbol rightType) {
         var equalityOperatorKind = GetEqualityOperatorKind(tokenType);
         if (equalityOperatorKind is not null && leftType == rightType && IsEqualityComparable(leftType)) {
             return new BoundBinaryOperator(
@@ -62,7 +62,7 @@ sealed class BoundBinaryOperator : BinaryOperator {
                 equalityOperatorKind.Value,
                 leftType,
                 rightType,
-                SymbolType.Bool
+                BuiltInTypes.Bool
             );
         }
 
@@ -82,13 +82,10 @@ sealed class BoundBinaryOperator : BinaryOperator {
         };
     }
 
-    static bool IsEqualityComparable(SymbolType type) {
-        return type switch {
-            SymbolType.Int => true,
-            SymbolType.Bool => true,
-            SymbolType.Char => true,
-            _ => false,
-        };
+    static bool IsEqualityComparable(TypeSymbol type) {
+        return ReferenceEquals(type, BuiltInTypes.Int)
+            || ReferenceEquals(type, BuiltInTypes.Bool)
+            || ReferenceEquals(type, BuiltInTypes.Char);
     }
 }
 
@@ -119,10 +116,10 @@ sealed class BoundUnaryOperator : BinaryOperator {
 
     public BoundUnaryOperatorKind unaryOperatorKind;
 
-    public SymbolType operandType;
-    public SymbolType resultType;
+    public TypeSymbol operandType;
+    public TypeSymbol resultType;
 
-    public BoundUnaryOperator(TokenType tokenType, SymbolType operandType, SymbolType resultType, BoundUnaryOperatorKind unaryOperatorKind) {
+    public BoundUnaryOperator(TokenType tokenType, TypeSymbol operandType, TypeSymbol resultType, BoundUnaryOperatorKind unaryOperatorKind) {
         this.tokenType = tokenType;
         this.operandType = operandType;
         this.unaryOperatorKind = unaryOperatorKind;
@@ -130,11 +127,11 @@ sealed class BoundUnaryOperator : BinaryOperator {
     }
 
     public static readonly BoundUnaryOperator[] boundUnaryOperators = new[] {
-        new BoundUnaryOperator(TokenType.Bang, SymbolType.Bool, SymbolType.Bool, BoundUnaryOperatorKind.LogicalNot),
-        new BoundUnaryOperator(TokenType.Minus, SymbolType.Int, SymbolType.Int, BoundUnaryOperatorKind.NegateInt),
+        new BoundUnaryOperator(TokenType.Bang, BuiltInTypes.Bool, BuiltInTypes.Bool, BoundUnaryOperatorKind.LogicalNot),
+        new BoundUnaryOperator(TokenType.Minus, BuiltInTypes.Int, BuiltInTypes.Int, BoundUnaryOperatorKind.NegateInt),
 };
 
-    public static BoundUnaryOperator? GetUnaryOperator(TokenType tokenType, SymbolType operandType) {
+    public static BoundUnaryOperator? GetUnaryOperator(TokenType tokenType, TypeSymbol operandType) {
         foreach (var op in boundUnaryOperators) {
             if (op.tokenType == tokenType && op.operandType == operandType) {
                 return op;

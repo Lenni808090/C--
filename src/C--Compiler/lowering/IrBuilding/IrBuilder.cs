@@ -481,13 +481,20 @@ class IrBuilder {
         basicBlocks.Add(currentBlock);
     }
 
-    Runtime.ValueType GetValueType(SymbolType symbolType) {
-        return symbolType switch {
-            SymbolType.Int => Runtime.ValueType.Int,
-            SymbolType.Bool => Runtime.ValueType.Bool,
-            SymbolType.Char => Runtime.ValueType.Char,
-            _ => throw new Exception("Unkown symbol type in get value type" + symbolType),
-        };
+    Runtime.ValueType GetValueType(TypeSymbol typeSymbol) {
+        if (typeSymbol == BuiltInTypes.Int) {
+            return Runtime.ValueType.Int;
+        }
+
+        if (typeSymbol == BuiltInTypes.Bool) {
+            return Runtime.ValueType.Bool;
+        }
+
+        if (typeSymbol == BuiltInTypes.Char) {
+            return Runtime.ValueType.Char;
+        }
+
+        throw new Exception("Unkown symbol type in get value type" + typeSymbol);
     }
 
 

@@ -495,7 +495,7 @@ class Program {
         switch (stmt) {
             case BoundVarDeclarationStmt v: {
                     Console.Write(indent);
-                    Console.WriteLine($"local: {v.localSymbol.name} : {v.localSymbol.symbolType} (index {v.localSymbol.index})");
+                    Console.WriteLine($"local: {v.localSymbol.name} : {v.localSymbol.typeSymbol} (index {v.localSymbol.index})");
                     PrintBoundExpr(v.initializer, indent, true);
                     break;
                 }
@@ -569,7 +569,7 @@ class Program {
                 }
             case BoundVarAssignmentExpr va: {
                     Console.Write(indent);
-                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.symbolType} (index {va.localSymbol.index})");
+                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.typeSymbol} (index {va.localSymbol.index})");
                     PrintBoundExpr(va.assignmentExpr, indent, true);
                     break;
                 }

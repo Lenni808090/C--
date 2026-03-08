@@ -140,6 +140,16 @@ sealed class BoundVarAssignmentExpr : BoundExpr {
         this.assignmentExpr = assignmentExpr;
     }
 }
+sealed class BoundIndexExpr : BoundExpr {
+    public BoundExpr index;
+
+    public BoundExpr target;
+
+    public BoundIndexExpr(BoundExpr index, BoundExpr target, TypeSymbol type, SourceLocation location) : base(type, location) {
+        this.index = index;
+        this.target = target;
+    }
+}
 
 sealed class BoundArrayCreationExpr : BoundExpr {
     public BoundExpr length;
@@ -173,7 +183,7 @@ sealed class BoundLiteralExpr : BoundExpr {
 sealed class BoundNameExpr : BoundExpr {
     public LocalSymbol localSymbol;
     //works because first normal conbstructure then base constructur is called;
-    public BoundNameExpr(LocalSymbol localSymbol, SourceLocation location) : base(localSymbol.symbolType, location) {
+    public BoundNameExpr(LocalSymbol localSymbol, SourceLocation location) : base(localSymbol.typeSymbol, location) {
         this.localSymbol = localSymbol;
     }
 }
@@ -182,7 +192,7 @@ sealed class BoundBinaryExpr : BoundExpr {
     public BoundExpr leftBoundExpr;
     public BoundExpr rightBoundExpr;
     public BoundBinaryOperator boundBinaryOperator;
-    public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperator boundBinaryOperatorKind, TypeSymbol symbolType, SourceLocation location) : base(symbolType, location) {
+    public BoundBinaryExpr(BoundExpr leftBoundExpr, BoundExpr rightBoundExpr, BoundBinaryOperator boundBinaryOperatorKind, TypeSymbol typeSymbol, SourceLocation location) : base(typeSymbol, location) {
         this.leftBoundExpr = leftBoundExpr;
         this.rightBoundExpr = rightBoundExpr;
         this.boundBinaryOperator = boundBinaryOperatorKind;
@@ -193,14 +203,14 @@ sealed class BoundUnaryExpr : BoundExpr {
     public BoundExpr operatedExpr;
     public BoundUnaryOperator boundUnaryOperator;
 
-    public BoundUnaryExpr(BoundExpr operatedExpr, BoundUnaryOperator boundUnaryOperator, TypeSymbol symbolType, SourceLocation location) : base(symbolType, location) {
+    public BoundUnaryExpr(BoundExpr operatedExpr, BoundUnaryOperator boundUnaryOperator, TypeSymbol typeSymbol, SourceLocation location) : base(typeSymbol, location) {
         this.operatedExpr = operatedExpr;
         this.boundUnaryOperator = boundUnaryOperator;
     }
 }
 
 sealed class BoundErrorExpr : BoundExpr {
-    public BoundErrorExpr(SourceLocation location) : base(new ErrorSymbolType(), location) { }
+    public BoundErrorExpr(SourceLocation location) : base(BuiltInTypes.Error, location) { }
 }
 
 sealed class BoundErrorStmt : BoundStmt {
@@ -210,24 +220,24 @@ sealed class BoundErrorStmt : BoundStmt {
 
 sealed class LocalSymbol {
     public string name;
-    public TypeSymbol symbolType;
+    public TypeSymbol typeSymbol;
 
     public BoundModifiers modifiers;
     public bool isCompilerGenerated;
     public int index;
 
-    public LocalSymbol(string name, TypeSymbol symbolType, BoundModifiers modifiers, int index, bool isCompilerGenerated = false) {
+    public LocalSymbol(string name, TypeSymbol typeSymbol, BoundModifiers modifiers, int index, bool isCompilerGenerated = false) {
         this.modifiers = modifiers;
         this.name = name;
-        this.symbolType = symbolType;
+        this.typeSymbol = typeSymbol;
         this.index = index;
         this.isCompilerGenerated = isCompilerGenerated;
     }
 
-    public static LocalSymbol generateTempLocal(TypeSymbol symbolType, int index) {
+    public static LocalSymbol generateTempLocal(TypeSymbol typeSymbol, int index) {
         string name = "&temp" + index;
 
-        return new LocalSymbol(name, symbolType, new BoundModifiers(), index, true);
+        return new LocalSymbol(name, typeSymbol, new BoundModifiers(), index, true);
     }
 }
 
@@ -279,4 +289,11 @@ class ErrorSymbolType : TypeSymbol {
     public ErrorSymbolType() : base("Error") {
     }
 
+}
+
+static class BuiltInTypes {
+    public static readonly PrimitiveSymbolType Int = new("int");
+    public static readonly PrimitiveSymbolType Char = new("char");
+    public static readonly PrimitiveSymbolType Bool = new("bool");
+    public static readonly PrimitiveSymbolType Error = new("<error>");
 }
