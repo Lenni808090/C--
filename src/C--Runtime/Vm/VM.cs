@@ -5,7 +5,7 @@ namespace CMinus.Runtime;
 
 class VM {
     Value[] constants;
-
+    Heap heap;
     CallFrame currentFrame => callFrames.Peek();
     CompiledFunction currentFunction => functions[currentFrame.functionInd];
 
@@ -14,9 +14,12 @@ class VM {
     int entryInd;
     Stack<CallFrame> callFrames;
 
+
+
     public VM(CompiledProgram compiledProgram, Value[] constants) {
         functions = compiledProgram.compiledFunctions;
         entryInd = compiledProgram.entryFuncInd;
+        heap = new();
         callFrames = new();
         this.constants = constants;
         PushEntryFrame();
@@ -30,10 +33,10 @@ class VM {
     public Value Run() {
         while (true) {
             var frame = currentFrame;
-            OpCode currentByteCode = (OpCode)currentBytecode[frame.instructionPointer++];
+            OpCode currentOpCode = (OpCode)currentBytecode[frame.instructionPointer++];
 
 
-            switch (currentByteCode) {
+            switch (currentOpCode) {
                 case OpCode.LOAD_CONST: {
                         ushort dstReg = getu16();
                         ushort constIndex = getu16();
@@ -78,8 +81,8 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int left = (int)frame.regs[leftReg].RawData;
-                        int right = (int)frame.regs[rightReg].RawData;
+                        int left = frame.regs[leftReg].AsInt();
+                        int right = frame.regs[rightReg].AsInt();
                         frame.regs[dstReg] = new Value(ValueType.Int, left + right);
                         break;
                     }
@@ -87,8 +90,8 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int left = (int)frame.regs[leftReg].RawData;
-                        int right = (int)frame.regs[rightReg].RawData;
+                        int left = frame.regs[leftReg].AsInt();
+                        int right = frame.regs[rightReg].AsInt();
                         frame.regs[dstReg] = new Value(ValueType.Int, left - right);
                         break;
                     }
@@ -96,8 +99,8 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int left = (int)frame.regs[leftReg].RawData;
-                        int right = (int)frame.regs[rightReg].RawData;
+                        int left = frame.regs[leftReg].AsInt();
+                        int right = frame.regs[rightReg].AsInt();
                         frame.regs[dstReg] = new Value(ValueType.Int, left * right);
                         break;
                     }
@@ -105,8 +108,8 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int left = (int)frame.regs[leftReg].RawData;
-                        int right = (int)frame.regs[rightReg].RawData;
+                        int left = frame.regs[leftReg].AsInt();
+                        int right = frame.regs[rightReg].AsInt();
                         frame.regs[dstReg] = new Value(ValueType.Int, left / right);
                         break;
                     }
@@ -114,7 +117,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort srcReg = getu16();
 
-                        int toBeNegged = (int)frame.regs[srcReg].RawData;
+                        int toBeNegged = frame.regs[srcReg].AsInt();
                         frame.regs[dstReg] = new Value(ValueType.Int, -toBeNegged);
                         break;
                     }
@@ -122,8 +125,8 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int left = (int)frame.regs[leftReg].RawData;
-                        int right = (int)frame.regs[rightReg].RawData;
+                        int left = frame.regs[leftReg].AsInt();
+                        int right = frame.regs[rightReg].AsInt();
                         frame.regs[dstReg] = new Value(ValueType.Int, left % right);
                         break;
                     }
@@ -168,7 +171,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int result = ((int)frame.regs[leftReg].RawData == (int)frame.regs[rightReg].RawData) ? 1 : 0;
+                        int result = (frame.regs[leftReg].Type == frame.regs[rightReg].Type && frame.regs[leftReg].RawData == frame.regs[rightReg].RawData) ? 1 : 0;
                         frame.regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
@@ -176,7 +179,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int result = ((int)frame.regs[leftReg].RawData < (int)frame.regs[rightReg].RawData) ? 1 : 0;
+                        int result = (frame.regs[leftReg].AsInt() < frame.regs[rightReg].AsInt()) ? 1 : 0;
                         frame.regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
@@ -184,7 +187,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int result = ((int)frame.regs[leftReg].RawData > (int)frame.regs[rightReg].RawData) ? 1 : 0;
+                        int result = (frame.regs[leftReg].AsInt() > frame.regs[rightReg].AsInt()) ? 1 : 0;
                         frame.regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
@@ -192,7 +195,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int result = ((int)frame.regs[leftReg].RawData <= (int)frame.regs[rightReg].RawData) ? 1 : 0;
+                        int result = (frame.regs[leftReg].AsInt() <= frame.regs[rightReg].AsInt()) ? 1 : 0;
                         frame.regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
@@ -200,7 +203,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int result = ((int)frame.regs[leftReg].RawData >= (int)frame.regs[rightReg].RawData) ? 1 : 0;
+                        int result = (frame.regs[leftReg].AsInt() >= frame.regs[rightReg].AsInt()) ? 1 : 0;
                         frame.regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
@@ -208,7 +211,7 @@ class VM {
                         ushort dstReg = getu16();
                         ushort leftReg = getu16();
                         ushort rightReg = getu16();
-                        int result = ((int)frame.regs[leftReg].RawData != (int)frame.regs[rightReg].RawData) ? 1 : 0;
+                        int result = (frame.regs[leftReg].Type != frame.regs[rightReg].Type || frame.regs[leftReg].RawData != frame.regs[rightReg].RawData) ? 1 : 0;
                         frame.regs[dstReg] = new Value(ValueType.Bool, result);
                         break;
                     }
@@ -236,6 +239,56 @@ class VM {
                         break;
                     }
 
+                case OpCode.NEW_ARRAY: {
+                        ushort dstReg = getu16();
+                        ValueType type = (ValueType)currentBytecode[frame.instructionPointer++];
+                        ushort lengthReg = getu16();
+                        int length = frame.regs[lengthReg].AsInt();
+                        if (length < 0) {
+                            throw new Exception("array length must be positive");
+                        }
+                        AllocateNewArray(dstReg, type, length);
+                        break;
+                    }
+                case OpCode.ARRAY_LENGTH: {
+                        ushort dstReg = getu16();
+                        ushort arrayReg = getu16();
+
+                        ArrayObject arrayObj = GetArrayObject(arrayReg);
+
+                        frame.regs[dstReg] = new Value(ValueType.Int, arrayObj.Length);
+
+                        break;
+                    }
+                case OpCode.STORE_ELEMENT: {
+                        ushort srcReg = getu16();
+                        ushort arrayReg = getu16();
+                        ushort indexReg = getu16();
+
+                        int index = frame.regs[indexReg].AsInt();
+
+                        ArrayObject arrayObj = GetArrayObject(arrayReg);
+                        if (index < 0 || index >= arrayObj.Length) {
+                            throw new Exception("Index out of range");
+                        }
+                        arrayObj.Elements[index] = frame.regs[srcReg];
+
+                        break;
+                    }
+                case OpCode.LOAD_ELEMNT: {
+                        ushort dstReg = getu16();
+                        ushort arrayReg = getu16();
+                        ushort indexReg = getu16();
+
+                        int index = frame.regs[indexReg].AsInt();
+
+                        ArrayObject arrayObj = GetArrayObject(arrayReg);
+                        if (index < 0 || index >= arrayObj.Length) {
+                            throw new Exception("Index out of range");
+                        }
+                        frame.regs[dstReg] = arrayObj.Elements[index];
+                        break;
+                    }
                 default:
                     throw new InvalidOperationException("Unknown opcode at position " + (currentFrame.instructionPointer - 1));
 
@@ -254,6 +307,40 @@ class VM {
 
         callFrames.Push(callFrame);
     }
+
+    ArrayObject GetArrayObject(ushort arrayReg) {
+        var frame = callFrames.Peek();
+
+        int heapRefId = frame.regs[arrayReg].AsHeapRef();
+        ArrayObject arrayObj = (ArrayObject)heap.GetHeapObject(heapRefId);
+        return arrayObj;
+    }
+
+    void AllocateNewArray(ushort dstReg, Runtime.ValueType type, int length) {
+        Value[] Elements = new Value[length];
+        SetArrayDefaultValues(Elements, type);
+
+        ArrayObject array = new ArrayObject(type, Elements);
+        int heapObjId = heap.Allocate(array);
+        var callFrame = callFrames.Peek();
+
+        var heapObjRef = new Value(ValueType.HeapRef, heapObjId);
+        callFrame.regs[dstReg] = heapObjRef;
+    }
+
+    void SetArrayDefaultValues(Value[] elements, ValueType type) {
+        Value defaultValue = type switch {
+            ValueType.Int => new Value(ValueType.Int, 0),
+            ValueType.Bool => new Value(ValueType.Bool, 0),
+            ValueType.Char => new Value(ValueType.Char, 0),
+            _ => throw new Exception("Unknown array type"),
+        };
+
+        for (int i = 0; i < elements.Length; i++) {
+            elements[i] = defaultValue;
+        }
+    }
+
 
     ushort getu16() {
         ushort reg = BitConverter.ToUInt16(currentBytecode, currentFrame.instructionPointer);

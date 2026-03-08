@@ -29,6 +29,12 @@ enum OpCode : byte {
     CMP_NEQ,
     MODULUS_INT,
 
+
+    NEW_ARRAY,
+    STORE_ELEMENT,
+    LOAD_ELEMNT,
+    ARRAY_LENGTH,
+
     MOVE,
 
     CALL,
