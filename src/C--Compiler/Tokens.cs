@@ -1,6 +1,9 @@
 namespace CMinus.Compiler;
 
 enum TokenType {
+
+    New,
+
     Return,
 
     True,
@@ -20,6 +23,9 @@ enum TokenType {
 
     OpenBrace,
     CloseBrace,
+
+    OpenBracket,
+    CloseBracket,
 
     Semicolon,
     Colon,

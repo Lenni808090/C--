@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Security.Cryptography.X509Certificates;
 using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
@@ -349,6 +350,20 @@ class Parser {
         return new WhileStmt(condition, body);
     }
 
+    Expr ParseObjectCreation() {
+        NextToken();
+
+        var typeIndentifier = Expect(TokenType.Identifier, "Type identifier expected after new keyword for obj creation");
+        var typeSyntax = new ArrayTypeSyntax(new IdentifierTypeSyntax(typeIndentifier));
+
+        Expect(TokenType.OpenBracket, "opening bracket expected after array type");
+        Expr length = ParseExpr();
+        Expect(TokenType.CloseBracket, "closing bracket expected after array length");
+
+
+        return new ArrayCreationExpr(typeSyntax, length);
+    }
+
     TypeSyntax ParseType() {
         Token typeToken = Current;
         NextToken();
@@ -489,6 +504,10 @@ class Parser {
             case TokenType.False: {
                     NextToken();
                     return new LiteralExpr(token);
+                }
+            case TokenType.New: {
+                    var objCreationExpr = ParseObjectCreation();
+                    return objCreationExpr;
                 }
             case TokenType.Identifier: {
                     NextToken();

@@ -34,16 +34,17 @@ class Lexer {
     new()
     {
         { "return", TokenType.Return },
-        { "true", TokenType.True},
-        { "false", TokenType.False},
-        { "if", TokenType.If},
-        { "else", TokenType.Else},
-        { "while", TokenType.While},
-        { "continue", TokenType.Continue},
-        { "for", TokenType.For},
-        { "break", TokenType.Break},
-        { "mut", TokenType.Mut},
-        { "meth", TokenType.Meth},
+        { "true", TokenType.True },
+        { "false", TokenType.False },
+        { "if", TokenType.If },
+        { "else", TokenType.Else },
+        { "while", TokenType.While },
+        { "continue", TokenType.Continue },
+        { "for", TokenType.For },
+        { "break", TokenType.Break },
+        { "mut", TokenType.Mut },
+        { "meth", TokenType.Meth },
+        { "new", TokenType.New},
     };
     public Lexer(string data, CompilerContext context) {
         this.data = data.ToArray();
@@ -276,6 +277,18 @@ class Lexer {
                         var start = CaptureStart();
                         Next();
                         tokens.Add(newToken(TokenType.CloseBrace, "}", start));
+                        break;
+                    }
+                case '[': {
+                        var start = CaptureStart();
+                        Next();
+                        tokens.Add(newToken(TokenType.OpenBracket, "[", start));
+                        break;
+                    }
+                case ']': {
+                        var start = CaptureStart();
+                        Next();
+                        tokens.Add(newToken(TokenType.CloseBracket, "]", start));
                         break;
                     }
                 case '\'': {

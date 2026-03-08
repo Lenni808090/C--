@@ -42,6 +42,18 @@ sealed class IdentifierTypeSyntax : TypeSyntax {
     }
 }
 
+sealed class ArrayTypeSyntax : TypeSyntax {
+    public override SyntaxKind syntaxKind => SyntaxKind.ArrayType;
+
+    public override SourceLocation location => elementType.location;
+
+    public TypeSyntax elementType;
+
+    public ArrayTypeSyntax(TypeSyntax elementType) {
+        this.elementType = elementType;
+    }
+}
+
 
 sealed class CompilationUnit : SyntaxNode {
     public Stmt[] stmts;
@@ -170,7 +182,6 @@ sealed class BlockStmt : Stmt {
         this.stmts = stmts;
     }
 }
-
 sealed class VarDeclarationStmt : Stmt {
     public override SyntaxKind syntaxKind => SyntaxKind.VarDeclarationStmt;
     public override SourceLocation location => modifiers.Length > 0 ? modifiers[0].Location : type.location;
@@ -189,6 +200,23 @@ sealed class VarDeclarationStmt : Stmt {
         this.declarementExpr = declarementExpr;
     }
 }
+
+
+sealed class ArrayCreationExpr : Expr {
+    public override SyntaxKind syntaxKind => SyntaxKind.ArrayCreationExpr;
+
+    public override SourceLocation location => typeSyntax.location;
+
+    public TypeSyntax typeSyntax;
+
+    public Expr length;
+
+    public ArrayCreationExpr(TypeSyntax typeSyntax, Expr length) {
+        this.typeSyntax = typeSyntax;
+        this.length = length;
+    }
+}
+
 sealed class CallExpr : Expr {
     public Expr calle;
     public Expr[] args;
@@ -287,9 +315,11 @@ enum SyntaxKind {
     LiteralExpr,
     NameExpr,
     BinaryExpr,
+    ArrayCreationExpr,
     UnaryExpr,
     ExpressionStmt,
     CallExpr,
 
     IdentifierType,
+    ArrayType,
 }
