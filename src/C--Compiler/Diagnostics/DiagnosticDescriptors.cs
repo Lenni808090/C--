@@ -62,28 +62,32 @@ public static class DiagnosticDescriptors {
         new("BND017", "Binder", "parameter names must be unique: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderProgramNeedsEntryPoint =
         new("BND018", "Binder", "program needs an entry point named Main", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderMainFunctionCannotHaveParameters =
+        new("BND019", "Binder", "entry point 'Main' must not declare parameters", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderMainFunctionAlreadyDefined =
+        new("BND020", "Binder", "program may only declare one valid entry point 'Main'", Severity.Error);
     public static readonly DiagnosticDescriptor BinderFunctionResolutionFailed =
-        new("BND019", "Binder", "function could not be resolved after collection: {0}", Severity.Error);
+        new("BND021", "Binder", "function could not be resolved after collection: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderReturnTypeMismatch =
-        new("BND020", "Binder", "return type mismatch. expected {0}, got {1}", Severity.Error);
+        new("BND022", "Binder", "return type mismatch. expected {0}, got {1}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderCallTargetMustBeFunctionName =
-        new("BND023", "Binder", "call target must be a function name", Severity.Error);
+        new("BND025", "Binder", "call target must be a function name", Severity.Error);
     public static readonly DiagnosticDescriptor BinderFunctionNotDeclared =
-        new("BND024", "Binder", "function is not declared: {0}", Severity.Error);
+        new("BND026", "Binder", "function is not declared: {0}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderCallArgumentCountMismatch =
-        new("BND025", "Binder", "function '{0}' expects {1} argument(s), got {2}", Severity.Error);
+        new("BND027", "Binder", "function '{0}' expects {1} argument(s), got {2}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderCallArgumentTypeMismatch =
-        new("BND026", "Binder", "argument {1} of function '{0}' expects {2}, got {3}", Severity.Error);
+        new("BND028", "Binder", "argument {1} of function '{0}' expects {2}, got {3}", Severity.Error);
     public static readonly DiagnosticDescriptor BinderArrayCreationTypeMustBeArray =
-        new("BND027", "Binder", "array creation must use an array type", Severity.Error);
+        new("BND029", "Binder", "array creation must use an array type", Severity.Error);
     public static readonly DiagnosticDescriptor BinderArrayLengthMustBeInt =
-        new("BND028", "Binder", "array length must be of type int", Severity.Error);
+        new("BND030", "Binder", "array length must be of type int", Severity.Error);
     public static readonly DiagnosticDescriptor BinderIndexTargetMustBeArray =
-        new("BND029", "Binder", "indexed target must be of an array type", Severity.Error);
+        new("BND031", "Binder", "indexed target must be of an array type", Severity.Error);
     public static readonly DiagnosticDescriptor BinderArrayIndexMustBeInt =
-        new("BND030", "Binder", "array index must be of type int", Severity.Error);
+        new("BND032", "Binder", "array index must be of type int", Severity.Error);
     public static readonly DiagnosticDescriptor BinderAssignmentTargetMustBeAssignable =
-        new("BND031", "Binder", "left side of assignment must be assignable", Severity.Error);
+        new("BND033", "Binder", "left side of assignment must be assignable", Severity.Error);
 
 
     public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);

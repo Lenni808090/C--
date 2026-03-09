@@ -32,14 +32,18 @@ class CompiledFunction {
 
     public CallFrame AsCallFrame(ushort? returnReg, int functionInd) {
         Value[] regs = new Value[maxRegCount];
-        Value[] locals = new Value[localCount + paramCount];
+        Value[] locals = new Value[localCount];
         return new CallFrame(regs, locals, returnReg, functionInd);
     }
 }
 
 readonly struct InstructionDebugInfo {
-    public int BytecodeOffset { get; }
-    public SourceLocation Location { get; }
+    public int BytecodeOffset {
+        get;
+    }
+    public SourceLocation Location {
+        get;
+    }
 
     public InstructionDebugInfo(int bytecodeOffset, SourceLocation location) {
         BytecodeOffset = bytecodeOffset;

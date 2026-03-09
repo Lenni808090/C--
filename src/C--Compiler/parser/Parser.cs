@@ -351,38 +351,43 @@ class Parser {
         NextToken();
 
         TypeSyntax arrayTypeSyntax = ParseIdentifierType();
-        Expr? length = null;
+        List<Expr?> length = new();
 
         while (Current.TokenType == TokenType.OpenBracket) {
             NextToken();
 
             if (Current.TokenType == TokenType.CloseBracket) {
-                if (length is null) {
-                    ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
-                }
                 NextToken();
+                length.Add(null);
                 arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
                 continue;
             }
-
-            if (length is not null) {
-                ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
-                ParseExpr();
-            }
             else {
-                length = ParseExpr();
+                length.Add(ParseExpr());
             }
 
             Expect(TokenType.CloseBracket, "closing bracket expected after length in array creation");
             arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
         }
 
-        if (length is null) {
-            ReportError(Current, DiagnosticDescriptors.ParserUnexpectedToken, "array creation requires a sized first dimension", Current.TokenType);
-            length = new LiteralExpr(new Token("0", TokenType.Number, Current.Location, 0));
+        if (length.Count == 0) {
+            ReportError(Current, DiagnosticDescriptors.ParserUnexpectedToken, "array creation requires at least one dimension", Current.TokenType);
+            arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
+            length.Add(new LiteralExpr(new Token("0", TokenType.Number, arrayTypeSyntax.location, 0)));
         }
 
-        return new ArrayCreationExpr(arrayTypeSyntax, length);
+        if (length[0] is null) {
+            ReportError(Current, DiagnosticDescriptors.ParserUnexpectedToken, "array creation requires a sized first dimension", Current.TokenType);
+            length[0] = new LiteralExpr(new Token("0", TokenType.Number, Current.Location, 0));
+        }
+
+        for (int i = 1; i < length.Count; i++) {
+            if (length[i] is not null) {
+                ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
+            }
+        }
+
+        return new ArrayCreationExpr(arrayTypeSyntax, length[0]!);
     }
 
     TypeSyntax ParseType() {

@@ -21,6 +21,7 @@ class Binder {
     DiagnosticBag diagnostics;
     List<BoundFunctionDeclaration> functions;
     BoundFunctionDeclaration? mainFunc;
+    bool sawInvalidMainFunction;
     int nextLocalIndex;
     Stmt[] stmtsToBind;
 
@@ -41,6 +42,7 @@ class Binder {
         stmtsToBind = compilationUnit.stmts;
         loopDepth = 0;
         currentReturnType = BuiltInTypes.Error;
+        sawInvalidMainFunction = false;
     }
 
     public BoundCompiledUnit BindCompiledUnit() {
@@ -89,8 +91,11 @@ class Binder {
             functions.Add(boundStmt);
         }
 
-        if (mainFunc is null) {
+        if (mainFunc is null && !sawInvalidMainFunction) {
             ReportError(GetCompilationLocation(), DiagnosticDescriptors.BinderProgramNeedsEntryPoint);
+        }
+
+        if (mainFunc is null) {
             mainFunc = CreateErrorMainFunction();
         }
         return new BoundCompiledUnit(mainFunc, functions.ToArray());
@@ -117,11 +122,26 @@ class Binder {
         var func = new BoundFunctionDeclaration(functionSymbol, body, functionDeclaration.functionName.Location);
 
         if (name == "Main") {
-            mainFunc = func;
+            ValidateMainFunc(func, functionSymbol);
         }
 
         PopScope();
         return func;
+    }
+
+    void ValidateMainFunc(BoundFunctionDeclaration func, FunctionSymbol functionSymbol) {
+        if (mainFunc is not null) {
+            ReportError(func.location, DiagnosticDescriptors.BinderMainFunctionAlreadyDefined);
+        }
+        else {
+            if (functionSymbol.argCount > 0) {
+                ReportError(func.location, DiagnosticDescriptors.BinderMainFunctionCannotHaveParameters);
+                sawInvalidMainFunction = true;
+            }
+            else {
+                mainFunc = func;
+            }
+        }
     }
 
     void AddParams(FunctionDeclarationStmt functionDeclaration) {

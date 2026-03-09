@@ -9,21 +9,13 @@ enum RuntimeTypeKind {
 }
 
 sealed class RuntimeTypeDesc {
-    public int TypeId {
-        get;
-    }
+    public int TypeId;
 
-    public RuntimeTypeKind Kind {
-        get;
-    }
+    public RuntimeTypeKind Kind;
 
-    public int? ElementTypeId {
-        get;
-    }
+    public int? ElementTypeId;
 
-    public string? Name {
-        get;
-    }
+    public string? Name;
 
     public RuntimeTypeDesc(int typeId, RuntimeTypeKind kind, int? elementTypeId = null, string? name = null) {
         TypeId = typeId;
