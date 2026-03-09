@@ -1,5 +1,6 @@
 namespace CMinus.Compiler.Lowering;
 
+using System.Data;
 using CMinus.Compiler;
 
 abstract class IrInstr {
@@ -24,9 +25,12 @@ abstract class Terminator {
 sealed class IrCompiledUnit {
     public IrFunction[] irFunctions;
     public int mainFunctionInd;
-    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd) {
+    public Runtime.RuntimeTypeDesc[] typeTable;
+
+    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, Runtime.RuntimeTypeDesc[] typeTable) {
         this.irFunctions = irFunctions;
         this.mainFunctionInd = mainFunctionInd;
+        this.typeTable = typeTable;
     }
 }
 
@@ -93,6 +97,55 @@ sealed class IrLoadLocal : IrInstr {
         this.dstReg = dstReg;
         this.localIndex = localIndex;
     }
+}
+
+sealed class IrNewArray : IrInstr {
+    public int dstReg;
+    public int typeId;
+
+    public int lengthReg;
+
+    public IrNewArray(int dstReg, int typeId, int lengthReg, SourceLocation location) : base(location) {
+        this.dstReg = dstReg;
+        this.typeId = typeId;
+        this.lengthReg = lengthReg;
+    }
+}
+
+sealed class IrArrayLength : IrInstr {
+    public int dstReg;
+    public int arrayReg;
+
+    public IrArrayLength(int dstReg, int arrayReg, SourceLocation location) : base(location) {
+        this.dstReg = dstReg;
+        this.arrayReg = arrayReg;
+    }
+
+}
+
+sealed class IrStoreElement : IrInstr {
+    public int srcReg;
+    public int arrayReg;
+    public int indexReg;
+
+    public IrStoreElement(int srcReg, int arrayReg, int indexReg, SourceLocation location) : base(location) {
+        this.srcReg = srcReg;
+        this.arrayReg = arrayReg;
+        this.indexReg = indexReg;
+    }
+}
+
+sealed class IrLoadElement : IrInstr {
+    public int dstReg;
+    public int arrayReg;
+    public int indexReg;
+
+    public IrLoadElement(int dstReg, int arrayReg, int indexReg, SourceLocation location) : base(location) {
+        this.dstReg = dstReg;
+        this.arrayReg = arrayReg;
+        this.indexReg = indexReg;
+    }
+
 }
 
 sealed class IrReturn : Terminator {

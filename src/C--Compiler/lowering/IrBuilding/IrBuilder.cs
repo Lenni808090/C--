@@ -7,6 +7,7 @@ namespace CMinus.Compiler.Lowering;
 class IrBuilder {
     List<BasicBlock> basicBlocks;
     Stack<LoopTarget> loopTarget;
+    RuntimeTypeInterner runtimeTypeInterner;
 
     Dictionary<FunctionSymbol, int> symbolToInd;
     BasicBlock currentBlock;
@@ -21,6 +22,7 @@ class IrBuilder {
         symbolToInd = new();
         basicBlocks = new();
         loopTarget = new();
+        runtimeTypeInterner = new();
         this.boundCompiledUnit = boundCompiledUnit;
         currentBlock = MakeNewBlock();
     }
@@ -43,7 +45,7 @@ class IrBuilder {
             builtFunctions.Add(BuildFunction(function));
         }
 
-        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd);
+        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd, runtimeTypeInterner.BuildTypeTable());
     }
 
     public void fillSymbolToInd(BoundFunctionDeclaration[] functionDeclarations) {
@@ -252,6 +254,15 @@ class IrBuilder {
             case BoundCallExpr c: {
                     return BuildCallExpr(c);
                 }
+            case BoundArrayCreationExpr a: {
+                    return BuildArrayCreationExpr(a);
+                }
+            case BoundIndexExpr i: {
+                    return BuildIndexExpr(i);
+                }
+            case BoundIndexAssignmentExpr i: {
+                    return BuildIndexAssignmentExpr(i);
+                }
             default: {
                     throw new Exception("Unkown Expr in Build Expr Ir" + boundExpr);
                 }
@@ -309,6 +320,26 @@ class IrBuilder {
         }
         int functionInd = symbolToInd[callExpr.callee];
         return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd, callExpr.location);
+    }
+
+    int BuildArrayCreationExpr(BoundArrayCreationExpr arrayCreationExpr) {
+        int lengthReg = BuildExpr(arrayCreationExpr.length);
+        int typeId = GetRuntimeTypeId(arrayCreationExpr.type);
+        return EmitNewArray(typeId, lengthReg, arrayCreationExpr.location);
+    }
+
+    int BuildIndexExpr(BoundIndexExpr indexExpr) {
+        int arrayReg = BuildExpr(indexExpr.target);
+        int indexReg = BuildExpr(indexExpr.index);
+        return EmitLoadElement(arrayReg, indexReg, indexExpr.location);
+    }
+
+    int BuildIndexAssignmentExpr(BoundIndexAssignmentExpr indexAssignmentExpr) {
+        int arrayReg = BuildExpr(indexAssignmentExpr.target);
+        int indexReg = BuildExpr(indexAssignmentExpr.index);
+        int valueReg = BuildExpr(indexAssignmentExpr.value);
+        EmitStoreElement(valueReg, arrayReg, indexReg, indexAssignmentExpr.location);
+        return valueReg;
     }
 
     int BuildLogicalOrExpr(BoundBinaryExpr binaryExpr) {
@@ -452,6 +483,22 @@ class IrBuilder {
         Emit(new IrCallInstr(dstReg, argCount, argRegs, functionIndex, location));
         return dstReg;
     }
+
+    int EmitNewArray(int typeId, int lengthReg, SourceLocation location) {
+        int dstReg = AllocVReg();
+        Emit(new IrNewArray(dstReg, typeId, lengthReg, location));
+        return dstReg;
+    }
+
+    void EmitStoreElement(int srcReg, int arrayReg, int indexReg, SourceLocation location) {
+        Emit(new IrStoreElement(srcReg, arrayReg, indexReg, location));
+    }
+
+    int EmitLoadElement(int arrayReg, int indexReg, SourceLocation location) {
+        int dstReg = AllocVReg();
+        Emit(new IrLoadElement(dstReg, arrayReg, indexReg, location));
+        return dstReg;
+    }
     void TerminateReturn(int returnReg, SourceLocation location) {
         Terminate(new IrReturn(returnReg, location));
     }
@@ -495,6 +542,10 @@ class IrBuilder {
         }
 
         throw new Exception("Unkown symbol type in get value type" + typeSymbol);
+    }
+
+    int GetRuntimeTypeId(TypeSymbol typeSymbol) {
+        return runtimeTypeInterner.Intern(typeSymbol);
     }
 
 

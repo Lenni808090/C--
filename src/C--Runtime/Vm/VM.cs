@@ -5,6 +5,7 @@ namespace CMinus.Runtime;
 
 class VM {
     Value[] constants;
+    RuntimeTypeDesc[] typeTable;
     Heap heap;
     CallFrame currentFrame => callFrames.Peek();
     CompiledFunction currentFunction => functions[currentFrame.functionInd];
@@ -19,6 +20,7 @@ class VM {
     public VM(CompiledProgram compiledProgram, Value[] constants) {
         functions = compiledProgram.compiledFunctions;
         entryInd = compiledProgram.entryFuncInd;
+        typeTable = compiledProgram.typeTable;
         heap = new();
         callFrames = new();
         this.constants = constants;
@@ -241,13 +243,13 @@ class VM {
 
                 case OpCode.NEW_ARRAY: {
                         ushort dstReg = getu16();
-                        ValueType type = (ValueType)currentBytecode[frame.instructionPointer++];
+                        int typeId = GetI32();
                         ushort lengthReg = getu16();
                         int length = frame.regs[lengthReg].AsInt();
                         if (length < 0) {
                             throw new Exception("array length must be positive");
                         }
-                        AllocateNewArray(dstReg, type, length);
+                        AllocateNewArray(dstReg, typeId, length);
                         break;
                     }
                 case OpCode.ARRAY_LENGTH: {
@@ -310,17 +312,30 @@ class VM {
 
     ArrayObject GetArrayObject(ushort arrayReg) {
         var frame = callFrames.Peek();
+        Value arrayValue = frame.regs[arrayReg];
 
-        int heapRefId = frame.regs[arrayReg].AsHeapRef();
-        ArrayObject arrayObj = (ArrayObject)heap.GetHeapObject(heapRefId);
+        if (arrayValue.Type == ValueType.Null) {
+            throw new NullReferenceException("array reference is null");
+        }
+
+        int heapRefId = arrayValue.AsHeapRef();
+        HeapObject heapObject = heap.GetHeapObject(heapRefId);
+        if (heapObject is not ArrayObject arrayObj) {
+            throw new Exception("heap reference does not point to an array");
+        }
         return arrayObj;
     }
 
-    void AllocateNewArray(ushort dstReg, Runtime.ValueType type, int length) {
-        Value[] Elements = new Value[length];
-        SetArrayDefaultValues(Elements, type);
+    void AllocateNewArray(ushort dstReg, int typeId, int length) {
+        RuntimeTypeDesc arrayType = GetTypeDesc(typeId);
+        if (arrayType.Kind != RuntimeTypeKind.Array || arrayType.ElementTypeId is null) {
+            throw new Exception("NEW_ARRAY requires an array type descriptor");
+        }
 
-        ArrayObject array = new ArrayObject(type, Elements);
+        Value[] Elements = new Value[length];
+        SetArrayDefaultValues(Elements, arrayType.ElementTypeId.Value);
+
+        ArrayObject array = new ArrayObject(typeId, arrayType.ElementTypeId.Value, Elements);
         int heapObjId = heap.Allocate(array);
         var callFrame = callFrames.Peek();
 
@@ -328,17 +343,32 @@ class VM {
         callFrame.regs[dstReg] = heapObjRef;
     }
 
-    void SetArrayDefaultValues(Value[] elements, ValueType type) {
-        Value defaultValue = type switch {
-            ValueType.Int => new Value(ValueType.Int, 0),
-            ValueType.Bool => new Value(ValueType.Bool, 0),
-            ValueType.Char => new Value(ValueType.Char, 0),
-            _ => throw new Exception("Unknown array type"),
-        };
+    void SetArrayDefaultValues(Value[] elements, int elementTypeId) {
+        Value defaultValue = DefaultValueForType(elementTypeId);
 
         for (int i = 0; i < elements.Length; i++) {
             elements[i] = defaultValue;
         }
+    }
+
+    Value DefaultValueForType(int typeId) {
+        RuntimeTypeDesc type = GetTypeDesc(typeId);
+        return type.Kind switch {
+            RuntimeTypeKind.Int => new Value(ValueType.Int, 0),
+            RuntimeTypeKind.Bool => new Value(ValueType.Bool, 0),
+            RuntimeTypeKind.Char => new Value(ValueType.Char, 0),
+            RuntimeTypeKind.Array => new Value(ValueType.Null, 0),
+            RuntimeTypeKind.Object => new Value(ValueType.Null, 0),
+            _ => throw new Exception("unknown runtime type kind"),
+        };
+    }
+
+    RuntimeTypeDesc GetTypeDesc(int typeId) {
+        if (typeId < 0 || typeId >= typeTable.Length) {
+            throw new Exception("unknown runtime type id " + typeId);
+        }
+
+        return typeTable[typeId];
     }
 
 
@@ -346,6 +376,12 @@ class VM {
         ushort reg = BitConverter.ToUInt16(currentBytecode, currentFrame.instructionPointer);
         currentFrame.instructionPointer += 2;
         return reg;
+    }
+
+    int GetI32() {
+        int value = BitConverter.ToInt32(currentBytecode, currentFrame.instructionPointer);
+        currentFrame.instructionPointer += 4;
+        return value;
     }
 
 }

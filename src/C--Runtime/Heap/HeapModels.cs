@@ -10,12 +10,14 @@ abstract class HeapObject {
 class ArrayObject : HeapObject {
     public override HeapObjectKind heapObjectKind => HeapObjectKind.ArrayObject;
 
-    public ValueType ElementType;
+    public int TypeId;
+    public int ElementTypeId;
     public Value[] Elements;
     public int Length;
-    public ArrayObject(ValueType ElementType, Value[] Elements) {
+    public ArrayObject(int typeId, int elementTypeId, Value[] Elements) {
         Length = Elements.Length;
-        this.ElementType = ElementType;
+        TypeId = typeId;
+        ElementTypeId = elementTypeId;
         this.Elements = Elements;
     }
 }

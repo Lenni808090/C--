@@ -23,7 +23,7 @@ class CodeGenerator {
             compiledFunctions.Add(GenerateFunction(irFunction));
         }
 
-        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.mainFunctionInd);
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable);
     }
 
     public CompiledFunction GenerateFunction(IrFunction irFunction) {
@@ -80,6 +80,22 @@ class CodeGenerator {
                 }
             case IrCallInstr call: {
                     EmitCall(call);
+                    break;
+                }
+            case IrNewArray newArray: {
+                    EmitNewArray(newArray);
+                    break;
+                }
+            case IrStoreElement storeElement: {
+                    EmitStoreElement(storeElement);
+                    break;
+                }
+            case IrLoadElement loadElement: {
+                    EmitLoadElement(loadElement);
+                    break;
+                }
+            case IrArrayLength arrayLength: {
+                    EmitArrayLength(arrayLength);
                     break;
                 }
             default: {
@@ -212,6 +228,26 @@ class CodeGenerator {
         ushort functionIndex = (ushort)irCallInstr.functionIndex;
 
         functionBuilder.Emitter.EmitCall(dst, functionIndex, argCount, argRegs);
+    }
+
+    void EmitNewArray(IrNewArray newArray) {
+        functionBuilder.RecordLocation(newArray.location);
+        functionBuilder.Emitter.EmitNewArray((ushort)newArray.dstReg, newArray.typeId, (ushort)newArray.lengthReg);
+    }
+
+    void EmitStoreElement(IrStoreElement storeElement) {
+        functionBuilder.RecordLocation(storeElement.location);
+        functionBuilder.Emitter.EmitStoreElement((ushort)storeElement.srcReg, (ushort)storeElement.arrayReg, (ushort)storeElement.indexReg);
+    }
+
+    void EmitLoadElement(IrLoadElement loadElement) {
+        functionBuilder.RecordLocation(loadElement.location);
+        functionBuilder.Emitter.EmitLoadElement((ushort)loadElement.dstReg, (ushort)loadElement.arrayReg, (ushort)loadElement.indexReg);
+    }
+
+    void EmitArrayLength(IrArrayLength arrayLength) {
+        functionBuilder.RecordLocation(arrayLength.location);
+        functionBuilder.Emitter.EmitArrayLength((ushort)arrayLength.dstReg, (ushort)arrayLength.arrayReg);
     }
 
     void EmitReturn(IrReturn @return) {

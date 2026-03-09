@@ -297,6 +297,10 @@ class PrimitiveSymbolType : TypeSymbol {
     public PrimitiveSymbolType(string name) : base(name) { }
 }
 
+class NamedTypeSymbol : TypeSymbol {
+    public NamedTypeSymbol(string name) : base(name) { }
+}
+
 class ArraySymbolType : TypeSymbol {
     public TypeSymbol elementType;
 
@@ -327,9 +331,16 @@ static class TypeSymbolExtensions {
                     var primitive2 = (PrimitiveSymbolType)type2;
                     return primitive1.name == primitive2.name;
                 }
+            case NamedTypeSymbol named1: {
+                    var named2 = (NamedTypeSymbol)type2;
+                    return named1.name == named2.name;
+                }
             case ArraySymbolType array1: {
                     var array2 = (ArraySymbolType)type2;
                     return IsSameType(array1.elementType, array2.elementType);
+                }
+            case ErrorSymbolType: {
+                    return true;
                 }
             default: {
                     throw new Exception("Unkown type in type comparission");
@@ -342,5 +353,5 @@ static class BuiltInTypes {
     public static readonly PrimitiveSymbolType Int = new("int");
     public static readonly PrimitiveSymbolType Char = new("char");
     public static readonly PrimitiveSymbolType Bool = new("bool");
-    public static readonly PrimitiveSymbolType Error = new("<error>");
+    public static readonly ErrorSymbolType Error = new();
 }

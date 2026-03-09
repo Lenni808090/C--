@@ -24,7 +24,7 @@ class Binder {
     int nextLocalIndex;
     Stmt[] stmtsToBind;
 
-    private static readonly Dictionary<string, TypeSymbol> standardTypes =
+    private static readonly Dictionary<string, TypeSymbol> namedTypes =
       new()
     {
         { "int", BuiltInTypes.Int },
@@ -708,7 +708,7 @@ class Binder {
 
     bool TryResolveNamedType(IdentifierTypeSyntax identifierTypeSyntax, out TypeSymbol? typeSymbol) {
         string name = identifierTypeSyntax.identifier.Text;
-        if (standardTypes.TryGetValue(name, out TypeSymbol? type)) {
+        if (namedTypes.TryGetValue(name, out TypeSymbol? type)) {
             typeSymbol = type;
             return true;
         }

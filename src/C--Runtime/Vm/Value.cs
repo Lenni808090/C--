@@ -54,6 +54,12 @@ struct Value {
             case ValueType.Char: {
                     return $"Char({(char)RawData})";
                 }
+            case ValueType.HeapRef: {
+                    return $"HeapRef({RawData})";
+                }
+            case ValueType.Null: {
+                    return "Null";
+                }
             default: {
                     throw new InvalidOperationException("Unknown ValueType: " + Type);
                 }

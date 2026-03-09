@@ -83,6 +83,33 @@ class Emitter {
         EmitU16(localIndex);
     }
 
+    public void EmitNewArray(ushort dstReg, int typeId, ushort lengthReg) {
+        EmitOp(OpCode.NEW_ARRAY);
+        EmitU16(dstReg);
+        EmitI32(typeId);
+        EmitU16(lengthReg);
+    }
+
+    public void EmitStoreElement(ushort srcReg, ushort arrayReg, ushort indexReg) {
+        EmitOp(OpCode.STORE_ELEMENT);
+        EmitU16(srcReg);
+        EmitU16(arrayReg);
+        EmitU16(indexReg);
+    }
+
+    public void EmitLoadElement(ushort dstReg, ushort arrayReg, ushort indexReg) {
+        EmitOp(OpCode.LOAD_ELEMNT);
+        EmitU16(dstReg);
+        EmitU16(arrayReg);
+        EmitU16(indexReg);
+    }
+
+    public void EmitArrayLength(ushort dstReg, ushort arrayReg) {
+        EmitOp(OpCode.ARRAY_LENGTH);
+        EmitU16(dstReg);
+        EmitU16(arrayReg);
+    }
+
     public void EmitReturn(ushort returnReg) {
         EmitOp(OpCode.RETURN);
         EmitU16(returnReg);

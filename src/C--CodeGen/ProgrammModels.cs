@@ -5,11 +5,13 @@ namespace CMinus.CodeGen;
 
 class CompiledProgram {
     public CompiledFunction[] compiledFunctions;
-
     public int entryFuncInd;
-    public CompiledProgram(CompiledFunction[] compiledFunctions, int entryFuncInd) {
+    public RuntimeTypeDesc[] typeTable;
+
+    public CompiledProgram(CompiledFunction[] compiledFunctions, int entryFuncInd, RuntimeTypeDesc[] typeTable) {
         this.compiledFunctions = compiledFunctions;
         this.entryFuncInd = entryFuncInd;
+        this.typeTable = typeTable;
     }
 }
 

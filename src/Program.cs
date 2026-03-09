@@ -13,8 +13,10 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            x: int[] = new int[5];
-                            x[2] = 3;
+                            x: int[][] = new int[3][];
+                            x[0] = new int[2];
+                            x[0][1] = 3;
+                            return x[0][1];
                         }
 ";
 
@@ -479,6 +481,33 @@ class Program {
                         Console.WriteLine();
                         break;
                     }
+                case OpCode.NEW_ARRAY: {
+                        ushort dst = ReadU16();
+                        int typeId = ReadI32();
+                        ushort lengthReg = ReadU16();
+                        Console.WriteLine($" r{dst}, type[{typeId}], r{lengthReg}");
+                        break;
+                    }
+                case OpCode.STORE_ELEMENT: {
+                        ushort src = ReadU16();
+                        ushort array = ReadU16();
+                        ushort index = ReadU16();
+                        Console.WriteLine($" r{src}, r{array}, r{index}");
+                        break;
+                    }
+                case OpCode.LOAD_ELEMNT: {
+                        ushort dst = ReadU16();
+                        ushort array = ReadU16();
+                        ushort index = ReadU16();
+                        Console.WriteLine($" r{dst}, r{array}, r{index}");
+                        break;
+                    }
+                case OpCode.ARRAY_LENGTH: {
+                        ushort dst = ReadU16();
+                        ushort array = ReadU16();
+                        Console.WriteLine($" r{dst}, r{array}");
+                        break;
+                    }
                 default: {
                         Console.WriteLine(" <unknown opcode>");
                         return;
@@ -496,6 +525,12 @@ class Program {
         Console.WriteLine("=== CONSTANT POOL ===");
         for (int i = 0; i < constants.Length; i++) {
             Console.WriteLine($"[{i}] {constants[i]}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("=== TYPE TABLE ===");
+        for (int i = 0; i < program.typeTable.Length; i++) {
+            Console.WriteLine($"[{i}] {program.typeTable[i]}");
         }
 
         Console.WriteLine();
@@ -590,9 +625,25 @@ class Program {
                     break;
                 }
             case BoundVarAssignmentExpr va: {
+                    Console.WriteLine($"BoundVarAssignmentExpr : {va.type}");
+                    indent += isLast ? "   " : "|  ";
                     Console.Write(indent);
                     Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.typeSymbol} (index {va.localSymbol.index})");
                     PrintBoundExpr(va.value, indent, true);
+                    break;
+                }
+            case BoundIndexAssignmentExpr indexAssignment: {
+                    Console.WriteLine($"BoundIndexAssignmentExpr : {indexAssignment.type}");
+                    indent += isLast ? "   " : "|  ";
+                    Console.Write(indent);
+                    Console.WriteLine("+--Target");
+                    PrintBoundExpr(indexAssignment.target, indent + "   ", false);
+                    Console.Write(indent);
+                    Console.WriteLine("+--Index");
+                    PrintBoundExpr(indexAssignment.index, indent + "   ", false);
+                    Console.Write(indent);
+                    Console.WriteLine("+--Value");
+                    PrintBoundExpr(indexAssignment.value, indent + "   ", true);
                     break;
                 }
             case BoundArrayCreationExpr arrayCreation: {
@@ -666,6 +717,18 @@ class Program {
                             break;
                         case IrCallInstr c:
                             Console.WriteLine($"  call r{c.dstReg} <- fn[{c.functionIndex}]({string.Join(", ", c.argRegs.Select(static r => $"r{r}"))})");
+                            break;
+                        case IrNewArray a:
+                            Console.WriteLine($"  new_array r{a.dstReg} <- type[{a.typeId}], r{a.lengthReg}");
+                            break;
+                        case IrStoreElement s:
+                            Console.WriteLine($"  store_element r{s.srcReg} -> r{s.arrayReg}[r{s.indexReg}]");
+                            break;
+                        case IrLoadElement l:
+                            Console.WriteLine($"  load_element r{l.dstReg} <- r{l.arrayReg}[r{l.indexReg}]");
+                            break;
+                        case IrArrayLength a:
+                            Console.WriteLine($"  array_length r{a.dstReg} <- len(r{a.arrayReg})");
                             break;
                         default:
                             Console.WriteLine("  <unknown instr>");

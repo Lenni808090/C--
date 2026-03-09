@@ -268,8 +268,8 @@ class Parser {
 
             Expect(TokenType.Colon, "Colon expected after Param Name for Type Definition");
 
-            var parameterType = Expect(TokenType.Identifier, "Type Expexted after Colon when declaring params");
-            parameters.Add(new ParameterSyntax(paramName, new IdentifierTypeSyntax(parameterType), new Token[0]));
+            var parameterType = ParseType();
+            parameters.Add(new ParameterSyntax(paramName, parameterType, new Token[0]));
             if (Current.TokenType == TokenType.Comma) {
                 NextToken();
             }
@@ -279,11 +279,11 @@ class Parser {
 
         Expect(TokenType.Arrow, "Arrow Expected After Params for Function Return Type");
 
-        var returnType = Expect(TokenType.Identifier, "Function Return Type Expected After Arrow");
+        var returnType = ParseType();
 
         var body = (BlockStmt)ParseBlockStmt();
 
-        return new FunctionDeclarationStmt(functionName, parameters.ToArray(), new IdentifierTypeSyntax(returnType), body);
+        return new FunctionDeclarationStmt(functionName, parameters.ToArray(), returnType, body);
     }
 
     Stmt ParseIfStmt() {
@@ -350,24 +350,36 @@ class Parser {
     Expr ParseObjectCreationExpr() {
         NextToken();
 
-        TypeSyntax arrayTypeSyntax = new ArrayTypeSyntax(ParseIdentifierType());
-        Expect(TokenType.OpenBracket, "opening bracket expected after array type");
-        Expr length = ParseExpr();
-        Expect(TokenType.CloseBracket, "closing bracket expected after length in array creation");
+        TypeSyntax arrayTypeSyntax = ParseIdentifierType();
+        Expr? length = null;
 
         while (Current.TokenType == TokenType.OpenBracket) {
             NextToken();
 
             if (Current.TokenType == TokenType.CloseBracket) {
+                if (length is null) {
+                    ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
+                }
                 NextToken();
                 arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
                 continue;
             }
 
-            ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
-            ParseExpr();
+            if (length is not null) {
+                ReportError(Current, DiagnosticDescriptors.ParserJaggedArrayCreationAdditionalDimensionsMustBeUnsized);
+                ParseExpr();
+            }
+            else {
+                length = ParseExpr();
+            }
+
             Expect(TokenType.CloseBracket, "closing bracket expected after length in array creation");
             arrayTypeSyntax = new ArrayTypeSyntax(arrayTypeSyntax);
+        }
+
+        if (length is null) {
+            ReportError(Current, DiagnosticDescriptors.ParserUnexpectedToken, "array creation requires a sized first dimension", Current.TokenType);
+            length = new LiteralExpr(new Token("0", TokenType.Number, Current.Location, 0));
         }
 
         return new ArrayCreationExpr(arrayTypeSyntax, length);

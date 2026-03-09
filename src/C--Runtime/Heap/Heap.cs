@@ -11,6 +11,7 @@ class Heap {
     public int Allocate(HeapObject heapObject) {
         int id = heapObjects.Count;
         heapObject.id = id;
+        heapObjects.Add(heapObject);
         return id;
     }
 
