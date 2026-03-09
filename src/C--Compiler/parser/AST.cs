@@ -250,12 +250,12 @@ sealed class AssignmentExpr : Expr {
     public Expr target;
 
     public Token assignmentOperator;
-    public Expr assignmentExpr;
+    public Expr value;
 
-    public AssignmentExpr(Expr target, Token assignmentOperator, Expr assignmentExpr) {
+    public AssignmentExpr(Expr target, Token assignmentOperator, Expr value) {
         this.assignmentOperator = assignmentOperator;
         this.target = target;
-        this.assignmentExpr = assignmentExpr;
+        this.value = value;
     }
 
 }

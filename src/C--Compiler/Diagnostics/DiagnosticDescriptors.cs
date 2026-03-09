@@ -82,6 +82,8 @@ public static class DiagnosticDescriptors {
         new("BND029", "Binder", "indexed target must be of an array type", Severity.Error);
     public static readonly DiagnosticDescriptor BinderArrayIndexMustBeInt =
         new("BND030", "Binder", "array index must be of type int", Severity.Error);
+    public static readonly DiagnosticDescriptor BinderAssignmentTargetMustBeAssignable =
+        new("BND031", "Binder", "left side of assignment must be assignable", Severity.Error);
 
 
     public static readonly DiagnosticDescriptor ConrolFlowUnreachableCode = new("CFA001", "Control Flow Analysis", "unreachable code detected", Severity.Error);

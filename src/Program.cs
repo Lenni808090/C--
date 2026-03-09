@@ -235,7 +235,7 @@ class Program {
                     Console.Write(indent);
                     Console.WriteLine("+--Target");
                     PrintSyntaxExpr(va.target, indent + "   ", false);
-                    PrintSyntaxExpr(va.assignmentExpr, indent, true);
+                    PrintSyntaxExpr(va.value, indent, true);
                     break;
                 }
             case ArrayCreationExpr arrayCreation: {
@@ -592,7 +592,7 @@ class Program {
             case BoundVarAssignmentExpr va: {
                     Console.Write(indent);
                     Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.typeSymbol} (index {va.localSymbol.index})");
-                    PrintBoundExpr(va.assignmentExpr, indent, true);
+                    PrintBoundExpr(va.value, indent, true);
                     break;
                 }
             case BoundArrayCreationExpr arrayCreation: {

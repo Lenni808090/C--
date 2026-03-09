@@ -135,25 +135,24 @@ sealed class BoundExpressionStmt : BoundStmt {
 
 sealed class BoundVarAssignmentExpr : BoundExpr {
     public LocalSymbol localSymbol;
-    public BoundExpr assignmentExpr;
+    public BoundExpr value;
 
-    public BoundVarAssignmentExpr(LocalSymbol localSymbol, BoundExpr assignmentExpr, TypeSymbol type, SourceLocation location) : base(type, location) {
+    public BoundVarAssignmentExpr(LocalSymbol localSymbol, BoundExpr value, TypeSymbol type, SourceLocation location) : base(type, location) {
         this.localSymbol = localSymbol;
-        this.assignmentExpr = assignmentExpr;
+        this.value = value;
     }
 }
 
 sealed class BoundIndexAssignmentExpr : BoundExpr {
     public BoundExpr index;
 
-    public LocalSymbol localSymbol;
+    public BoundExpr target;
+    public BoundExpr value;
 
-    public BoundExpr assignmentExpr;
-
-    public BoundIndexAssignmentExpr(BoundExpr index, LocalSymbol localSymbol, BoundExpr assignmentExpr, TypeSymbol type, SourceLocation location) : base(type, location) {
+    public BoundIndexAssignmentExpr(BoundExpr target, BoundExpr index, BoundExpr value, TypeSymbol type, SourceLocation location) : base(type, location) {
         this.index = index;
-        this.localSymbol = localSymbol;
-        this.assignmentExpr = assignmentExpr;
+        this.target = target;
+        this.value = value;
     }
 
 }

@@ -428,6 +428,21 @@ class Binder {
     }
 
     BoundExpr BindAssignmentExpr(AssignmentExpr assignmentExpr) {
+        if (assignmentExpr.target is NameExpr) {
+            return BindVarAssignmentExpr(assignmentExpr);
+        }
+
+        if (assignmentExpr.target is IndexExpr) {
+            return BindIndexAssignmentExpr(assignmentExpr);
+        }
+
+        ReportError(assignmentExpr.target.location, DiagnosticDescriptors.BinderAssignmentTargetMustBeAssignable);
+        return new BoundErrorExpr(assignmentExpr.location);
+
+    }
+
+    BoundExpr BindVarAssignmentExpr(AssignmentExpr assignmentExpr) {
+
         if (assignmentExpr.target is not NameExpr nameExpr) {
             ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, "<assignment target>");
             return new BoundErrorExpr(assignmentExpr.location);
@@ -435,7 +450,7 @@ class Binder {
 
         var name = nameExpr.name.Text;
         var local = lookUpLocal(name);
-        var assignedExpr = BindExpr(assignmentExpr.assignmentExpr);
+        var assignedExpr = BindExpr(assignmentExpr.value);
 
         if (local is null) {
             ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
@@ -488,6 +503,46 @@ class Binder {
         return new BoundVarAssignmentExpr(local, compoundExpr, local.typeSymbol, location);
     }
 
+    BoundExpr BindIndexAssignmentExpr(AssignmentExpr assignmentExpr) {
+        if (assignmentExpr.target is not IndexExpr indexExpr) {
+            ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, "<assignment target>");
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+        BoundExpr boundTarget = BindExpr(indexExpr.target);
+
+        if (!IsValidType(boundTarget.type)) {
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        if (boundTarget.type is not ArraySymbolType arrayType) {
+            ReportError(indexExpr.target.location, DiagnosticDescriptors.BinderIndexTargetMustBeArray);
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        BoundExpr index = BindExpr(indexExpr.index);
+
+        if (!IsValidType(index.type)) {
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        if (!index.type.IsSameType(BuiltInTypes.Int)) {
+            ReportError(indexExpr.index.location, DiagnosticDescriptors.BinderArrayIndexMustBeInt);
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        BoundExpr value = BindExpr(assignmentExpr.value);
+
+        if (!IsValidType(value.type)) {
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        if (!value.type.IsSameType(arrayType.elementType)) {
+            ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        return new BoundIndexAssignmentExpr(boundTarget, index, value, arrayType.elementType, assignmentExpr.location);
+    }
 
     BoundExpr BindNameExpr(NameExpr nameExpr) {
         string name = nameExpr.name.Text;

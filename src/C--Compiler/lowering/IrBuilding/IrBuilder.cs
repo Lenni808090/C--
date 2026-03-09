@@ -258,7 +258,7 @@ class IrBuilder {
         }
     }
     int BuildVarAssignmentExpr(BoundVarAssignmentExpr assignmentStmt) {
-        int srcReg = BuildExpr(assignmentStmt.assignmentExpr);
+        int srcReg = BuildExpr(assignmentStmt.value);
         var localIndex = assignmentStmt.localSymbol.index;
         EmitStoreLocal(srcReg, localIndex, assignmentStmt.location);
         return srcReg;
