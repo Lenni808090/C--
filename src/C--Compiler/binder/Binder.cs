@@ -556,13 +556,30 @@ class Binder {
             return new BoundErrorExpr(assignmentExpr.location);
         }
 
-        if (!value.type.IsSameType(arrayType.elementType)) {
-            ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
-            return new BoundErrorExpr(assignmentExpr.location);
+        TokenType opType = assignmentExpr.assignmentOperator.TokenType;
+
+        //TODO: make this prettier;
+        BoundBinaryOperator? op = null;
+
+        if (opType == TokenType.Equals) {
+            if (!arrayType.elementType.IsSameType(value.type)) {
+                ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+                return new BoundErrorExpr(assignmentExpr.location);
+            }
+        }
+        else {
+            op = MapCompoundAssignmentToBinaryOperator(opType, arrayType.elementType, value.type);
+
+            if (op is null) {
+                ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderDeclaredAndAssignedTypeMismatch);
+                return new BoundErrorExpr(assignmentExpr.location);
+            }
         }
 
-        return new BoundIndexAssignmentExpr(boundTarget, index, value, arrayType.elementType, assignmentExpr.location);
+
+        return new BoundIndexAssignmentExpr(boundTarget, index, op, value, arrayType.elementType, assignmentExpr.location);
     }
+
 
     BoundExpr BindNameExpr(NameExpr nameExpr) {
         string name = nameExpr.name.Text;

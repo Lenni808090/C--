@@ -145,13 +145,16 @@ sealed class BoundVarAssignmentExpr : BoundExpr {
 
 sealed class BoundIndexAssignmentExpr : BoundExpr {
     public BoundExpr index;
+    public BoundBinaryOperator? op;
 
+    public bool isCompound => op is not null;
     public BoundExpr target;
     public BoundExpr value;
 
-    public BoundIndexAssignmentExpr(BoundExpr target, BoundExpr index, BoundExpr value, TypeSymbol type, SourceLocation location) : base(type, location) {
+    public BoundIndexAssignmentExpr(BoundExpr target, BoundExpr index, BoundBinaryOperator? op, BoundExpr value, TypeSymbol type, SourceLocation location) : base(type, location) {
         this.index = index;
         this.target = target;
+        this.op = op;
         this.value = value;
     }
 

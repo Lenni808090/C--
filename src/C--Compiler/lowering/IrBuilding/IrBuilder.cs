@@ -334,13 +334,24 @@ class IrBuilder {
         return EmitLoadElement(arrayReg, indexReg, indexExpr.location);
     }
 
-    int BuildIndexAssignmentExpr(BoundIndexAssignmentExpr indexAssignmentExpr) {
-        int arrayReg = BuildExpr(indexAssignmentExpr.target);
-        int indexReg = BuildExpr(indexAssignmentExpr.index);
-        int valueReg = BuildExpr(indexAssignmentExpr.value);
-        EmitStoreElement(valueReg, arrayReg, indexReg, indexAssignmentExpr.location);
-        return valueReg;
+    int BuildIndexAssignmentExpr(BoundIndexAssignmentExpr expr) {
+        int arrayReg = BuildExpr(expr.target);
+        int indexReg = BuildExpr(expr.index);
+
+        if (!expr.isCompound) {
+            int valueReg = BuildExpr(expr.value);
+            EmitStoreElement(valueReg, arrayReg, indexReg, expr.location);
+            return valueReg;
+        }
+
+        int oldElementReg = EmitLoadElement(arrayReg, indexReg, expr.location);
+        int rhsReg = BuildExpr(expr.value);
+        int resReg = EmitBinary(MapBinaryOp(expr.op!.operatorKind), oldElementReg, rhsReg, expr.location);
+        EmitStoreElement(resReg, arrayReg, indexReg, expr.location);
+
+        return resReg;
     }
+
 
     int BuildLogicalOrExpr(BoundBinaryExpr binaryExpr) {
         int tempIndex = AllocTempLocalInd();

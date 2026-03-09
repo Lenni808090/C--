@@ -27,8 +27,6 @@ class Program {
         var diagnostics = compilerContext.diagnostics;
 
         Lexer lexer = new Lexer(code, compilerContext);
-        int[][] x = new int[2][];
-        x[2][2] = 2;
 
         Token[] tokens = lexer.Lex();
         if (diagnostics.CheckForErrors()) {
