@@ -13,7 +13,8 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            x: int[][] = new int[5][];
+                            x: int[] = new int[5];
+                            x[2] = 3;
                         }
 ";
 
@@ -230,8 +231,10 @@ class Program {
                     PrintSyntaxExpr(bin.rightExpr, indent, true);
                     break;
                 }
-            case VarAssignmentExpr va: {
-                    PrintNameToken("name", va.variable, indent, false);
+            case AssignmentExpr va: {
+                    Console.Write(indent);
+                    Console.WriteLine("+--Target");
+                    PrintSyntaxExpr(va.target, indent + "   ", false);
                     PrintSyntaxExpr(va.assignmentExpr, indent, true);
                     break;
                 }

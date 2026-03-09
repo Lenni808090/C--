@@ -119,7 +119,7 @@ class Parser {
         return isDecl;
     }
 
-    bool matchesAssignemntExpr() {
+    bool MatchesAssignmentExpr() {
         bool matches = true;
 
         if (Current.TokenType != TokenType.Identifier) {
@@ -316,8 +316,8 @@ class Parser {
             var modifiers = ParseModifiers();
             declarationStmt = ParseVarDeclarationCore(modifiers);
         }
-        else if (matchesAssignemntExpr()) {
-            initializerExpr = ParseAssignemntExpr();
+        else if (MatchesAssignmentExpr()) {
+            initializerExpr = ParseAssignmentExpr();
         }
         else {
             ReportError(Current, DiagnosticDescriptors.ParserForLoopNeedsAssignmentOrDeclaration);
@@ -416,18 +416,23 @@ class Parser {
     }
 
     Expr ParseExpr() {
-        return ParseAssignemntExpr();
+        return ParseAssignmentExpr();
     }
 
-    Expr ParseAssignemntExpr() {
-        if (matchesAssignemntExpr()) {
-            Token identifier = NextToken();
-            var assignOP = NextToken();
-            Expr assignedExpr = ParseExpr();
-            return new VarAssignmentExpr(identifier, assignOP, assignedExpr);
+    //here an if is used because its right associative not left;
+    Expr ParseAssignmentExpr() {
+        Expr left = ParseLogicalOrExpr();
+
+        if (!IsAssignmentOperator(Current.TokenType)) {
+            return left;
         }
-        return ParseLogicalOrExpr();
+
+        Token op = NextToken();
+        Expr right = ParseAssignmentExpr();
+        return new AssignmentExpr(left, op, right);
     }
+
+
 
     Expr ParseLogicalOrExpr() {
         Expr left = ParseLogicalAndExpr();

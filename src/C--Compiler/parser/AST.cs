@@ -243,18 +243,18 @@ sealed class IndexExpr : Expr {
         this.index = index;
     }
 }
-sealed class VarAssignmentExpr : Expr {
-    public override SyntaxKind syntaxKind => SyntaxKind.VarAssignmentExpr;
-    public override SourceLocation location => variable.Location;
+sealed class AssignmentExpr : Expr {
+    public override SyntaxKind syntaxKind => SyntaxKind.AssignmentExpr;
+    public override SourceLocation location => target.location;
 
-    public Token variable;
+    public Expr target;
 
     public Token assignmentOperator;
     public Expr assignmentExpr;
 
-    public VarAssignmentExpr(Token variable, Token assignmentOperator, Expr assignmentExpr) {
+    public AssignmentExpr(Expr target, Token assignmentOperator, Expr assignmentExpr) {
         this.assignmentOperator = assignmentOperator;
-        this.variable = variable;
+        this.target = target;
         this.assignmentExpr = assignmentExpr;
     }
 
@@ -331,7 +331,7 @@ enum SyntaxKind {
     BinaryExpr,
     ArrayCreationExpr,
     UnaryExpr,
-    VarAssignmentExpr,
+    AssignmentExpr,
     ExpressionStmt,
     CallExpr,
 

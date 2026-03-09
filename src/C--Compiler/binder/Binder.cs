@@ -309,7 +309,7 @@ class Binder {
 
     BoundExpr BindExpr(Expr expr) {
         return expr switch {
-            VarAssignmentExpr a => BindVarAssignmentExpr(a),
+            AssignmentExpr a => BindAssignmentExpr(a),
             CallExpr c => BindCallExpr(c),
             ArrayCreationExpr a => BindArrayCreationExpr(a),
             IndexExpr i => BindIndexExpr(i),
@@ -427,28 +427,33 @@ class Binder {
         return new BoundIndexExpr(index, target, type, indexExpr.location);
     }
 
-    BoundExpr BindVarAssignmentExpr(VarAssignmentExpr varAssignmentExpr) {
-        var name = varAssignmentExpr.variable.Text;
+    BoundExpr BindAssignmentExpr(AssignmentExpr assignmentExpr) {
+        if (assignmentExpr.target is not NameExpr nameExpr) {
+            ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, "<assignment target>");
+            return new BoundErrorExpr(assignmentExpr.location);
+        }
+
+        var name = nameExpr.name.Text;
         var local = lookUpLocal(name);
-        var assignedExpr = BindExpr(varAssignmentExpr.assignmentExpr);
+        var assignedExpr = BindExpr(assignmentExpr.assignmentExpr);
 
         if (local is null) {
-            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
-            return new BoundErrorExpr(varAssignmentExpr.location);
+            ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderVariableNotDeclared, name);
+            return new BoundErrorExpr(assignmentExpr.location);
         }
 
         if (!local.modifiers.isMutable) {
-            ReportError(varAssignmentExpr.location, DiagnosticDescriptors.BinderInmutableAssignment);
-            return new BoundErrorExpr(varAssignmentExpr.location);
+            ReportError(assignmentExpr.location, DiagnosticDescriptors.BinderInmutableAssignment);
+            return new BoundErrorExpr(assignmentExpr.location);
         }
 
-        var assignmentOperatorType = varAssignmentExpr.assignmentOperator.TokenType;
+        var assignmentOperatorType = assignmentExpr.assignmentOperator.TokenType;
 
         if (assignmentOperatorType == TokenType.Equals) {
-            return BindSimpleVarAssignment(local, assignedExpr, varAssignmentExpr.location);
+            return BindSimpleVarAssignment(local, assignedExpr, assignmentExpr.location);
         }
 
-        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType, varAssignmentExpr.location);
+        return BindCompoundVarAssignment(local, assignedExpr, assignmentOperatorType, assignmentExpr.location);
     }
     BoundExpr BindSimpleVarAssignment(LocalSymbol local, BoundExpr assignedExpr, SourceLocation location) {
         if (!IsValidType(assignedExpr.type) || !IsValidType(local.typeSymbol)) {

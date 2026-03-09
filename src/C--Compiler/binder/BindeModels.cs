@@ -1,6 +1,8 @@
 namespace CMinus.Compiler.Binding;
 
 using CMinus.Compiler;
+using CMinus.Compiler.Syntax;
+
 
 abstract class BoundStmt {
     public SourceLocation location {
@@ -140,6 +142,22 @@ sealed class BoundVarAssignmentExpr : BoundExpr {
         this.assignmentExpr = assignmentExpr;
     }
 }
+
+sealed class BoundIndexAssignmentExpr : BoundExpr {
+    public BoundExpr index;
+
+    public LocalSymbol localSymbol;
+
+    public BoundExpr assignmentExpr;
+
+    public BoundIndexAssignmentExpr(BoundExpr index, LocalSymbol localSymbol, BoundExpr assignmentExpr, TypeSymbol type, SourceLocation location) : base(type, location) {
+        this.index = index;
+        this.localSymbol = localSymbol;
+        this.assignmentExpr = assignmentExpr;
+    }
+
+}
+
 sealed class BoundIndexExpr : BoundExpr {
     public BoundExpr index;
 
