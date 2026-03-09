@@ -786,6 +786,7 @@ class Binder {
     }
     void ReportError(SourceLocation location, DiagnosticDescriptor descriptor, params object[] args) {
         diagnostics.Report(location, descriptor, args);
+
     }
 }
 

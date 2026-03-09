@@ -57,6 +57,7 @@ sealed class FunctionBuilder {
     public CompiledFunction BuildAndReset(int localCount, int paramCount, int maxRegCount) {
         var func = Build(localCount, paramCount, maxRegCount);
         Emitter.Reset();
+        debugInfo.Clear();
         return func;
     }
 }

@@ -79,12 +79,19 @@ class Parser {
                tokenType == TokenType.If ||
                tokenType == TokenType.While ||
                tokenType == TokenType.For ||
+               tokenType == TokenType.Continue ||
+               tokenType == TokenType.Break ||
+               tokenType == TokenType.Meth ||
                tokenType == TokenType.OpenBrace ||
                tokenType == TokenType.CloseBrace ||
                tokenType == TokenType.Identifier ||
                tokenType == TokenType.Number ||
+               tokenType == TokenType.Char ||
                tokenType == TokenType.True ||
                tokenType == TokenType.False ||
+               tokenType == TokenType.New ||
+               tokenType == TokenType.Bang ||
+               tokenType == TokenType.Minus ||
                tokenType == TokenType.OpenParentheses ||
                tokenType == TokenType.Mut;
     }
@@ -264,12 +271,13 @@ class Parser {
 
         List<ParameterSyntax> parameters = new();
         while (Current.TokenType != TokenType.CloseParentheses && Current.TokenType != TokenType.EoF) {
+            var modifiers = ParseModifiers();
             var paramName = Expect(TokenType.Identifier, "parameter identifier expected inside parentheses");
 
             Expect(TokenType.Colon, "Colon expected after Param Name for Type Definition");
 
             var parameterType = ParseType();
-            parameters.Add(new ParameterSyntax(paramName, parameterType, new Token[0]));
+            parameters.Add(new ParameterSyntax(paramName, parameterType, modifiers));
             if (Current.TokenType == TokenType.Comma) {
                 NextToken();
             }

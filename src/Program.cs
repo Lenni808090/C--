@@ -14,8 +14,7 @@ class Program {
         string code = @"
                         meth Main() -> int {
                             x: int[][] = new int[5][];
-                            x[0] = new int[5];
-                            x[0][0] = 2;
+                            x[0][6] = 2;
                             return getArray(x, 0)[0];
                         }
 
@@ -28,6 +27,9 @@ class Program {
         var diagnostics = compilerContext.diagnostics;
 
         Lexer lexer = new Lexer(code, compilerContext);
+        int[][] x = new int[2][];
+        x[2][2] = 2;
+
         Token[] tokens = lexer.Lex();
         if (diagnostics.CheckForErrors()) {
             diagnostics.PrintAllErrors();
