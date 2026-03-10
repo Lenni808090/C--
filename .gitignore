@@ -4,4 +4,9 @@
 # Keep only source folder and this file
 !/src/
 !/src/**
+!/native-jit/
+!/native-jit/**
+/native-jit/*.exe
+/native-jit/*.obj
+/native-jit/*.pdb
 !/.gitignore

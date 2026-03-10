@@ -13,13 +13,21 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            x: int[][] = new int[5][];
-                            x[0][6] = 2;
-                            return getArray(x, 0)[0];
+                            x: int[] = new int[5];
+                            fillArray(x);
+
+                            return x[Echo(4)];
                         }
 
-                        meth getArray(array: int[][], outerIndex: int) -> int[] {
-                            return array[outerIndex];
+                        meth fillArray(x: int[]) -> int{
+                            for(mut i: int = 0; i < 5; i += 1){
+                                x[i] = i;
+                            }
+                            return 0;
+                        }
+
+                        meth Echo(echo: int) -> int {
+                            return echo;
                         }
 ";
 
