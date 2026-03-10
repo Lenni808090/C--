@@ -1,14 +1,17 @@
 using CMinus.Runtime;
-using CMinus.Compiler;
+using Microsoft.VisualBasic;
 
 namespace CMinus.CodeGen;
 
 class CompiledProgram {
     public CompiledFunction[] compiledFunctions;
+
+    public Value[] constants;
     public int entryFuncInd;
     public RuntimeTypeDesc[] typeTable;
 
-    public CompiledProgram(CompiledFunction[] compiledFunctions, int entryFuncInd, RuntimeTypeDesc[] typeTable) {
+    public CompiledProgram(CompiledFunction[] compiledFunctions, Value[] constants, int entryFuncInd, RuntimeTypeDesc[] typeTable) {
+        this.constants = constants;
         this.compiledFunctions = compiledFunctions;
         this.entryFuncInd = entryFuncInd;
         this.typeTable = typeTable;
@@ -20,14 +23,12 @@ class CompiledFunction {
     public int localCount;
     public int paramCount;
     public int maxRegCount;
-    public InstructionDebugInfo[] debugInfo;
 
-    public CompiledFunction(byte[] bytecode, int localCount, int maxRegCount, int paramCount, InstructionDebugInfo[] debugInfo) {
+    public CompiledFunction(byte[] bytecode, int localCount, int maxRegCount, int paramCount) {
         this.bytecode = bytecode;
         this.paramCount = paramCount;
         this.localCount = localCount;
         this.maxRegCount = maxRegCount;
-        this.debugInfo = debugInfo;
     }
 
     public CallFrame AsCallFrame(ushort? returnReg, int functionInd) {
@@ -36,18 +37,3 @@ class CompiledFunction {
         return new CallFrame(regs, locals, returnReg, functionInd);
     }
 }
-
-readonly struct InstructionDebugInfo {
-    public int BytecodeOffset {
-        get;
-    }
-    public SourceLocation Location {
-        get;
-    }
-
-    public InstructionDebugInfo(int bytecodeOffset, SourceLocation location) {
-        BytecodeOffset = bytecodeOffset;
-        Location = location;
-    }
-}
-

@@ -1,5 +1,3 @@
-using System.Data;
-using System.Runtime.CompilerServices;
 using CMinus.Compiler.Binding;
 
 namespace CMinus.Compiler.Lowering;
@@ -66,6 +64,7 @@ class IrBuilder {
     }
 
     void BuildStmt(BoundStmt boundStmt) {
+        EnsureCurrentBlockLocation(boundStmt.location);
         switch (boundStmt) {
             case BoundVarDeclarationStmt v: {
                     BuildVarDeclarationStmt(v);
@@ -112,22 +111,22 @@ class IrBuilder {
     void BuildVarDeclarationStmt(BoundVarDeclarationStmt v) {
         int localIndex = v.localSymbol.index;
         int srcReg = BuildExpr(v.initializer);
-        EmitStoreLocal(srcReg, localIndex, v.location);
+        EmitStoreLocal(srcReg, localIndex);
     }
 
     void BuildContinueStmt(BoundContinueStmt continueStmt) {
         var condBlockId = loopTarget.Peek().continueBlockId;
-        TerminateGoto(condBlockId, continueStmt.location);
+        TerminateGoto(condBlockId);
     }
 
     void BuildBrealStmt(BoundBreakStmt breakStmt) {
         var endBlockId = loopTarget.Peek().endBlockId;
-        TerminateGoto(endBlockId, breakStmt.location);
+        TerminateGoto(endBlockId);
     }
 
     void BuildReturnStmt(BoundReturnStmt returnStmt) {
         int returnedReg = BuildExpr(returnStmt.boundReturnedExpr);
-        TerminateReturn(returnedReg, returnStmt.location);
+        TerminateReturn(returnedReg);
     }
 
     void BuildIfStmt(BoundIfStmt ifStmt) {
@@ -137,19 +136,19 @@ class IrBuilder {
         var elseBlock = ifStmt.elseStmt is null ? null : CreateBlock();
         var mergeBlock = CreateBlock();
 
-        TerminateBranch(conditionResReg, thenBlock.blockId, elseBlock is null ? mergeBlock.blockId : elseBlock.blockId, ifStmt.location);
+        TerminateBranch(conditionResReg, thenBlock.blockId, elseBlock is null ? mergeBlock.blockId : elseBlock.blockId);
 
         SwitchCurrentBlock(thenBlock);
         BuildStmt(ifStmt.thenStmt);
         if (currentBlock.terminator is null) {
-            TerminateGoto(mergeBlock.blockId, ifStmt.location);
+            TerminateGoto(mergeBlock.blockId);
         }
 
         if (elseBlock is not null) {
             SwitchCurrentBlock(elseBlock);
             BuildStmt(ifStmt.elseStmt!);
             if (currentBlock.terminator is null) {
-                TerminateGoto(mergeBlock.blockId, ifStmt.location);
+                TerminateGoto(mergeBlock.blockId);
             }
         }
 
@@ -165,18 +164,18 @@ class IrBuilder {
         loopTarget.Push(CreateLoopTarget(condBlock, endBlock));
 
         if (currentBlock.terminator is null) {
-            TerminateGoto(condBlock.blockId, whileStmt.location);
+            TerminateGoto(condBlock.blockId);
         }
 
         SwitchCurrentBlock(condBlock);
         int resReg = BuildExpr(whileStmt.boundConditionExpr);
-        TerminateBranch(resReg, whileBlock.blockId, endBlock.blockId, whileStmt.location);
+        TerminateBranch(resReg, whileBlock.blockId, endBlock.blockId);
 
         SwitchCurrentBlock(whileBlock);
         BuildStmt(whileStmt.body);
 
         if (currentBlock.terminator is null) {
-            TerminateGoto(condBlock.blockId, whileStmt.location);
+            TerminateGoto(condBlock.blockId);
         }
 
         SwitchCurrentBlock(endBlock);
@@ -195,23 +194,23 @@ class IrBuilder {
         BuildStmt(forStmt.initializer);
 
         if (currentBlock.terminator is null) {
-            TerminateGoto(condBlock.blockId, forStmt.location);
+            TerminateGoto(condBlock.blockId);
         }
 
         SwitchCurrentBlock(condBlock);
         int condReg = BuildExpr(forStmt.condition);
-        TerminateBranch(condReg, bodyBlock.blockId, endBlock.blockId, forStmt.location);
+        TerminateBranch(condReg, bodyBlock.blockId, endBlock.blockId);
 
         SwitchCurrentBlock(bodyBlock);
         BuildStmt(forStmt.body);
         if (currentBlock.terminator is null) {
-            TerminateGoto(iterBlock.blockId, forStmt.location);
+            TerminateGoto(iterBlock.blockId);
         }
 
         SwitchCurrentBlock(iterBlock);
         BuildExpr(forStmt.iteration);
         if (currentBlock.terminator is null) {
-            TerminateGoto(condBlock.blockId, forStmt.location);
+            TerminateGoto(condBlock.blockId);
         }
 
         SwitchCurrentBlock(endBlock);
@@ -235,6 +234,7 @@ class IrBuilder {
     }
 
     int BuildExpr(BoundExpr boundExpr) {
+        EnsureCurrentBlockLocation(boundExpr.location);
         switch (boundExpr) {
             case BoundVarAssignmentExpr va: {
                     return BuildVarAssignmentExpr(va);
@@ -271,18 +271,18 @@ class IrBuilder {
     int BuildVarAssignmentExpr(BoundVarAssignmentExpr assignmentStmt) {
         int srcReg = BuildExpr(assignmentStmt.value);
         var localIndex = assignmentStmt.localSymbol.index;
-        EmitStoreLocal(srcReg, localIndex, assignmentStmt.location);
+        EmitStoreLocal(srcReg, localIndex);
         return srcReg;
     }
     int BuildLiteralExpr(BoundLiteralExpr literalExpr) {
         var type = GetValueType(literalExpr.type);
         long value = literalExpr.value;
-        return EmitLoadConst(type, value, literalExpr.location);
+        return EmitLoadConst(type, value);
     }
 
     int BuildNameExpr(BoundNameExpr nameExpr) {
         int localIndex = nameExpr.localSymbol.index;
-        return EmitLoadLocal(localIndex, nameExpr.location);
+        return EmitLoadLocal(localIndex);
     }
 
     int BuildBinaryExpr(BoundBinaryExpr binaryExpr) {
@@ -300,7 +300,7 @@ class IrBuilder {
 
         var irOpKind = MapBinaryOp(opKind);
 
-        return EmitBinary(irOpKind, leftReg, rightReg, binaryExpr.location);
+        return EmitBinary(irOpKind, leftReg, rightReg);
     }
 
 
@@ -310,7 +310,7 @@ class IrBuilder {
 
         int operandResReg = BuildExpr(unaryExpr.operatedExpr);
 
-        return EmitUnary(irUnaryOP, operandResReg, unaryExpr.location);
+        return EmitUnary(irUnaryOP, operandResReg);
     }
 
     int BuildCallExpr(BoundCallExpr callExpr) {
@@ -319,19 +319,19 @@ class IrBuilder {
             argRegs.Add(BuildExpr(arg));
         }
         int functionInd = symbolToInd[callExpr.callee];
-        return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd, callExpr.location);
+        return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd);
     }
 
     int BuildArrayCreationExpr(BoundArrayCreationExpr arrayCreationExpr) {
         int lengthReg = BuildExpr(arrayCreationExpr.length);
         int typeId = GetRuntimeTypeId(arrayCreationExpr.type);
-        return EmitNewArray(typeId, lengthReg, arrayCreationExpr.location);
+        return EmitNewArray(typeId, lengthReg);
     }
 
     int BuildIndexExpr(BoundIndexExpr indexExpr) {
         int arrayReg = BuildExpr(indexExpr.target);
         int indexReg = BuildExpr(indexExpr.index);
-        return EmitLoadElement(arrayReg, indexReg, indexExpr.location);
+        return EmitLoadElement(arrayReg, indexReg);
     }
 
     int BuildIndexAssignmentExpr(BoundIndexAssignmentExpr expr) {
@@ -340,14 +340,14 @@ class IrBuilder {
 
         if (!expr.isCompound) {
             int valueReg = BuildExpr(expr.value);
-            EmitStoreElement(valueReg, arrayReg, indexReg, expr.location);
+            EmitStoreElement(valueReg, arrayReg, indexReg);
             return valueReg;
         }
 
-        int oldElementReg = EmitLoadElement(arrayReg, indexReg, expr.location);
+        int oldElementReg = EmitLoadElement(arrayReg, indexReg);
         int rhsReg = BuildExpr(expr.value);
-        int resReg = EmitBinary(MapBinaryOp(expr.op!.operatorKind), oldElementReg, rhsReg, expr.location);
-        EmitStoreElement(resReg, arrayReg, indexReg, expr.location);
+        int resReg = EmitBinary(MapBinaryOp(expr.op!.operatorKind), oldElementReg, rhsReg);
+        EmitStoreElement(resReg, arrayReg, indexReg);
 
         return resReg;
     }
@@ -362,20 +362,20 @@ class IrBuilder {
         var leftTrueBlock = CreateBlock();
         var mergeBlock = CreateBlock();
 
-        TerminateBranch(leftReg, leftTrueBlock.blockId, rhsBlock.blockId, binaryExpr.location);
+        TerminateBranch(leftReg, leftTrueBlock.blockId, rhsBlock.blockId);
 
         SwitchCurrentBlock(leftTrueBlock);
-        EmitStoreLocal(leftReg, tempIndex, binaryExpr.location);
-        TerminateGoto(mergeBlock.blockId, binaryExpr.location);
+        EmitStoreLocal(leftReg, tempIndex);
+        TerminateGoto(mergeBlock.blockId);
 
         SwitchCurrentBlock(rhsBlock);
         int rightReg = BuildExpr(binaryExpr.rightBoundExpr);
-        EmitStoreLocal(rightReg, tempIndex, binaryExpr.location);
-        TerminateGoto(mergeBlock.blockId, binaryExpr.location);
+        EmitStoreLocal(rightReg, tempIndex);
+        TerminateGoto(mergeBlock.blockId);
 
         SwitchCurrentBlock(mergeBlock);
 
-        int resReg = EmitLoadLocal(tempIndex, binaryExpr.location);
+        int resReg = EmitLoadLocal(tempIndex);
 
         return resReg;
     }
@@ -389,20 +389,20 @@ class IrBuilder {
         var rhsBlock = CreateBlock();
         var mergeBlock = CreateBlock();
 
-        TerminateBranch(leftReg, rhsBlock.blockId, falsyBranch.blockId, binaryExpr.location);
+        TerminateBranch(leftReg, rhsBlock.blockId, falsyBranch.blockId);
 
         SwitchCurrentBlock(falsyBranch);
-        EmitStoreLocal(leftReg, tempIndex, binaryExpr.location);
-        TerminateGoto(mergeBlock.blockId, binaryExpr.location);
+        EmitStoreLocal(leftReg, tempIndex);
+        TerminateGoto(mergeBlock.blockId);
 
         SwitchCurrentBlock(rhsBlock);
         int rightReg = BuildExpr(binaryExpr.rightBoundExpr);
-        EmitStoreLocal(rightReg, tempIndex, binaryExpr.location);
-        TerminateGoto(mergeBlock.blockId, binaryExpr.location);
+        EmitStoreLocal(rightReg, tempIndex);
+        TerminateGoto(mergeBlock.blockId);
 
         SwitchCurrentBlock(mergeBlock);
 
-        int resReg = EmitLoadLocal(tempIndex, binaryExpr.location);
+        int resReg = EmitLoadLocal(tempIndex);
 
         return resReg;
     }
@@ -412,18 +412,12 @@ class IrBuilder {
         if (currentBlock.terminator is not null) {
             throw new Exception("there is already a terminator in this block");
         }
-        if (!currentBlock.location.IsValid) {
-            currentBlock.location = irInstr.location;
-        }
         currentBlock.irInstrs.Add(irInstr);
     }
 
     void Terminate(Terminator terminator) {
         if (currentBlock.terminator is not null) {
             throw new Exception("onyl one terminator allowed");
-        }
-        if (!currentBlock.location.IsValid) {
-            currentBlock.location = terminator.location;
         }
         currentBlock.terminator = terminator;
     }
@@ -453,75 +447,81 @@ class IrBuilder {
         currentBlock = basicBlock;
     }
 
+    void EnsureCurrentBlockLocation(SourceLocation location) {
+        if (!currentBlock.location.IsValid) {
+            currentBlock.location = location;
+        }
+    }
+
     int AllocTempLocalInd() {
         return nextTempLocalInd++;
     }
 
-    int EmitLoadConst(Runtime.ValueType type, long value, SourceLocation location) {
+    int EmitLoadConst(Runtime.ValueType type, long value) {
         int dstReg = AllocVReg();
-        Emit(new IrLoadConst(type, value, dstReg, location));
+        Emit(new IrLoadConst(type, value, dstReg));
         return dstReg;
     }
 
-    void EmitStoreLocal(int srcReg, int localIndex, SourceLocation location) {
-        Emit(new IrStoreLocal(srcReg, localIndex, location));
+    void EmitStoreLocal(int srcReg, int localIndex) {
+        Emit(new IrStoreLocal(srcReg, localIndex));
     }
 
-    int EmitLoadLocal(int localIndex, SourceLocation location) {
+    int EmitLoadLocal(int localIndex) {
         int dstReg = AllocVReg();
-        Emit(new IrLoadLocal(dstReg, localIndex, location));
+        Emit(new IrLoadLocal(dstReg, localIndex));
         return dstReg;
     }
 
-    int EmitMove(int dstReg, int srcReg, SourceLocation location) {
-        Emit(new IrMove(dstReg, srcReg, location));
+    int EmitMove(int dstReg, int srcReg) {
+        Emit(new IrMove(dstReg, srcReg));
         return dstReg;
     }
-    int EmitBinary(IrBinaryOPKind op, int leftReg, int rightReg, SourceLocation location) {
+    int EmitBinary(IrBinaryOPKind op, int leftReg, int rightReg) {
         int dstReg = AllocVReg();
-        Emit(new IrBinaryOp(op, dstReg, leftReg, rightReg, location));
+        Emit(new IrBinaryOp(op, dstReg, leftReg, rightReg));
         return dstReg;
     }
 
-    int EmitUnary(IrUnaryOpKind op, int srcReg, SourceLocation location) {
+    int EmitUnary(IrUnaryOpKind op, int srcReg) {
         int dstReg = AllocVReg();
-        Emit(new IrUnary(dstReg, srcReg, op, location));
+        Emit(new IrUnary(dstReg, srcReg, op));
         return dstReg;
     }
 
-    int EmitCall(int argCount, int[] argRegs, int functionIndex, SourceLocation location) {
+    int EmitCall(int argCount, int[] argRegs, int functionIndex) {
         int dstReg = AllocVReg();
-        Emit(new IrCallInstr(dstReg, argCount, argRegs, functionIndex, location));
+        Emit(new IrCallInstr(dstReg, argCount, argRegs, functionIndex));
         return dstReg;
     }
 
-    int EmitNewArray(int typeId, int lengthReg, SourceLocation location) {
+    int EmitNewArray(int typeId, int lengthReg) {
         int dstReg = AllocVReg();
-        Emit(new IrNewArray(dstReg, typeId, lengthReg, location));
+        Emit(new IrNewArray(dstReg, typeId, lengthReg));
         return dstReg;
     }
 
-    void EmitStoreElement(int srcReg, int arrayReg, int indexReg, SourceLocation location) {
-        Emit(new IrStoreElement(srcReg, arrayReg, indexReg, location));
+    void EmitStoreElement(int srcReg, int arrayReg, int indexReg) {
+        Emit(new IrStoreElement(srcReg, arrayReg, indexReg));
     }
 
-    int EmitLoadElement(int arrayReg, int indexReg, SourceLocation location) {
+    int EmitLoadElement(int arrayReg, int indexReg) {
         int dstReg = AllocVReg();
-        Emit(new IrLoadElement(dstReg, arrayReg, indexReg, location));
+        Emit(new IrLoadElement(dstReg, arrayReg, indexReg));
         return dstReg;
     }
-    void TerminateReturn(int returnReg, SourceLocation location) {
-        Terminate(new IrReturn(returnReg, location));
+    void TerminateReturn(int returnReg) {
+        Terminate(new IrReturn(returnReg));
     }
 
 
-    void TerminateGoto(int targetBlockId, SourceLocation location) {
-        Terminate(new IrGoto(targetBlockId, location));
+    void TerminateGoto(int targetBlockId) {
+        Terminate(new IrGoto(targetBlockId));
     }
 
 
-    void TerminateBranch(int condReg, int thenBlockId, int elseBlockId, SourceLocation location) {
-        Terminate(new IrBranch(condReg, thenBlockId, elseBlockId, location));
+    void TerminateBranch(int condReg, int thenBlockId, int elseBlockId) {
+        Terminate(new IrBranch(condReg, thenBlockId, elseBlockId));
     }
 
     LoopTarget CreateLoopTarget(BasicBlock condBlock, BasicBlock endBlock) {
@@ -536,6 +536,7 @@ class IrBuilder {
         maxVReg = 0;
         nextTempLocalInd = functionDeclaration.functionSymbol.localCount;
         currentBlock = MakeNewBlock();
+        currentBlock.location = functionDeclaration.location;
         basicBlocks.Add(currentBlock);
     }
 

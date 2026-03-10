@@ -87,7 +87,7 @@ class Program {
         Console.WriteLine();
         PrintProgramBytecode(compiledProgram, constants);
 
-        VM vm = new VM(compiledProgram, constants);
+        VM vm = new VM(compiledProgram);
         Value result = vm.Run();
         Console.WriteLine("RESULT: " + result);
     }

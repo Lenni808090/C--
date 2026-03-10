@@ -1,26 +1,9 @@
 namespace CMinus.Compiler.Lowering;
 
-using System.Data;
 using CMinus.Compiler;
 
-abstract class IrInstr {
-    public SourceLocation location {
-        get;
-    }
-
-    protected IrInstr(SourceLocation location) {
-        this.location = location;
-    }
-};
-abstract class Terminator {
-    public SourceLocation location {
-        get;
-    }
-
-    protected Terminator(SourceLocation location) {
-        this.location = location;
-    }
-};
+abstract class IrInstr;
+abstract class Terminator;
 
 sealed class IrCompiledUnit {
     public IrFunction[] irFunctions;
@@ -71,7 +54,7 @@ sealed class IrLoadConst : IrInstr {
     public long rawValue;
     public int dstReg;
 
-    public IrLoadConst(Runtime.ValueType valueType, long rawValue, int dstReg, SourceLocation location) : base(location) {
+    public IrLoadConst(Runtime.ValueType valueType, long rawValue, int dstReg) {
         this.valueType = valueType;
         this.rawValue = rawValue;
         this.dstReg = dstReg;
@@ -83,7 +66,7 @@ sealed class IrStoreLocal : IrInstr {
 
     public int localIndex;
 
-    public IrStoreLocal(int srcReg, int localIndex, SourceLocation location) : base(location) {
+    public IrStoreLocal(int srcReg, int localIndex) {
         this.srcReg = srcReg;
         this.localIndex = localIndex;
     }
@@ -93,7 +76,7 @@ sealed class IrLoadLocal : IrInstr {
     public int dstReg;
     public int localIndex;
 
-    public IrLoadLocal(int dstReg, int localIndex, SourceLocation location) : base(location) {
+    public IrLoadLocal(int dstReg, int localIndex) {
         this.dstReg = dstReg;
         this.localIndex = localIndex;
     }
@@ -105,7 +88,7 @@ sealed class IrNewArray : IrInstr {
 
     public int lengthReg;
 
-    public IrNewArray(int dstReg, int typeId, int lengthReg, SourceLocation location) : base(location) {
+    public IrNewArray(int dstReg, int typeId, int lengthReg) {
         this.dstReg = dstReg;
         this.typeId = typeId;
         this.lengthReg = lengthReg;
@@ -116,7 +99,7 @@ sealed class IrArrayLength : IrInstr {
     public int dstReg;
     public int arrayReg;
 
-    public IrArrayLength(int dstReg, int arrayReg, SourceLocation location) : base(location) {
+    public IrArrayLength(int dstReg, int arrayReg) {
         this.dstReg = dstReg;
         this.arrayReg = arrayReg;
     }
@@ -128,7 +111,7 @@ sealed class IrStoreElement : IrInstr {
     public int arrayReg;
     public int indexReg;
 
-    public IrStoreElement(int srcReg, int arrayReg, int indexReg, SourceLocation location) : base(location) {
+    public IrStoreElement(int srcReg, int arrayReg, int indexReg) {
         this.srcReg = srcReg;
         this.arrayReg = arrayReg;
         this.indexReg = indexReg;
@@ -140,7 +123,7 @@ sealed class IrLoadElement : IrInstr {
     public int arrayReg;
     public int indexReg;
 
-    public IrLoadElement(int dstReg, int arrayReg, int indexReg, SourceLocation location) : base(location) {
+    public IrLoadElement(int dstReg, int arrayReg, int indexReg) {
         this.dstReg = dstReg;
         this.arrayReg = arrayReg;
         this.indexReg = indexReg;
@@ -151,7 +134,7 @@ sealed class IrLoadElement : IrInstr {
 sealed class IrReturn : Terminator {
     public int returnReg;
 
-    public IrReturn(int returnReg, SourceLocation location) : base(location) {
+    public IrReturn(int returnReg) {
         this.returnReg = returnReg;
     }
 }
@@ -160,7 +143,7 @@ sealed class IrMove : IrInstr {
     public int dstReg;
     public int srcReg;
 
-    public IrMove(int dstReg, int srcReg, SourceLocation location) : base(location) {
+    public IrMove(int dstReg, int srcReg) {
         this.dstReg = dstReg;
         this.srcReg = srcReg;
     }
@@ -173,7 +156,7 @@ sealed class IrBinaryOp : IrInstr {
     public int leftReg;
     public int rightReg;
 
-    public IrBinaryOp(IrBinaryOPKind irBinaryOP, int dstReg, int leftReg, int rightReg, SourceLocation location) : base(location) {
+    public IrBinaryOp(IrBinaryOPKind irBinaryOP, int dstReg, int leftReg, int rightReg) {
         this.irBinaryOP = irBinaryOP;
         this.dstReg = dstReg;
         this.leftReg = leftReg;
@@ -187,7 +170,7 @@ sealed class IrUnary : IrInstr {
 
     public IrUnaryOpKind irUnaryOp;
 
-    public IrUnary(int dstReg, int operandReg, IrUnaryOpKind irUnaryOp, SourceLocation location) : base(location) {
+    public IrUnary(int dstReg, int operandReg, IrUnaryOpKind irUnaryOp) {
         this.dstReg = dstReg;
         this.operandReg = operandReg;
         this.irUnaryOp = irUnaryOp;
@@ -202,7 +185,7 @@ sealed class IrCallInstr : IrInstr {
     public int functionIndex;
     public int[] argRegs;
 
-    public IrCallInstr(int dstReg, int argCount, int[] argRegs, int functionIndex, SourceLocation location) : base(location) {
+    public IrCallInstr(int dstReg, int argCount, int[] argRegs, int functionIndex) {
         this.dstReg = dstReg;
         this.functionIndex = functionIndex;
         this.argCount = argCount;
@@ -215,7 +198,7 @@ sealed class IrCallInstr : IrInstr {
 sealed class IrGoto : Terminator {
     public int basicBlockId;
 
-    public IrGoto(int basicBlockId, SourceLocation location) : base(location) {
+    public IrGoto(int basicBlockId) {
         this.basicBlockId = basicBlockId;
     }
 }
@@ -227,7 +210,7 @@ sealed class IrBranch : Terminator {
 
     public int elseBlockId;
 
-    public IrBranch(int condReg, int thenBlockId, int elseBlockId, SourceLocation location) : base(location) {
+    public IrBranch(int condReg, int thenBlockId, int elseBlockId) {
         this.condReg = condReg;
         this.thenBlockId = thenBlockId;
         this.elseBlockId = elseBlockId;

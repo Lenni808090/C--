@@ -17,13 +17,13 @@ class VM {
 
 
 
-    public VM(CompiledProgram compiledProgram, Value[] constants) {
+    public VM(CompiledProgram compiledProgram) {
         functions = compiledProgram.compiledFunctions;
         entryInd = compiledProgram.entryFuncInd;
         typeTable = compiledProgram.typeTable;
         heap = new();
         callFrames = new();
-        this.constants = constants;
+        this.constants = compiledProgram.constants;
         PushEntryFrame();
     }
 
