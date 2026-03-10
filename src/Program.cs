@@ -6,6 +6,7 @@ using CMinus.Compiler.Lowering;
 using CMinus.Compiler.Parsing;
 using CMinus.Compiler.Syntax;
 using CMinus.Runtime;
+using CMinus.Serialization;
 
 namespace CMinus;
 
@@ -86,7 +87,9 @@ class Program {
 
         Console.WriteLine();
         PrintProgramBytecode(compiledProgram, constants);
-
+        ByteWriter byteWriter = new(compiledProgram, 1);
+        byteWriter.bytefyCompiledUnit("output.cmm");
+        
         VM vm = new VM(compiledProgram);
         Value result = vm.Run();
         Console.WriteLine("RESULT: " + result);

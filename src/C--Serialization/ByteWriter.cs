@@ -8,17 +8,17 @@ class ByteWriter {
     byte[] magicNumber = new byte[] { 0x43, 0x4D, 0x4D, 0x00 };
 
     CompiledProgram compiledProgram;
-    FileStream fileStream;
-    BinaryWriter writer;
+
     ushort currentVersion;
     public ByteWriter(CompiledProgram compiledProgram, ushort currentVersion) {
         this.currentVersion = currentVersion;
         this.compiledProgram = compiledProgram;
-        fileStream = new("output.cmm", FileMode.Create);
-        writer = new(fileStream);
     }
 
-    public void bytefyCompiledUnit() {
+    public void bytefyCompiledUnit(string outputPath) {
+        using FileStream fileStream = new(outputPath, FileMode.Create);
+        using BinaryWriter writer = new(fileStream);
+
         // metadata
         writer.Write(magicNumber);
         writer.Write(currentVersion);
@@ -60,7 +60,7 @@ class ByteWriter {
             writer.Write((ushort)function.localCount);
             writer.Write((ushort)function.paramCount);
             writer.Write((ushort)function.maxRegCount);
-            writer.Write((int)function.bytecode.Length);
+            writer.Write((uint)function.bytecode.Length);
             writer.Write(function.bytecode);
         }
     }
