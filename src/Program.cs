@@ -83,10 +83,9 @@ class Program {
 
         CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
         CompiledProgram compiledProgram = codeGenerator.GenerateProgramm();
-        Value[] constants = codeGenerator.Constants;
 
         Console.WriteLine();
-        PrintProgramBytecode(compiledProgram, constants);
+        PrintProgramBytecode(compiledProgram, compiledProgram.constants);
         ByteWriter byteWriter = new(compiledProgram, 1);
         byteWriter.bytefyCompiledUnit("output.cmm");
 
@@ -390,8 +389,6 @@ class Program {
         Console.WriteLine($"name: {function.functionSymbol.name}");
         Console.Write(childIndent);
         Console.WriteLine($"args: {function.functionSymbol.argCount}");
-        Console.Write(childIndent);
-        Console.WriteLine($"locals: {function.functionSymbol.localCount}");
         PrintBoundStmt(function.functionBody, childIndent, true);
     }
 
@@ -567,7 +564,7 @@ class Program {
         switch (stmt) {
             case BoundVarDeclarationStmt v: {
                     Console.Write(indent);
-                    Console.WriteLine($"local: {v.localSymbol.name} : {v.localSymbol.typeSymbol} (index {v.localSymbol.index})");
+                    Console.WriteLine($"local: {v.localSymbol.name} : {v.localSymbol.typeSymbol}");
                     PrintBoundExpr(v.initializer, indent, true);
                     break;
                 }
@@ -636,14 +633,14 @@ class Program {
                     break;
                 }
             case BoundNameExpr name: {
-                    Console.WriteLine($"BoundNameExpr : {name.type}  name={name.localSymbol.name} (index {name.localSymbol.index})");
+                    Console.WriteLine($"BoundNameExpr : {name.type}  name={name.localSymbol.name}");
                     break;
                 }
             case BoundVarAssignmentExpr va: {
                     Console.WriteLine($"BoundVarAssignmentExpr : {va.type}");
                     indent += isLast ? "   " : "|  ";
                     Console.Write(indent);
-                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.typeSymbol} (index {va.localSymbol.index})");
+                    Console.WriteLine($"local: {va.localSymbol.name} : {va.localSymbol.typeSymbol}");
                     PrintBoundExpr(va.value, indent, true);
                     break;
                 }
@@ -713,7 +710,7 @@ class Program {
                 foreach (IrInstr irInstr in block.irInstrs) {
                     switch (irInstr) {
                         case IrLoadConst c:
-                            Console.WriteLine($"  load_const r{c.dstReg} <- {c.valueType}({c.rawValue})");
+                            Console.WriteLine($"  load_const r{c.dstReg} <- const[{c.constIndex}]");
                             break;
                         case IrStoreLocal s:
                             Console.WriteLine($"  store_local local[{s.localIndex}] <- r{s.srcReg}");
