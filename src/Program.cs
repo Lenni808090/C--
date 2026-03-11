@@ -14,7 +14,7 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            x: int = 3;
+                            x: int = 3 + 2 * 2 - 4 / 3 % 4;
                             return x;
                         }
 

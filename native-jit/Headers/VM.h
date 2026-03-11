@@ -20,8 +20,8 @@ enum OpCodes {
     SUB_INT,
     MULT_INT,
     DIV_INT,
-    NEG_INT,
     MOD_INT,
+    NEG_INT,
 
     NOT,
 

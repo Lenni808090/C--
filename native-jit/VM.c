@@ -4,6 +4,7 @@
 
 #include "Headers/VM.h"
 
+#include "Headers/value.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,13 +54,13 @@ static u16 ReadU16(CallFrame* frame) {
     return value;
 }
 
-// static i32 ReadI32(CallFrame* frame) {
+//  static i32 ReadI32(CallFrame* frame) {
 //     const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
 //                      (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
 //                      (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
-//                      (frame->function->bytecode[frame->instructionPointer + 3] << 24));
-//     frame->instructionPointer += 4;
-//     return value;
+//                       (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+//      frame->instructionPointer += 4;
+//      return value;
 // }
 
 Value VmRun(Vm* vm) {
@@ -110,6 +111,95 @@ Value VmRun(Vm* vm) {
                 }
                 break;
             }
+            case ADD_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_INT };
+
+                resValue.rawData = AsInt(frame->regs[leftReg]) + AsInt(frame->regs[rightReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case SUB_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_INT };
+
+                resValue.rawData = AsInt(frame->regs[leftReg]) - AsInt(frame->regs[rightReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case MULT_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_INT };
+
+                resValue.rawData = AsInt(frame->regs[leftReg]) * AsInt(frame->regs[rightReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case DIV_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_INT };
+
+                resValue.rawData = AsInt(frame->regs[leftReg]) / AsInt(frame->regs[rightReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case MOD_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_INT };
+
+                resValue.rawData = AsInt(frame->regs[leftReg]) % AsInt(frame->regs[rightReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case NEG_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 negReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_INT };
+
+                resValue.rawData = -AsInt(frame->regs[negReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case NOT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 notReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = !AsBool(frame->regs[notReg]);
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
             default: {
                 fprintf(stderr, "executing opcode: 0x%02X at ip: %u\n", opCode, frame->instructionPointer - 1);
                 exit(1);
