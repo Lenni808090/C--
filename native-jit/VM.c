@@ -40,13 +40,116 @@ void VmInit(Vm* vm, const Program* program) {
 }
 
 void VmFree(const Vm* vm) {
-    for (i32 i = 0; i < vm->depth; i++) {
+    for (i32 i = 0; i <= vm->depth; i++) {
         free(vm->frames[i].regs);
         free(vm->frames[i].locals);
     }
 }
 
+static u16 ReadU16(CallFrame* frame) {
+    const u16 value = (u16)(frame->function->bytecode[frame->instructionPointer] |
+                     (frame->function->bytecode[frame->instructionPointer + 1] << 8));
+    frame->instructionPointer += 2;
+    return value;
+}
+
+// static i32 ReadI32(CallFrame* frame) {
+//     const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
+//                      (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
+//                      (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
+//                      (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+//     frame->instructionPointer += 4;
+//     return value;
+// }
+
 Value VmRun(Vm* vm) {
 
+    while (vm->running) {
+        CallFrame* frame = &vm->frames[vm->depth];
+        const u8 opCode = frame->function->bytecode[frame->instructionPointer++];
 
+        switch (opCode) {
+            case LOAD_CONST: {
+                const u16 dstReg = ReadU16(frame);
+                const u16 constInd = ReadU16(frame);
+
+                frame->regs[dstReg] = vm->program->constants[constInd];
+                break;
+            }
+
+            case STORE_LOCAL: {
+                const u16 srcReg = ReadU16(frame);
+                const u16 localIndex = ReadU16(frame);
+
+                frame->locals[localIndex] = frame->regs[srcReg];
+                break;
+            }
+
+            case LOAD_LOCAL: {
+                const u16 dstReg = ReadU16(frame);
+                const u16 localIndex = ReadU16(frame);
+
+                frame->regs[dstReg] = frame->locals[localIndex];
+                break;
+            }
+
+            case RETURN: {
+                const u16 returnedReg = ReadU16(frame);
+                const Value returnedVal = frame->regs[returnedReg];
+                if (!frame->hasReturnReg) {
+                    vm->running = false;
+                    return returnedVal;
+                }
+                if (vm->depth != 0) {
+                    free(frame->regs);
+                    free(frame->locals);
+                    vm->depth--;
+
+                    CallFrame* callerFrame = &vm->frames[vm->depth];
+                    callerFrame->regs[frame->returnReg] = returnedVal;
+                }
+                break;
+            }
+            default: {
+                fprintf(stderr, "executing opcode: 0x%02X at ip: %u\n", opCode, frame->instructionPointer - 1);
+                exit(1);
+            }
+        }
+    }
+    return (Value){.type = VAL_NULL, .rawData = 0};;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

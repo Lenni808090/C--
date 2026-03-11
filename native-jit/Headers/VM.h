@@ -8,6 +8,38 @@
 #include "types.h"
 #include <stdbool.h>
 
+enum OpCodes {
+
+    LOAD_CONST = 0x00,
+    LOAD_LOCAL,
+    STORE_LOCAL,
+
+    RETURN,
+
+    ADD_INT,
+    SUB_INT,
+    MULT_INT,
+    DIV_INT,
+    NEG_INT,
+    MOD_INT,
+
+    NOT,
+
+    JUMP,
+    JUMP_IF_FALSE,
+    JUMP_IF_TRUE,
+
+
+    CMP_LT_INT,
+    CMP_LTE_INT,
+    CMP_MT_INT,
+    CMP_MTE_INT,
+
+    CMP_EQ,
+    CMP_NEQ,
+};
+
+
 typedef struct {
     const Function* function;
     u32 instructionPointer;
@@ -21,10 +53,11 @@ typedef struct {
     const Program* program;
     CallFrame frames[256];
     i32 depth;
-    u8 running;
+    bool running;
 } Vm;
 
-CallFrame CreateFrame(const Function* function, u16 returnReg);
+
+CallFrame CreateFrame(const Function* function, u16 returnReg, bool hasReturnReg);
 void VmInit(Vm* vm, const Program* program);
 void VmFree(const Vm* vm);
 Value VmRun(Vm* vm);

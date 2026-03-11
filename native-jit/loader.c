@@ -119,3 +119,37 @@ Program LoadProgam(const char* path) {
     fclose(file);
     return program;
 }
+
+
+
+void FreeProgram(Program* program) {
+    for (u16 i = 0; i < program->functionCount; i++) {
+        free(program->functions[i].bytecode);
+    }
+    free(program->functions);
+    for (u16 i = 0; i < program->typeTableLength; i++) {
+        free(program->typeTable[i].name);
+    }
+    free(program->typeTable);
+    free(program->constants);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

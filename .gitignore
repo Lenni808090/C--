@@ -9,4 +9,6 @@
 /native-jit/*.exe
 /native-jit/*.obj
 /native-jit/*.pdb
+.idea/
+*.iml
 !/.gitignore

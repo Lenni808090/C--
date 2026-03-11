@@ -14,22 +14,10 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            x: int[] = new int[5];
-                            fillArray(x);
-
-                            return x[Echo(4)];
+                            x: int = 3;
+                            return x;
                         }
 
-                        meth fillArray(x: int[]) -> int{
-                            for(mut i: int = 0; i < 5; i += 1){
-                                x[i] = i;
-                            }
-                            return 0;
-                        }
-
-                        meth Echo(echo: int) -> int {
-                            return echo;
-                        }
 ";
 
         CompilerContext compilerContext = new();
@@ -89,7 +77,7 @@ class Program {
         PrintProgramBytecode(compiledProgram, constants);
         ByteWriter byteWriter = new(compiledProgram, 1);
         byteWriter.bytefyCompiledUnit("output.cmm");
-        
+
         VM vm = new VM(compiledProgram);
         Value result = vm.Run();
         Console.WriteLine("RESULT: " + result);

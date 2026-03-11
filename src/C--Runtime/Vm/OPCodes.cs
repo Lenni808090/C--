@@ -13,7 +13,7 @@ enum OpCode : byte {
     MULTIPLY_INT,
     DIVIDE_INT,
     NEG_INT,
-
+    MODULUS_INT,
     NOT,
 
     JUMP,
@@ -21,13 +21,15 @@ enum OpCode : byte {
     JUMP_IF_TRUE,
 
 
-    CMP_EQ,
+
     CMP_LT_INT,
     CMP_LTE_INT,
     CMP_MT_INT,
     CMP_MTE_INT,
+
+    CMP_EQ,
     CMP_NEQ,
-    MODULUS_INT,
+
 
 
     NEW_ARRAY,

@@ -5,4 +5,6 @@
 
 Program LoadProgam(const char* path);
 
+void FreeProgram(Program* program);
+
 #endif
