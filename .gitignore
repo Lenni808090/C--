@@ -6,6 +6,17 @@
 !/src/**
 !/native-jit/
 !/native-jit/**
+
+# Ignore generated native build output and IDE metadata inside native-jit
+/native-jit/build/
+/native-jit/.idea/
+/native-jit/editor/cmake-build-debug-wsl/
+/native-jit/cmm_runtime
+
+# Keep authored editor config
+!/native-jit/editor/
+!/native-jit/editor/CMakeLists.txt
+
 /native-jit/*.exe
 /native-jit/*.obj
 /native-jit/*.pdb

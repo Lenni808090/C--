@@ -7,7 +7,6 @@ namespace CMinus.CodeGen;
 class CodeGenerator {
     FunctionBuilder functionBuilder;
     IrCompiledUnit irCompiledUnit;
-    public Value[] Constants => functionBuilder.Constants;
 
 
     Dictionary<int, Label> blockLabels;
@@ -23,7 +22,7 @@ class CodeGenerator {
             compiledFunctions.Add(GenerateFunction(irFunction));
         }
 
-        return new CompiledProgram(compiledFunctions.ToArray(), Constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable);
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable);
     }
 
     public CompiledFunction GenerateFunction(IrFunction irFunction) {
@@ -126,8 +125,7 @@ class CodeGenerator {
     }
 
     void EmitLoadConst(IrLoadConst loadConst) {
-        int constInd = newConst(loadConst.valueType, loadConst.rawValue);
-        functionBuilder.Emitter.EmitLoadConstant((ushort)loadConst.dstReg, (ushort)constInd);
+        functionBuilder.Emitter.EmitLoadConstant((ushort)loadConst.dstReg, (ushort)loadConst.constIndex);
     }
 
     void EmitStoreLocal(IrStoreLocal storeLocal) {
@@ -254,10 +252,5 @@ class CodeGenerator {
         functionBuilder.Emitter.EmitJumpIfFalse((ushort)branch.condReg, elseLabel);
         functionBuilder.Emitter.EmitJump(thenLabel);
     }
-    int newConst(Runtime.ValueType type, long value) {
-        var _const = new Value(type, value);
-        return functionBuilder.AddConstant(_const);
-    }
-
 
 }

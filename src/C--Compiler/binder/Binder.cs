@@ -22,7 +22,6 @@ class Binder {
     List<BoundFunctionDeclaration> functions;
     BoundFunctionDeclaration? mainFunc;
     bool sawInvalidMainFunction;
-    int nextLocalIndex;
     Stmt[] stmtsToBind;
 
     private static readonly Dictionary<string, TypeSymbol> namedTypes =
@@ -103,7 +102,6 @@ class Binder {
 
 
     BoundFunctionDeclaration BindFunction(FunctionDeclarationStmt functionDeclaration) {
-        ResetLocalIndex();
         PushScope();
 
         var name = functionDeclaration.functionName.Text;
@@ -116,10 +114,9 @@ class Binder {
 
         currentReturnType = functionSymbol.returnType;
 
-        AddParams(functionDeclaration);
+        var paramSymbols = AddParams(functionDeclaration);
         var body = (BoundBlockStmt)BindBlockStmt(functionDeclaration.functionBody);
-        functionSymbol.localCount = nextLocalIndex;
-        var func = new BoundFunctionDeclaration(functionSymbol, body, functionDeclaration.functionName.Location);
+        var func = new BoundFunctionDeclaration(functionSymbol, body, paramSymbols, functionDeclaration.functionName.Location);
 
         if (name == "Main") {
             ValidateMainFunc(func, functionSymbol);
@@ -144,7 +141,8 @@ class Binder {
         }
     }
 
-    void AddParams(FunctionDeclarationStmt functionDeclaration) {
+    LocalSymbol[] AddParams(FunctionDeclarationStmt functionDeclaration) {
+        List<LocalSymbol> paramSymbols = new();
         foreach (var param in functionDeclaration.@params) {
             string name = param.name.Text;
 
@@ -156,10 +154,11 @@ class Binder {
                 continue;
             }
 
-            int index = AllocateLocalIndex();
-            LocalSymbol local = new LocalSymbol(name, type, modifiers, index);
+            LocalSymbol local = new LocalSymbol(name, type, modifiers);
             scopes.Peek().Add(name, local);
+            paramSymbols.Add(local);
         }
+        return paramSymbols.ToArray();
     }
     BoundStmt BindStmt(Stmt stmt) {
         return stmt switch {
@@ -317,8 +316,7 @@ class Binder {
         }
 
 
-        int index = AllocateLocalIndex();
-        LocalSymbol localSymbol = new LocalSymbol(name, declared, modifiers, index);
+        LocalSymbol localSymbol = new LocalSymbol(name, declared, modifiers);
         scopes.Peek().Add(varDeclarationStmt.name.Text, localSymbol);
 
 
@@ -695,14 +693,6 @@ class Binder {
         scopes.Pop();
     }
 
-    void ResetLocalIndex() {
-        nextLocalIndex = 0;
-    }
-
-    int AllocateLocalIndex() {
-        return nextLocalIndex++;
-    }
-
     int EnterLoop() {
         return loopDepth += 1;
     }
@@ -787,7 +777,7 @@ class Binder {
         };
     }
     LocalSymbol CreateErrorLocal(string name, BoundModifiers modifiers) {
-        return new LocalSymbol(name, BuiltInTypes.Error, modifiers, -1);
+        return new LocalSymbol(name, BuiltInTypes.Error, modifiers);
     }
     FunctionSymbol CreateErrorFunctionSymbol(string name) {
         return new FunctionSymbol(name, BuiltInTypes.Error, Array.Empty<TypeSymbol>());

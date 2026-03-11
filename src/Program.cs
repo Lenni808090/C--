@@ -12,13 +12,25 @@ namespace CMinus;
 
 class Program {
     static void Main() {
+        const int expectedNativeResult = 9;
         string code = @"
                         meth Main() -> int {
-                            x: int = 3 + 2 * 2 - 4 / 3 % 4;
-                            return x;
+                            mut sum: int = 0;
+
+                            for (mut i: int = 0; i < 6; i = i + 1) {
+                                if ((i % 2) == 0) {
+                                    sum = sum + i;
+                                } else {
+                                    sum = sum + 1;
+                                }
+                            }
+
+                            return sum;
                         }
 
 ";
+
+        Console.WriteLine($"Expected native result: {expectedNativeResult}");
 
         CompilerContext compilerContext = new();
         var diagnostics = compilerContext.diagnostics;

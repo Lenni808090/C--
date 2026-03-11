@@ -63,6 +63,16 @@ static u16 ReadU16(CallFrame* frame) {
       return value;
  }
 
+void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount) {
+    const CallFrame callFrame = CreateFrame(&vm->program->functions[functionIndex], dstReg, true);
+    for (u16 i = 0; i < argCount; i++) {
+        const Value param = vm->frames[vm->depth].regs[argRegs[i]];
+        callFrame.locals[i] = param;
+    }
+    vm->depth++;
+    vm->frames[vm->depth] = callFrame;
+}
+
 Value VmRun(Vm* vm) {
 
     while (vm->running) {
@@ -102,12 +112,13 @@ Value VmRun(Vm* vm) {
                     return returnedVal;
                 }
                 if (vm->depth != 0) {
+                    const u16 returnReg = frame->returnReg;
                     free(frame->regs);
                     free(frame->locals);
                     vm->depth--;
 
                     CallFrame* callerFrame = &vm->frames[vm->depth];
-                    callerFrame->regs[frame->returnReg] = returnedVal;
+                    callerFrame->regs[returnReg] = returnedVal;
                 }
                 break;
             }
@@ -265,6 +276,7 @@ Value VmRun(Vm* vm) {
                 if (!cond) {
                     frame->instructionPointer += offset;
                 }
+                break;
             }
 
             case JUMP_IF_TRUE: {
@@ -274,6 +286,7 @@ Value VmRun(Vm* vm) {
                 if (cond) {
                     frame->instructionPointer += offset;
                 }
+                break;
             }
 
             case CMP_EQ: {
@@ -300,6 +313,18 @@ Value VmRun(Vm* vm) {
 
                 frame->regs[resReg] = resValue;
                 break;
+            }
+
+
+            case CALL: {
+                const u16 dstReg = ReadU16(frame);
+                const i32 functionIndex = ReadI32(frame);
+                const u16 argCount = ReadU16(frame);
+                u16 argRegs[argCount];
+                for (u16 i = 0; i < argCount; i++) {
+                    u16 argReg = ReadU16(frame);
+                    argRegs[i] = argReg;
+                }
             }
 
             default: {

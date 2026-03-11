@@ -9,11 +9,13 @@ sealed class IrCompiledUnit {
     public IrFunction[] irFunctions;
     public int mainFunctionInd;
     public Runtime.RuntimeTypeDesc[] typeTable;
+    public Runtime.Value[] constants;
 
-    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, Runtime.RuntimeTypeDesc[] typeTable) {
+    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, Runtime.RuntimeTypeDesc[] typeTable, Runtime.Value[] constants) {
         this.irFunctions = irFunctions;
         this.mainFunctionInd = mainFunctionInd;
         this.typeTable = typeTable;
+        this.constants = constants;
     }
 }
 
@@ -49,14 +51,11 @@ sealed class BasicBlock {
 
 
 sealed class IrLoadConst : IrInstr {
-
-    public Runtime.ValueType valueType;
-    public long rawValue;
+    public int constIndex;
     public int dstReg;
 
-    public IrLoadConst(Runtime.ValueType valueType, long rawValue, int dstReg) {
-        this.valueType = valueType;
-        this.rawValue = rawValue;
+    public IrLoadConst(int constIndex, int dstReg) {
+        this.constIndex = constIndex;
         this.dstReg = dstReg;
     }
 }

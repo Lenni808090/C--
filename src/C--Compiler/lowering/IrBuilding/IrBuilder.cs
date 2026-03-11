@@ -6,13 +6,15 @@ class IrBuilder {
     List<BasicBlock> basicBlocks;
     Stack<LoopTarget> loopTarget;
     RuntimeTypeInterner runtimeTypeInterner;
+    ConstantInterner constantInterner;
 
     Dictionary<FunctionSymbol, int> symbolToInd;
+    Dictionary<LocalSymbol, int> localSlots;
     BasicBlock currentBlock;
 
     BoundCompiledUnit boundCompiledUnit;
     int nextBlockId;
-    int nextTempLocalInd;
+    int nextLocalSlot;
     int nextVReg;
     int maxVReg;
 
@@ -21,6 +23,8 @@ class IrBuilder {
         basicBlocks = new();
         loopTarget = new();
         runtimeTypeInterner = new();
+        constantInterner = new();
+        localSlots = new();
         this.boundCompiledUnit = boundCompiledUnit;
         currentBlock = MakeNewBlock();
     }
@@ -43,7 +47,7 @@ class IrBuilder {
             builtFunctions.Add(BuildFunction(function));
         }
 
-        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd, runtimeTypeInterner.BuildTypeTable());
+        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd, runtimeTypeInterner.BuildTypeTable(), constantInterner.Build());
     }
 
     public void fillSymbolToInd(BoundFunctionDeclaration[] functionDeclarations) {
@@ -58,7 +62,7 @@ class IrBuilder {
 
         var boundStmt = functionDeclaration.functionBody;
         BuildStmt(boundStmt);
-        var irFunc = new IrFunction(basicBlocks.ToArray(), nextTempLocalInd, maxVReg, functionDeclaration.functionSymbol.argCount);
+        var irFunc = new IrFunction(basicBlocks.ToArray(), nextLocalSlot, maxVReg, functionDeclaration.functionSymbol.argCount);
 
         return irFunc;
     }
@@ -109,7 +113,8 @@ class IrBuilder {
     }
 
     void BuildVarDeclarationStmt(BoundVarDeclarationStmt v) {
-        int localIndex = v.localSymbol.index;
+        int localIndex = nextLocalSlot++;
+        localSlots[v.localSymbol] = localIndex;
         int srcReg = BuildExpr(v.initializer);
         EmitStoreLocal(srcReg, localIndex);
     }
@@ -270,8 +275,7 @@ class IrBuilder {
     }
     int BuildVarAssignmentExpr(BoundVarAssignmentExpr assignmentStmt) {
         int srcReg = BuildExpr(assignmentStmt.value);
-        var localIndex = assignmentStmt.localSymbol.index;
-        EmitStoreLocal(srcReg, localIndex);
+        EmitStoreLocal(srcReg, localSlots[assignmentStmt.localSymbol]);
         return srcReg;
     }
     int BuildLiteralExpr(BoundLiteralExpr literalExpr) {
@@ -281,8 +285,7 @@ class IrBuilder {
     }
 
     int BuildNameExpr(BoundNameExpr nameExpr) {
-        int localIndex = nameExpr.localSymbol.index;
-        return EmitLoadLocal(localIndex);
+        return EmitLoadLocal(localSlots[nameExpr.localSymbol]);
     }
 
     int BuildBinaryExpr(BoundBinaryExpr binaryExpr) {
@@ -454,12 +457,13 @@ class IrBuilder {
     }
 
     int AllocTempLocalInd() {
-        return nextTempLocalInd++;
+        return nextLocalSlot++;
     }
 
     int EmitLoadConst(Runtime.ValueType type, long value) {
+        int constIndex = constantInterner.Intern(type, value);
         int dstReg = AllocVReg();
-        Emit(new IrLoadConst(type, value, dstReg));
+        Emit(new IrLoadConst(constIndex, dstReg));
         return dstReg;
     }
 
@@ -531,10 +535,16 @@ class IrBuilder {
     void StartFunction(BoundFunctionDeclaration functionDeclaration) {
         basicBlocks.Clear();
         loopTarget.Clear();
+        localSlots = new();
         nextBlockId = 0;
+        nextLocalSlot = 0;
         nextVReg = 0;
         maxVReg = 0;
-        nextTempLocalInd = functionDeclaration.functionSymbol.localCount;
+
+        foreach (var param in functionDeclaration.paramSymbols) {
+            localSlots[param] = nextLocalSlot++;
+        }
+
         currentBlock = MakeNewBlock();
         currentBlock.location = functionDeclaration.location;
         basicBlocks.Add(currentBlock);

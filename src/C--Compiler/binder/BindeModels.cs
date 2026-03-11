@@ -51,10 +51,12 @@ sealed class BoundVarDeclarationStmt : BoundStmt {
 sealed class BoundFunctionDeclaration : BoundStmt {
     public FunctionSymbol functionSymbol;
     public BoundBlockStmt functionBody;
+    public LocalSymbol[] paramSymbols;
 
-    public BoundFunctionDeclaration(FunctionSymbol functionSymbol, BoundBlockStmt functionBody, SourceLocation location) : base(location) {
+    public BoundFunctionDeclaration(FunctionSymbol functionSymbol, BoundBlockStmt functionBody, LocalSymbol[] paramSymbols, SourceLocation location) : base(location) {
         this.functionSymbol = functionSymbol;
         this.functionBody = functionBody;
+        this.paramSymbols = paramSymbols;
     }
 }
 
@@ -244,27 +246,18 @@ sealed class LocalSymbol {
 
     public BoundModifiers modifiers;
     public bool isCompilerGenerated;
-    public int index;
 
-    public LocalSymbol(string name, TypeSymbol typeSymbol, BoundModifiers modifiers, int index, bool isCompilerGenerated = false) {
+    public LocalSymbol(string name, TypeSymbol typeSymbol, BoundModifiers modifiers, bool isCompilerGenerated = false) {
         this.modifiers = modifiers;
         this.name = name;
         this.typeSymbol = typeSymbol;
-        this.index = index;
         this.isCompilerGenerated = isCompilerGenerated;
-    }
-
-    public static LocalSymbol generateTempLocal(TypeSymbol typeSymbol, int index) {
-        string name = "&temp" + index;
-
-        return new LocalSymbol(name, typeSymbol, new BoundModifiers(), index, true);
     }
 }
 
 sealed class FunctionSymbol {
     public string name;
     public TypeSymbol returnType;
-    public int localCount;
     public int argCount;
     public TypeSymbol[] argTypes;
 

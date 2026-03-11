@@ -37,6 +37,15 @@ enum OpCodes {
 
     CMP_EQ,
     CMP_NEQ,
+
+    NEW_ARRAY,
+    STORE_ARRAY,
+    LOAD_ARRAY,
+    ARRAY_LENGTH,
+
+    MOVE,
+
+    CALL,
 };
 
 
@@ -56,7 +65,7 @@ typedef struct {
     bool running;
 } Vm;
 
-
+void CallFunction(Vm* vm,u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount);
 CallFrame CreateFrame(const Function* function, u16 returnReg, bool hasReturnReg);
 void VmInit(Vm* vm, const Program* program);
 void VmFree(const Vm* vm);
