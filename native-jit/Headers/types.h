@@ -49,7 +49,7 @@ typedef struct {
 } Function;
 
 typedef struct {
-    u16 entryFunctionInd;
+    u16 entryFunctionIndex;
     u16 functionCount;
     u16 typeTableLength;
     u16 constantCount;

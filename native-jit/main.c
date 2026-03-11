@@ -1,9 +1,8 @@
-#include "loader.h"
+#include "Headers/loader.h"
 #include <stdio.h>
 
 int main(void) {
-    Program program =
-        LoadProgam("/mnt/c/Users/leona/source/repos/C--/output.cmm");
+    const Program program = LoadProgam("/mnt/c/Users/leona/source/repos/C--/output.cmm");
     (void)program;
     return 0;
 }
