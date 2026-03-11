@@ -32,8 +32,8 @@ enum OpCodes {
 
     CMP_LT_INT,
     CMP_LTE_INT,
-    CMP_MT_INT,
-    CMP_MTE_INT,
+    CMP_GT_INT,
+    CMP_GTE_INT,
 
     CMP_EQ,
     CMP_NEQ,

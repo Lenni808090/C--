@@ -54,14 +54,14 @@ static u16 ReadU16(CallFrame* frame) {
     return value;
 }
 
-//  static i32 ReadI32(CallFrame* frame) {
-//     const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
-//                      (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
-//                      (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
-//                       (frame->function->bytecode[frame->instructionPointer + 3] << 24));
-//      frame->instructionPointer += 4;
-//      return value;
-// }
+  static i32 ReadI32(CallFrame* frame) {
+     const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
+                      (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
+                      (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
+                       (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+     frame->instructionPointer += 4;
+      return value;
+ }
 
 Value VmRun(Vm* vm) {
 
@@ -188,13 +188,115 @@ Value VmRun(Vm* vm) {
                 break;
             }
 
+            case  CMP_LT_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = (AsInt(frame->regs[leftReg]) < AsInt(frame->regs[rightReg])) ? 1 : 0;
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case CMP_LTE_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = (AsInt(frame->regs[leftReg]) <= AsInt(frame->regs[rightReg])) ? 1 : 0;
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case CMP_GT_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = (AsInt(frame->regs[leftReg]) > AsInt(frame->regs[rightReg])) ? 1 : 0;
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case CMP_GTE_INT: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = (AsInt(frame->regs[leftReg]) <= AsInt(frame->regs[rightReg])) ? 1 : 0;
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
             case NOT: {
                 const u16 resReg = ReadU16(frame);
                 const u16 notReg = ReadU16(frame);
 
                 Value resValue = {.type = VAL_BOOL };
 
-                resValue.rawData = !AsBool(frame->regs[notReg]);
+                resValue.rawData = AsBool(frame->regs[notReg]) ? 0 : 1;
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case JUMP: {
+                const u32 offset = ReadI32(frame);
+                frame->instructionPointer += offset;
+                break;
+            }
+
+            case JUMP_IF_FALSE: {
+                const u16 condReg = ReadU16(frame);
+                const i32 offset = ReadI32(frame);
+                bool cond = AsBool(frame->regs[condReg]);
+                if (!cond) {
+                    frame->instructionPointer += offset;
+                }
+            }
+
+            case JUMP_IF_TRUE: {
+                const u16 condReg = ReadU16(frame);
+                const i32 offset = ReadI32(frame);
+                bool cond = AsBool(frame->regs[condReg]);
+                if (cond) {
+                    frame->instructionPointer += offset;
+                }
+            }
+
+            case CMP_EQ: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = ((frame->regs[leftReg].rawData == frame->regs[rightReg].rawData) && (frame->regs[leftReg].type == frame->regs[rightReg].type)) ? 1 : 0;
+
+                frame->regs[resReg] = resValue;
+                break;
+            }
+
+            case CMP_NEQ: {
+                const u16 resReg = ReadU16(frame);
+                const u16 leftReg = ReadU16(frame);
+                const u16 rightReg = ReadU16(frame);
+
+                Value resValue = {.type = VAL_BOOL };
+
+                resValue.rawData = ((frame->regs[leftReg].rawData != frame->regs[rightReg].rawData) || (frame->regs[leftReg].type != frame->regs[rightReg].type)) ? 1 : 0;
 
                 frame->regs[resReg] = resValue;
                 break;
