@@ -46,14 +46,14 @@ typedef struct {
     u16 maxRegCount;
     u32 bytecodeCount;
     u8* bytecode;
-} CompiledFunction;
+} Function;
 
 typedef struct {
     u16 entryFunctionInd;
     u16 functionCount;
     u16 typeTableLength;
     u16 constantCount;
-    CompiledFunction* compiledFunctions;
+    Function* functions;
     RuntimeTypeDesc* typeTable;
     Value* constants;
 } Program;
