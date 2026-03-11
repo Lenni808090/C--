@@ -281,7 +281,8 @@ class IrBuilder {
     int BuildLiteralExpr(BoundLiteralExpr literalExpr) {
         var type = GetValueType(literalExpr.type);
         long value = literalExpr.value;
-        return EmitLoadConst(type, value);
+        int constIndex = constantInterner.Intern(type, value);
+        return EmitLoadConst(constIndex, type, value);
     }
 
     int BuildNameExpr(BoundNameExpr nameExpr) {
@@ -460,8 +461,7 @@ class IrBuilder {
         return nextLocalSlot++;
     }
 
-    int EmitLoadConst(Runtime.ValueType type, long value) {
-        int constIndex = constantInterner.Intern(type, value);
+    int EmitLoadConst(int constIndex, Runtime.ValueType type, long value) {
         int dstReg = AllocVReg();
         Emit(new IrLoadConst(constIndex, dstReg));
         return dstReg;

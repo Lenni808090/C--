@@ -64,8 +64,8 @@ static u16 ReadU16(CallFrame* frame) {
  }
 
 void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount) {
-    const CallFrame callFrame = CreateFrame(&vm->program->functions[functionIndex], dstReg, true);
-    const Value* callerRegs = vm->frames[vm->depth].regs;
+    CallFrame callFrame = CreateFrame(&vm->program->functions[functionIndex], dstReg, true);
+    Value* callerRegs = vm->frames[vm->depth].regs;
     for (u16 i = 0; i < argCount; i++) {
         const Value param = callerRegs[argRegs[i]];
         callFrame.locals[i] = param;
@@ -326,6 +326,9 @@ Value VmRun(Vm* vm) {
                     u16 argReg = ReadU16(frame);
                     argRegs[i] = argReg;
                 }
+
+                CallFunction(vm, dstReg, functionIndex, argRegs, argCount);
+                break;
             }
 
             default: {

@@ -12,20 +12,19 @@ namespace CMinus;
 
 class Program {
     static void Main() {
-        const int expectedNativeResult = 9;
+        const int expectedNativeResult = 24310;
         string code = @"
                         meth Main() -> int {
-                            mut sum: int = 0;
+                            result: int = SumDown(220);
+                            return result;
+                        }
 
-                            for (mut i: int = 0; i < 6; i = i + 1) {
-                                if ((i % 2) == 0) {
-                                    sum = sum + i;
-                                } else {
-                                    sum = sum + 1;
-                                }
+                        meth SumDown(n: int) -> int {
+                            if (n == 0){
+                                return 0;
                             }
 
-                            return sum;
+                            return n + SumDown(n - 1);
                         }
 
 ";

@@ -785,8 +785,17 @@ class Binder {
 
     BoundFunctionDeclaration CreateErrorMainFunction() {
         var functionSymbol = CreateErrorFunctionSymbol("Main");
-        var body = new BoundBlockStmt(Array.Empty<BoundStmt>(), GetCompilationLocation());
-        return new BoundFunctionDeclaration(functionSymbol, body, GetCompilationLocation());
+        var location = GetCompilationLocation();
+        var body = new BoundBlockStmt(Array.Empty<BoundStmt>(), location);
+        var paramSymbols = CreateErrorParamSymbols(functionSymbol);
+        return new BoundFunctionDeclaration(functionSymbol, body, paramSymbols, location);
+    }
+    LocalSymbol[] CreateErrorParamSymbols(FunctionSymbol functionSymbol) {
+        var paramSymbols = new LocalSymbol[functionSymbol.argCount];
+        for (int i = 0; i < functionSymbol.argCount; i++) {
+            paramSymbols[i] = new LocalSymbol($"param{i}", functionSymbol.argTypes[i], new BoundModifiers());
+        }
+        return paramSymbols;
     }
     SourceLocation GetCompilationLocation() {
         return stmtsToBind.Length > 0 ? stmtsToBind[0].location : SourceLocation.None;
