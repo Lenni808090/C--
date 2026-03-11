@@ -275,18 +275,20 @@ class IrBuilder {
     }
     int BuildVarAssignmentExpr(BoundVarAssignmentExpr assignmentStmt) {
         int srcReg = BuildExpr(assignmentStmt.value);
-        EmitStoreLocal(srcReg, localSlots[assignmentStmt.localSymbol]);
+        int localInd = localSlots[assignmentStmt.localSymbol];
+        EmitStoreLocal(srcReg, localInd);
         return srcReg;
     }
     int BuildLiteralExpr(BoundLiteralExpr literalExpr) {
         var type = GetValueType(literalExpr.type);
         long value = literalExpr.value;
         int constIndex = constantInterner.Intern(type, value);
-        return EmitLoadConst(constIndex, type, value);
+        return EmitLoadConst(constIndex, value);
     }
 
     int BuildNameExpr(BoundNameExpr nameExpr) {
-        return EmitLoadLocal(localSlots[nameExpr.localSymbol]);
+        int localInd = localSlots[nameExpr.localSymbol];
+        return EmitLoadLocal(localInd);
     }
 
     int BuildBinaryExpr(BoundBinaryExpr binaryExpr) {
@@ -461,7 +463,7 @@ class IrBuilder {
         return nextLocalSlot++;
     }
 
-    int EmitLoadConst(int constIndex, Runtime.ValueType type, long value) {
+    int EmitLoadConst(int constIndex, long value) {
         int dstReg = AllocVReg();
         Emit(new IrLoadConst(constIndex, dstReg));
         return dstReg;
