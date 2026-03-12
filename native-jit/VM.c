@@ -339,6 +339,22 @@ Value VmRun(Vm* vm) {
                 break;
             }
 
+            case NEW_ARRAY: {
+                break;
+            }
+
+            case LOAD_ARRAY: {
+                break;
+            }
+
+            case STORE_ARRAY: {
+                break;
+            }
+
+            case ARRAY_LENGTH: {
+                break;
+            }
+
             default: {
                 fprintf(stderr, "executing opcode: 0x%02X at ip: %u\n", opCode, frame->instructionPointer - 1);
                 exit(1);

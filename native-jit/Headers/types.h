@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     RuntimeType kind;
-    u16 elementTypeId;
+    i32 elementTypeId;
     u16 nameLength;
     char* name;
 } RuntimeTypeDesc;

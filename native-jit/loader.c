@@ -43,7 +43,7 @@ Program LoadProgam(const char* path) {
         fread(&kind, sizeof(u8), 1, file);
         program.typeTable[i].kind = kind;
 
-        fread(&program.typeTable[i].elementTypeId, sizeof(u16), 1, file);
+        fread(&program.typeTable[i].elementTypeId, sizeof(i32), 1, file);
 
         u16 nameLength;
         fread(&nameLength, sizeof(u16), 1, file);
