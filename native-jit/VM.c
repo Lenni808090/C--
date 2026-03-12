@@ -23,15 +23,19 @@ CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool 
         exit(1);
     }
 
-
-    callFrame.locals = calloc(function->localCount, sizeof(Value));
-    if (callFrame.locals == NULL) {
-        fprintf(stderr, "unable to alloc frame locals");
-        exit(1);
+    if (function->localCount != 0) {
+        callFrame.locals = calloc(function->localCount, sizeof(Value));
+        if (callFrame.locals == NULL) {
+            fprintf(stderr, "unable to alloc frame regs");
+            exit(1);
+        }
+    }else {
+        callFrame.locals = NULL;
     }
 
     return callFrame;
 }
+
 RuntimeTypeDesc* GetTypeDesc(Vm* vm, int id) {
     if (id < 0 || id >= vm->program->typeTableLength) {
         fprintf(stderr, "unkown type Id");
