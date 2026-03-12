@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool hasReturnReg) {
     CallFrame callFrame;
@@ -16,14 +17,14 @@ CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool 
     callFrame.returnReg = returnReg;
     callFrame.hasReturnReg = hasReturnReg;
 
-    callFrame.regs = malloc(sizeof(Value) * function->maxRegCount);
+    callFrame.regs = calloc(function->maxRegCount, sizeof(Value));
     if (callFrame.regs == NULL) {
         fprintf(stderr, "unable to alloc frame regs");
         exit(1);
     }
 
 
-    callFrame.locals = malloc(sizeof(Value) * function->localCount);
+    callFrame.locals = calloc(function->localCount, sizeof(Value));
     if (callFrame.locals == NULL) {
         fprintf(stderr, "unable to alloc frame locals");
         exit(1);
@@ -31,20 +32,90 @@ CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool 
 
     return callFrame;
 }
+RuntimeTypeDesc* GetTypeDesc(Vm* vm, int id) {
+    if (id < 0 || id >= vm->program->typeTableLength) {
+        fprintf(stderr, "unkown type Id");
+        exit(1);
+    }
 
-void VmInit(Vm* vm, const Program* program) {
+    RuntimeTypeDesc* type = &vm->program->typeTable[id];
+    return type;
+}
+Value DefaultValueForType(RuntimeTypeDesc* type) {
+    switch (type->kind) {
+        case TYPE_INT: {
+            Value val = { .type = VAL_INT, .rawData = 0};
+            return val;
+        }
+        case TYPE_ARRAY: {
+            Value val = { .type = VAL_NULL, .rawData = 0};
+            return val;
+        }
+        case TYPE_BOOL: {
+            Value val = { .type = VAL_BOOL, .rawData = 0};
+            return val;
+        }
+        case TYPE_CHAR: {
+            Value val = { .type = VAL_CHAR, .rawData = '\0'};
+            return val;
+        }
+        case TYPE_OBJECT: {
+            Value val = { .type = VAL_NULL, .rawData = 0};
+            return val;
+        }
+        default: {
+            fprintf(stderr, "unkown type in default value for type");
+            exit(1);
+        }
+    }
+}
+void setArrayDefaultValues(Vm* vm, ArrayObject* arrayObject) {
+    RuntimeTypeDesc* elementType = GetTypeDesc(vm, arrayObject->elementTypeId);
+    Value defaultVal = DefaultValueForType(elementType);
+
+    for (u32 i = 0; i < arrayObject->length; i++) {
+        arrayObject->elements[i] = defaultVal;
+    }
+}
+
+i32 AllocateArrayObject(Vm* vm,i32 length, i32 typeId) {
+    HeapObject heapObject = {.heapObjectKind = ArrayObjectKind};
+
+    RuntimeTypeDesc* arrayType = GetTypeDesc(vm, typeId);
+
+    if (arrayType->kind != TYPE_ARRAY || arrayType->hasElementTypeId == false) {
+        fprintf(stderr, "allocating an array requires array type descriptor");
+        exit(1);
+    }
+
+    ArrayObject* arrayObject = malloc(sizeof(ArrayObject));
+    arrayObject->base = heapObject;
+    arrayObject->elementTypeId = arrayType->elementTypeId;
+    arrayObject->length = length;
+    arrayObject->kind = arrayType->kind;
+    arrayObject->elements = malloc(sizeof(Value) * arrayObject->length);
+
+    setArrayDefaultValues(vm, arrayObject);
+
+    return AllocHeapObject(&vm->heap, (HeapObject*)arrayObject);
+}
+void VmInit(Vm* vm,const Program* program) {
     vm->program = program;
     vm->running = 1;
     const CallFrame entryFrame = CreateFrame(&program->functions[program->entryFunctionIndex], 0, false);
     vm->frames[0] = entryFrame;
     vm->depth = 0;
+    Heap heap;
+    InitHeap(&heap, 256);
+    vm->heap = heap;
 }
 
-void VmFree(const Vm* vm) {
+void VmFree(Vm* vm) {
     for (i32 i = 0; i <= vm->depth; i++) {
         free(vm->frames[i].regs);
         free(vm->frames[i].locals);
     }
+    FreeHeap(&vm->heap);
 }
 
 static u16 ReadU16(CallFrame* frame) {
@@ -265,7 +336,7 @@ Value VmRun(Vm* vm) {
             }
 
             case JUMP: {
-                const u32 offset = ReadI32(frame);
+                const i32 offset = ReadI32(frame);
                 frame->instructionPointer += offset;
                 break;
             }
@@ -340,6 +411,19 @@ Value VmRun(Vm* vm) {
             }
 
             case NEW_ARRAY: {
+                u16 dstReg = ReadU16(frame);
+                i32 typeId = ReadI32(frame);
+                u16 lengthReg = ReadU16(frame);
+
+                i32 length = AsInt(frame->regs[lengthReg]);
+
+                if (length < 0) {
+                    fprintf(stderr, "tried to initialize array with negative length");
+                    exit(1);
+                }
+
+                Value val = {.type = VAL_HEAPREF, .rawData = AllocateArrayObject(vm, length, typeId)};
+                frame->regs[dstReg] = val;
                 break;
             }
 

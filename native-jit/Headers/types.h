@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <stdint.h>
+#include  <stdbool.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -36,6 +37,7 @@ typedef struct {
 typedef struct {
     RuntimeType kind;
     i32 elementTypeId;
+    bool hasElementTypeId;
     u16 nameLength;
     char* name;
 } RuntimeTypeDesc;
