@@ -246,7 +246,7 @@ Value VmRun(Vm* vm) {
 
                 Value resValue = {.type = VAL_BOOL };
 
-                resValue.rawData = (AsInt(frame->regs[leftReg]) <= AsInt(frame->regs[rightReg])) ? 1 : 0;
+                resValue.rawData = (AsInt(frame->regs[leftReg]) >= AsInt(frame->regs[rightReg])) ? 1 : 0;
 
                 frame->regs[resReg] = resValue;
                 break;
@@ -328,6 +328,14 @@ Value VmRun(Vm* vm) {
                 }
 
                 CallFunction(vm, dstReg, functionIndex, argRegs, argCount);
+                break;
+            }
+
+            case MOVE: {
+                const u16 dstReg = ReadU16(frame);
+                const u16 srcReg = ReadU16(frame);
+
+                frame->regs[dstReg] = frame->regs[srcReg];
                 break;
             }
 
