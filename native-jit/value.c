@@ -14,10 +14,19 @@ bool AsBool(Value value) {
     }
     return value.rawData == 0 ? false : true;
 }
-int AsInt(Value value) {
+i32 AsInt(Value value) {
     if (value.type != VAL_INT) {
         fprintf(stderr, "run time expected a int value");
         exit(1);
     }
     return (i32)value.rawData;
 }
+
+u32 AsHeapReference(Value value) {
+    if (value.type != VAL_HEAPREF) {
+        fprintf(stderr, "run time expected a heapref");
+        exit(1);
+    }
+    return (u32)value.rawData;
+}
+

@@ -9,4 +9,5 @@
 
 bool AsBool(Value value);
 i32 AsInt(Value value);
+u32 AsHeapReference(Value value);
 #endif // VALUE_H

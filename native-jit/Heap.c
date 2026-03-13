@@ -13,7 +13,7 @@ void InitHeap(Heap* heap, u32 capacity) {
     heap->capacity = capacity;
 }
 
-int AllocHeapObject(Heap* heap, HeapObject* heapObject) {
+u32 AllocHeapObject(Heap* heap, HeapObject* heapObject) {
     if (heap->heapLength >= heap->capacity) {
         HeapObject** tempHeap = realloc(heap->objects, sizeof(HeapObject*) * heap->capacity * 2);
         if (tempHeap == NULL) {

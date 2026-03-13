@@ -30,7 +30,7 @@ typedef struct {
 } Heap;
 
 void InitHeap(Heap* heap, u32 capacity);
-int AllocHeapObject(Heap* heap, HeapObject* heapObject);
+u32 AllocHeapObject(Heap* heap, HeapObject* heapObject);
 HeapObject* GetHeapObject(Heap* heap,u32 id);
 void FreeHeap(Heap* heap);
 

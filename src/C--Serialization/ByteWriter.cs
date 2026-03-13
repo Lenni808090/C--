@@ -33,10 +33,10 @@ class ByteWriter {
             writer.Write((byte)runtimeType.Kind);
 
             if (runtimeType.ElementTypeId is null) {
-                writer.Write((ushort)0xFFFF);
+                writer.Write((int)0x7FFFFFFF);
             }
             else {
-                writer.Write((ushort)runtimeType.ElementTypeId);
+                writer.Write((int)runtimeType.ElementTypeId);
             }
 
             if (runtimeType.Name is null) {

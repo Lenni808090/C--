@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool hasReturnReg) {
+CallFrame CreateFrame(const Function *function, const u16 returnReg, const bool hasReturnReg) {
     CallFrame callFrame;
     callFrame.function = function;
     callFrame.instructionPointer = 0;
@@ -29,42 +29,42 @@ CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool 
             fprintf(stderr, "unable to alloc frame regs");
             exit(1);
         }
-    }else {
+    } else {
         callFrame.locals = NULL;
     }
 
     return callFrame;
 }
 
-RuntimeTypeDesc* GetTypeDesc(Vm* vm, int id) {
+RuntimeTypeDesc *GetTypeDesc(Vm *vm, int id) {
     if (id < 0 || id >= vm->program->typeTableLength) {
         fprintf(stderr, "unkown type Id");
         exit(1);
     }
 
-    RuntimeTypeDesc* type = &vm->program->typeTable[id];
+    RuntimeTypeDesc *type = &vm->program->typeTable[id];
     return type;
 }
-Value DefaultValueForType(RuntimeTypeDesc* type) {
+Value DefaultValueForType(RuntimeTypeDesc *type) {
     switch (type->kind) {
         case TYPE_INT: {
-            Value val = { .type = VAL_INT, .rawData = 0};
+            Value val = {.type = VAL_INT, .rawData = 0};
             return val;
         }
         case TYPE_ARRAY: {
-            Value val = { .type = VAL_NULL, .rawData = 0};
+            Value val = {.type = VAL_NULL, .rawData = 0};
             return val;
         }
         case TYPE_BOOL: {
-            Value val = { .type = VAL_BOOL, .rawData = 0};
+            Value val = {.type = VAL_BOOL, .rawData = 0};
             return val;
         }
         case TYPE_CHAR: {
-            Value val = { .type = VAL_CHAR, .rawData = '\0'};
+            Value val = {.type = VAL_CHAR, .rawData = '\0'};
             return val;
         }
         case TYPE_OBJECT: {
-            Value val = { .type = VAL_NULL, .rawData = 0};
+            Value val = {.type = VAL_NULL, .rawData = 0};
             return val;
         }
         default: {
@@ -73,8 +73,25 @@ Value DefaultValueForType(RuntimeTypeDesc* type) {
         }
     }
 }
-void setArrayDefaultValues(Vm* vm, ArrayObject* arrayObject) {
-    RuntimeTypeDesc* elementType = GetTypeDesc(vm, arrayObject->elementTypeId);
+
+ArrayObject *GetArrayObject(Vm *vm, Value arrayValue) {
+    if (arrayValue.type == VAL_NULL) {
+        fprintf(stderr, "array reference is null");
+        exit(1);
+    }
+
+    u32 heapRef = AsHeapReference(arrayValue);
+    HeapObject *arrayObj = GetHeapObject(&vm->heap, heapRef);
+    if (arrayObj->heapObjectKind != ArrayObjectKind) {
+        fprintf(stderr, "not pointing to an arrray bud");
+        exit(1);
+    }
+
+    return (ArrayObject *)arrayObj;
+}
+
+void SetArrayDefaultValues(Vm *vm, ArrayObject *arrayObject) {
+    RuntimeTypeDesc *elementType = GetTypeDesc(vm, arrayObject->elementTypeId);
     Value defaultVal = DefaultValueForType(elementType);
 
     for (u32 i = 0; i < arrayObject->length; i++) {
@@ -82,28 +99,28 @@ void setArrayDefaultValues(Vm* vm, ArrayObject* arrayObject) {
     }
 }
 
-i32 AllocateArrayObject(Vm* vm,i32 length, i32 typeId) {
+i32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
     HeapObject heapObject = {.heapObjectKind = ArrayObjectKind};
 
-    RuntimeTypeDesc* arrayType = GetTypeDesc(vm, typeId);
+    RuntimeTypeDesc *arrayType = GetTypeDesc(vm, typeId);
 
     if (arrayType->kind != TYPE_ARRAY || arrayType->hasElementTypeId == false) {
         fprintf(stderr, "allocating an array requires array type descriptor");
         exit(1);
     }
 
-    ArrayObject* arrayObject = malloc(sizeof(ArrayObject));
+    ArrayObject *arrayObject = malloc(sizeof(ArrayObject));
     arrayObject->base = heapObject;
     arrayObject->elementTypeId = arrayType->elementTypeId;
     arrayObject->length = length;
     arrayObject->kind = arrayType->kind;
     arrayObject->elements = malloc(sizeof(Value) * arrayObject->length);
 
-    setArrayDefaultValues(vm, arrayObject);
+    SetArrayDefaultValues(vm, arrayObject);
 
-    return AllocHeapObject(&vm->heap, (HeapObject*)arrayObject);
+    return AllocHeapObject(&vm->heap, (HeapObject *)arrayObject);
 }
-void VmInit(Vm* vm,const Program* program) {
+void VmInit(Vm *vm, const Program *program) {
     vm->program = program;
     vm->running = 1;
     const CallFrame entryFrame = CreateFrame(&program->functions[program->entryFunctionIndex], 0, false);
@@ -114,7 +131,7 @@ void VmInit(Vm* vm,const Program* program) {
     vm->heap = heap;
 }
 
-void VmFree(Vm* vm) {
+void VmFree(Vm *vm) {
     for (i32 i = 0; i <= vm->depth; i++) {
         free(vm->frames[i].regs);
         free(vm->frames[i].locals);
@@ -122,25 +139,25 @@ void VmFree(Vm* vm) {
     FreeHeap(&vm->heap);
 }
 
-static u16 ReadU16(CallFrame* frame) {
+static u16 ReadU16(CallFrame *frame) {
     const u16 value = (u16)(frame->function->bytecode[frame->instructionPointer] |
-                     (frame->function->bytecode[frame->instructionPointer + 1] << 8));
+                            (frame->function->bytecode[frame->instructionPointer + 1] << 8));
     frame->instructionPointer += 2;
     return value;
 }
 
-  static i32 ReadI32(CallFrame* frame) {
-     const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
-                      (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
-                      (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
-                       (frame->function->bytecode[frame->instructionPointer + 3] << 24));
-     frame->instructionPointer += 4;
-      return value;
- }
+static i32 ReadI32(CallFrame *frame) {
+    const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
+                            (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
+                            (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
+                            (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+    frame->instructionPointer += 4;
+    return value;
+}
 
-void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount) {
+void CallFunction(Vm *vm, u16 dstReg, i32 functionIndex, u16 *argRegs, u16 argCount) {
     CallFrame callFrame = CreateFrame(&vm->program->functions[functionIndex], dstReg, true);
-    Value* callerRegs = vm->frames[vm->depth].regs;
+    Value *callerRegs = vm->frames[vm->depth].regs;
     for (u16 i = 0; i < argCount; i++) {
         const Value param = callerRegs[argRegs[i]];
         callFrame.locals[i] = param;
@@ -149,10 +166,9 @@ void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCo
     vm->frames[vm->depth] = callFrame;
 }
 
-Value VmRun(Vm* vm) {
-
+Value VmRun(Vm *vm) {
     while (vm->running) {
-        CallFrame* frame = &vm->frames[vm->depth];
+        CallFrame *frame = &vm->frames[vm->depth];
         const u8 opCode = frame->function->bytecode[frame->instructionPointer++];
 
         switch (opCode) {
@@ -193,7 +209,7 @@ Value VmRun(Vm* vm) {
                     free(frame->locals);
                     vm->depth--;
 
-                    CallFrame* callerFrame = &vm->frames[vm->depth];
+                    CallFrame *callerFrame = &vm->frames[vm->depth];
                     callerFrame->regs[returnReg] = returnedVal;
                 }
                 break;
@@ -203,7 +219,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT };
+                Value resValue = {.type = VAL_INT};
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) + AsInt(frame->regs[rightReg]);
 
@@ -216,7 +232,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT };
+                Value resValue = {.type = VAL_INT};
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) - AsInt(frame->regs[rightReg]);
 
@@ -229,7 +245,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT };
+                Value resValue = {.type = VAL_INT};
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) * AsInt(frame->regs[rightReg]);
 
@@ -242,7 +258,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT };
+                Value resValue = {.type = VAL_INT};
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) / AsInt(frame->regs[rightReg]);
 
@@ -255,7 +271,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT };
+                Value resValue = {.type = VAL_INT};
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) % AsInt(frame->regs[rightReg]);
 
@@ -267,7 +283,7 @@ Value VmRun(Vm* vm) {
                 const u16 resReg = ReadU16(frame);
                 const u16 negReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT };
+                Value resValue = {.type = VAL_INT};
 
                 resValue.rawData = -AsInt(frame->regs[negReg]);
 
@@ -275,12 +291,12 @@ Value VmRun(Vm* vm) {
                 break;
             }
 
-            case  CMP_LT_INT: {
+            case CMP_LT_INT: {
                 const u16 resReg = ReadU16(frame);
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) < AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -293,7 +309,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) <= AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -306,7 +322,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) > AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -319,7 +335,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) >= AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -331,7 +347,7 @@ Value VmRun(Vm* vm) {
                 const u16 resReg = ReadU16(frame);
                 const u16 notReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = AsBool(frame->regs[notReg]) ? 0 : 1;
 
@@ -370,7 +386,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = ((frame->regs[leftReg].rawData == frame->regs[rightReg].rawData) && (frame->regs[leftReg].type == frame->regs[rightReg].type)) ? 1 : 0;
 
@@ -383,14 +399,13 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL };
+                Value resValue = {.type = VAL_BOOL};
 
                 resValue.rawData = ((frame->regs[leftReg].rawData != frame->regs[rightReg].rawData) || (frame->regs[leftReg].type != frame->regs[rightReg].type)) ? 1 : 0;
 
                 frame->regs[resReg] = resValue;
                 break;
             }
-
 
             case CALL: {
                 const u16 dstReg = ReadU16(frame);
@@ -432,14 +447,51 @@ Value VmRun(Vm* vm) {
             }
 
             case LOAD_ARRAY: {
+                u16 dstReg = ReadU16(frame);
+                u16 arrayReg = ReadU16(frame);
+                u16 indexReg = ReadU16(frame);
+
+                Value arrayValue = frame->regs[arrayReg];
+
+                i32 index = AsInt(frame->regs[indexReg]);
+                ArrayObject* arrayObject = GetArrayObject(vm, arrayValue);
+
+                if (index < 0 || index >= arrayObject->length) {
+                    fprintf(stderr, "index out of bounds %d", index);
+                    exit(1);
+                }
+
+                frame->regs[dstReg] = arrayObject->elements[index];
                 break;
             }
 
             case STORE_ARRAY: {
+                u16 srcReg = ReadU16(frame);
+                u16 arrayReg = ReadU16(frame);
+                u16 indexReg = ReadU16(frame);
+
+                Value arrayValue = frame->regs[arrayReg];
+
+                i32 index = AsInt(frame->regs[indexReg]);
+                ArrayObject* arrayObject = GetArrayObject(vm, arrayValue);
+
+                if (index < 0 || index >= arrayObject->length) {
+                    fprintf(stderr, "index out of bounds %d", index);
+                    exit(1);
+                }
+
+                arrayObject->elements[index] = frame->regs[srcReg];
                 break;
             }
 
             case ARRAY_LENGTH: {
+                u16 dstReg = ReadU16(frame);
+                u16 arrayReg = ReadU16(frame);
+
+                Value arrayValue = frame->regs[arrayReg];
+                ArrayObject* arrayObject = GetArrayObject(vm, arrayValue);
+                Value val = {.type = VAL_INT, .rawData = arrayObject->length};
+                frame->regs[dstReg] = val;
                 break;
             }
 
@@ -449,40 +501,5 @@ Value VmRun(Vm* vm) {
             }
         }
     }
-    return (Value){.type = VAL_NULL, .rawData = 0};;
+    return (Value){.type = VAL_NULL, .rawData = 0};
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

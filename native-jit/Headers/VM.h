@@ -69,10 +69,11 @@ typedef struct {
 
 void CallFunction(Vm* vm,u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount);
 CallFrame CreateFrame(const Function* function, u16 returnReg, bool hasReturnReg);
+ArrayObject* GetArrayObject(Vm* vm, Value arrayValue);
 i32 AllocateArrayObject(Vm* vm,i32 length, i32 typeId);
 Value DefaultValueForType(RuntimeTypeDesc* type);
 RuntimeTypeDesc* GetTypeDesc(Vm* vm,int id);
-void setArrayDefaultValues(Vm* vm, ArrayObject* arrayObject);
+void SetArrayDefaultValues(Vm* vm, ArrayObject* arrayObject);
 void VmInit(Vm* vm, const Program* program);
 void VmFree(Vm* vm);
 Value VmRun(Vm* vm);
