@@ -4,7 +4,8 @@
 
 #ifndef HEAP_H
 #define HEAP_H
-#include "VM.h"
+
+
 #include "types.h"
 
 typedef enum {

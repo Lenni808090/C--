@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "arena.h"
+
 #include <stdint.h>
 #include  <stdbool.h>
 
@@ -51,6 +53,7 @@ typedef struct {
 } Function;
 
 typedef struct {
+    Arena arena;
     u16 entryFunctionIndex;
     u16 functionCount;
     u16 typeTableLength;

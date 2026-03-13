@@ -7,7 +7,11 @@
 
 #include "types.h"
 #include "Heap.h"
+#include "arena.h"
+
 #include <stdbool.h>
+
+#define MAX_CALLS_DEPTH 256
 
 enum OpCodes {
 
@@ -60,8 +64,8 @@ typedef struct {
 }CallFrame;
 
 typedef struct {
-    const Program* program;
-    CallFrame frames[256];
+    Program* program;
+    CallFrame frames[MAX_CALLS_DEPTH];
     Heap heap;
     i32 depth;
     bool running;

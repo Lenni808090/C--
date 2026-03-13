@@ -13,6 +13,8 @@ add_executable(cmm_runtime
         ../Headers/value.h
         ../Heap.c
         ../Headers/Heap.h
+        ../arena.c
+        ../Headers/arena.h
 )
 
 target_compile_options(cmm_runtime PRIVATE
@@ -20,7 +22,6 @@ target_compile_options(cmm_runtime PRIVATE
         -g -O0
         -fsanitize=address
         -fno-omit-frame-pointer
-        -Wsign-conversion
 )
 
 target_link_options(cmm_runtime PRIVATE

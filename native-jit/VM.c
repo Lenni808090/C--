@@ -90,7 +90,7 @@ ArrayObject *GetArrayObject(Vm *vm, Value arrayValue) {
     return (ArrayObject *)arrayObj;
 }
 
-void SetArrayDefaultValues(Vm *vm, ArrayObject *arrayObject) {
+void SetArrayDefaultValues(Vm *vm, ArrayObject* arrayObject) {
     RuntimeTypeDesc *elementType = GetTypeDesc(vm, arrayObject->elementTypeId);
     Value defaultVal = DefaultValueForType(elementType);
 
@@ -116,7 +116,7 @@ u32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
     }
     arrayObject->base = heapObject;
     arrayObject->elementTypeId = arrayType->elementTypeId;
-    arrayObject->length = length;
+    arrayObject->length = (u32)length;
     arrayObject->kind = arrayType->kind;
     arrayObject->elements = calloc(arrayObject->length, sizeof(Value));
     if (arrayObject->elements == NULL) {
@@ -164,6 +164,10 @@ static i32 ReadI32(CallFrame *frame) {
 }
 
 void CallFunction(Vm *vm, u16 dstReg, i32 functionIndex, u16 *argRegs, u16 argCount) {
+    if (vm->depth >= MAX_CALLS_DEPTH) {
+        fprintf(stderr, "max frame stack reached");
+        exit(1);
+    }
     CallFrame callFrame = CreateFrame(&vm->program->functions[functionIndex], dstReg, true);
     Value *callerRegs = vm->frames[vm->depth].regs;
     for (u16 i = 0; i < argCount; i++) {
@@ -464,7 +468,7 @@ Value VmRun(Vm *vm) {
                 i32 index = AsInt(frame->regs[indexReg]);
                 ArrayObject* arrayObject = GetArrayObject(vm, arrayValue);
 
-                if (index < 0 || index >= arrayObject->length) {
+                if (index < 0 || (u32)index >= arrayObject->length) {
                     fprintf(stderr, "index out of bounds %d", index);
                     exit(1);
                 }
@@ -483,7 +487,7 @@ Value VmRun(Vm *vm) {
                 i32 index = AsInt(frame->regs[indexReg]);
                 ArrayObject* arrayObject = GetArrayObject(vm, arrayValue);
 
-                if (index < 0 || index >= arrayObject->length) {
+                if (index < 0 || (u32)index >= arrayObject->length) {
                     fprintf(stderr, "index out of bounds %d", index);
                     exit(1);
                 }

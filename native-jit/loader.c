@@ -4,11 +4,15 @@
 #include <string.h>
 
 #include <inttypes.h>
-
 static const u8 MAGIC_NUMBER[] = {0x43, 0x4D, 0x4D, 0x00};
 
 Program LoadProgam(const char* path) {
     FILE* file = fopen(path, "rb");
+
+    fseek(file, 0, SEEK_END);
+    i64 byteSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
     if (file == NULL) {
         fprintf(stderr, "could not open file: %s\n", path);
         exit(1);
@@ -21,22 +25,21 @@ Program LoadProgam(const char* path) {
         fprintf(stderr, "invalid magic number\n");
         exit(1);
     }
+    Program program;
+
+    Arena arena;
+    ArenaInit(&arena, byteSize * 4);
+    program.arena = arena;
 
     u16 version;
     fread(&version, sizeof(u16), 1, file);
 
-    Program program;
     fread(&program.entryFunctionIndex, sizeof(u16), 1, file);
     fread(&program.functionCount, sizeof(u16), 1, file);
     fread(&program.typeTableLength, sizeof(u16), 1, file);
     fread(&program.constantCount, sizeof(u16), 1, file);
 
-
-    program.typeTable = malloc(sizeof(RuntimeTypeDesc) * program.typeTableLength);
-    if (program.typeTable == NULL) {
-        fprintf(stderr, "failed to alloc type table");
-        exit(1);
-    }
+    program.typeTable = ArenaAlloc(&program.arena, sizeof(RuntimeTypeDesc) * program.typeTableLength);
 
     for (u16 i = 0; i < program.typeTableLength; i++) {
         u8 kind;
@@ -48,6 +51,8 @@ Program LoadProgam(const char* path) {
 
         if (elementTypeId == 0x7FFFFFFF) {
             program.typeTable[i].hasElementTypeId = false;
+        } else {
+            program.typeTable[i].hasElementTypeId = true;
         }
 
         program.typeTable[i].elementTypeId = elementTypeId;
@@ -57,7 +62,7 @@ Program LoadProgam(const char* path) {
         program.typeTable[i].nameLength = nameLength;
 
         if (nameLength > 0) {
-            program.typeTable[i].name = malloc(sizeof(char) * (nameLength + 1));
+            program.typeTable[i].name = ArenaAlloc(&program.arena, sizeof(char) * (nameLength + 1));
             fread(program.typeTable[i].name, sizeof(char), nameLength, file);
             program.typeTable[i].name[nameLength] = '\0';
         } else {
@@ -65,11 +70,7 @@ Program LoadProgam(const char* path) {
         }
     }
 
-    program.constants = malloc(sizeof(Value) * program.constantCount);
-    if (program.constants == NULL) {
-        fprintf(stderr, "failed to alloc constants");
-        exit(1);
-    }
+    program.constants = ArenaAlloc(&program.arena, sizeof(Value) * program.constantCount);
 
     for (u16 i = 0; i < program.constantCount; i++) {
         u8 type;
@@ -78,11 +79,7 @@ Program LoadProgam(const char* path) {
         fread(&program.constants[i].rawData, sizeof(i64), 1, file);
     }
 
-    program.functions = malloc(sizeof(Function) * program.functionCount);
-    if (program.functions == NULL) {
-        fprintf(stderr, "failed to alloc functions");
-        exit(1);
-    }
+    program.functions = ArenaAlloc(&program.arena, sizeof(Function) * program.functionCount);
 
     for (u16 i = 0; i < program.functionCount; i++) {
         fread(&program.functions[i].localCount, sizeof(u16), 1, file);
@@ -92,7 +89,7 @@ Program LoadProgam(const char* path) {
         u32 bytecodeCount;
         fread(&bytecodeCount, sizeof(u32), 1, file);
         program.functions[i].bytecodeCount = bytecodeCount;
-        program.functions[i].bytecode = malloc(bytecodeCount);
+        program.functions[i].bytecode = ArenaAlloc(&program.arena, bytecodeCount);
         if (program.functions[i].bytecode == NULL) {
             fprintf(stderr, "failed to alloc bytecode for function %d", i);
             exit(1);
@@ -127,36 +124,6 @@ Program LoadProgam(const char* path) {
     return program;
 }
 
-
-
 void FreeProgram(Program* program) {
-    for (u16 i = 0; i < program->functionCount; i++) {
-        free(program->functions[i].bytecode);
-    }
-    free(program->functions);
-    for (u16 i = 0; i < program->typeTableLength; i++) {
-        free(program->typeTable[i].name);
-    }
-    free(program->typeTable);
-    free(program->constants);
+    FreeArena(&program->arena);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
