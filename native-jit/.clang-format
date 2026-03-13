@@ -12,7 +12,7 @@ AllowShortCaseLabelsOnASingleLine: false
 
 ColumnLimit: 0
 
-PointerAlignment: Right
+PointerAlignment: Left
 SpaceBeforeParens: ControlStatements
 Cpp11BracedListStyle: true
 SortIncludes: false

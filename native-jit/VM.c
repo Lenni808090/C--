@@ -99,7 +99,7 @@ void SetArrayDefaultValues(Vm *vm, ArrayObject *arrayObject) {
     }
 }
 
-i32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
+u32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
     HeapObject heapObject = {.heapObjectKind = ArrayObjectKind};
 
     RuntimeTypeDesc *arrayType = GetTypeDesc(vm, typeId);
@@ -109,12 +109,20 @@ i32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
         exit(1);
     }
 
-    ArrayObject *arrayObject = malloc(sizeof(ArrayObject));
+    ArrayObject* arrayObject = malloc(sizeof(ArrayObject));
+    if (arrayObject == NULL) {
+        fprintf(stderr, "unable to alloc arrayObject");
+        exit(1);
+    }
     arrayObject->base = heapObject;
     arrayObject->elementTypeId = arrayType->elementTypeId;
     arrayObject->length = length;
     arrayObject->kind = arrayType->kind;
-    arrayObject->elements = malloc(sizeof(Value) * arrayObject->length);
+    arrayObject->elements = calloc(arrayObject->length, sizeof(Value));
+    if (arrayObject->elements == NULL) {
+        fprintf(stderr, "unable to alloc elements for array");
+        exit(1);
+    }
 
     SetArrayDefaultValues(vm, arrayObject);
 
