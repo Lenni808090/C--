@@ -1,6 +1,4 @@
 using CMinus.Compiler.Lowering;
-using CMinus.Runtime;
-using Microsoft.VisualBasic;
 
 namespace CMinus.CodeGen;
 

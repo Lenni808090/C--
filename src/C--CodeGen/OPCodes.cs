@@ -1,4 +1,4 @@
-namespace CMinus.Runtime;
+namespace CMinus.CodeGen;
 
 enum OpCode : byte {
     LOAD_CONST,
@@ -21,8 +21,6 @@ enum OpCode : byte {
     JUMP_IF_FALSE,
     JUMP_IF_TRUE,
 
-
-
     CMP_LT_INT,
     CMP_LTE_INT,
     CMP_MT_INT,
@@ -30,8 +28,6 @@ enum OpCode : byte {
 
     CMP_EQ,
     CMP_NEQ,
-
-
 
     NEW_ARRAY,
     STORE_ELEMENT,
@@ -41,5 +37,4 @@ enum OpCode : byte {
     MOVE,
 
     CALL,
-
 }

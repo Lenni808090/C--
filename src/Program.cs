@@ -5,7 +5,6 @@ using CMinus.Compiler.Lexing;
 using CMinus.Compiler.Lowering;
 using CMinus.Compiler.Parsing;
 using CMinus.Compiler.Syntax;
-using CMinus.Runtime;
 using CMinus.Serialization;
 
 namespace CMinus;
@@ -210,9 +209,7 @@ class Program {
         ByteWriter byteWriter = new(compiledProgram, 1);
         byteWriter.bytefyCompiledUnit("output.cmm");
 
-        VM vm = new VM(compiledProgram);
-        Value result = vm.Run();
-        Console.WriteLine("RESULT: " + result);
+        Console.WriteLine("Wrote output.cmm for native-jit.");
     }
 
     static void PrintSyntaxUnit(CompilationUnit unit) {

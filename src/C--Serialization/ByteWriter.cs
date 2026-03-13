@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using CMinus.CodeGen;
-using CMinus.Runtime;
 namespace CMinus.Serialization;
 
 class ByteWriter {

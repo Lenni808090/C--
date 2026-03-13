@@ -1,6 +1,3 @@
-using CMinus.Runtime;
-using Microsoft.VisualBasic;
-
 namespace CMinus.CodeGen;
 
 class CompiledProgram {
@@ -29,11 +26,5 @@ class CompiledFunction {
         this.paramCount = paramCount;
         this.localCount = localCount;
         this.maxRegCount = maxRegCount;
-    }
-
-    public CallFrame AsCallFrame(ushort? returnReg, int functionInd) {
-        Value[] regs = new Value[maxRegCount];
-        Value[] locals = new Value[localCount];
-        return new CallFrame(regs, locals, returnReg, functionInd);
     }
 }

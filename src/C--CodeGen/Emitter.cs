@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using CMinus.Runtime;
-
 namespace CMinus.CodeGen;
 
 class Emitter {

@@ -1,4 +1,4 @@
-namespace CMinus.Runtime;
+namespace CMinus.CodeGen;
 
 enum RuntimeTypeKind {
     Int,
@@ -10,11 +10,8 @@ enum RuntimeTypeKind {
 
 sealed class RuntimeTypeDesc {
     public int TypeId;
-
     public RuntimeTypeKind Kind;
-
     public int? ElementTypeId;
-
     public string? Name;
 
     public RuntimeTypeDesc(int typeId, RuntimeTypeKind kind, int? elementTypeId = null, string? name = null) {

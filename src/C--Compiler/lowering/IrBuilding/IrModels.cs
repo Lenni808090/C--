@@ -8,10 +8,10 @@ abstract class Terminator;
 sealed class IrCompiledUnit {
     public IrFunction[] irFunctions;
     public int mainFunctionInd;
-    public Runtime.RuntimeTypeDesc[] typeTable;
-    public Runtime.Value[] constants;
+    public CMinus.CodeGen.RuntimeTypeDesc[] typeTable;
+    public CMinus.CodeGen.Value[] constants;
 
-    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, Runtime.RuntimeTypeDesc[] typeTable, Runtime.Value[] constants) {
+    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, CMinus.CodeGen.RuntimeTypeDesc[] typeTable, CMinus.CodeGen.Value[] constants) {
         this.irFunctions = irFunctions;
         this.mainFunctionInd = mainFunctionInd;
         this.typeTable = typeTable;

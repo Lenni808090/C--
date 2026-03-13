@@ -552,17 +552,17 @@ class IrBuilder {
         basicBlocks.Add(currentBlock);
     }
 
-    Runtime.ValueType GetValueType(TypeSymbol typeSymbol) {
+    CMinus.CodeGen.ValueType GetValueType(TypeSymbol typeSymbol) {
         if (typeSymbol.IsSameType(BuiltInTypes.Int)) {
-            return Runtime.ValueType.Int;
+            return CMinus.CodeGen.ValueType.Int;
         }
 
         if (typeSymbol.IsSameType(BuiltInTypes.Bool)) {
-            return Runtime.ValueType.Bool;
+            return CMinus.CodeGen.ValueType.Bool;
         }
 
         if (typeSymbol.IsSameType(BuiltInTypes.Char)) {
-            return Runtime.ValueType.Char;
+            return CMinus.CodeGen.ValueType.Char;
         }
 
         throw new Exception("Unkown symbol type in get value type" + typeSymbol);

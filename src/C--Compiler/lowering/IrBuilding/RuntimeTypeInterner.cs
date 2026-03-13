@@ -1,5 +1,5 @@
 using CMinus.Compiler.Binding;
-using CMinus.Runtime;
+using CMinus.CodeGen;
 
 namespace CMinus.Compiler.Lowering;
 

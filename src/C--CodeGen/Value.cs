@@ -1,15 +1,12 @@
-namespace CMinus.Runtime;
+namespace CMinus.CodeGen;
 
 enum ValueType : byte {
     Int,
     Bool,
     Char,
-
     HeapRef,
-
     Null,
 }
-
 
 struct Value {
     public ValueType Type;
@@ -24,6 +21,7 @@ struct Value {
         if (Type != ValueType.Int && Type != ValueType.Char) {
             throw new Exception("expected int");
         }
+
         return (int)RawData;
     }
 
@@ -31,6 +29,7 @@ struct Value {
         if (Type != ValueType.Bool) {
             throw new Exception("expected bool");
         }
+
         return RawData != 0;
     }
 
@@ -38,39 +37,18 @@ struct Value {
         if (Type != ValueType.HeapRef) {
             throw new Exception("expected heap ref");
         }
+
         return (int)RawData;
     }
 
-
-
     public override string ToString() {
-        switch (Type) {
-            case ValueType.Int: {
-                    return $"Int({RawData})";
-                }
-            case ValueType.Bool: {
-                    return $"Bool({(RawData == 1 ? "true" : "false")})";
-                }
-            case ValueType.Char: {
-                    return $"Char({(char)RawData})";
-                }
-            case ValueType.HeapRef: {
-                    return $"HeapRef({RawData})";
-                }
-            case ValueType.Null: {
-                    return "Null";
-                }
-            default: {
-                    throw new InvalidOperationException("Unknown ValueType: " + Type);
-                }
-        }
-    }
-}
-
-
-struct HeapRef {
-    public int id;
-    public HeapRef(int id) {
-        this.id = id;
+        return Type switch {
+            ValueType.Int => $"Int({RawData})",
+            ValueType.Bool => $"Bool({(RawData == 1 ? "true" : "false")})",
+            ValueType.Char => $"Char({(char)RawData})",
+            ValueType.HeapRef => $"HeapRef({RawData})",
+            ValueType.Null => "Null",
+            _ => throw new InvalidOperationException("Unknown ValueType: " + Type),
+        };
     }
 }
