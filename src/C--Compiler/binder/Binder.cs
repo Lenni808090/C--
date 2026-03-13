@@ -1,12 +1,5 @@
-using System.Linq.Expressions;
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
-using CMinus.Compiler;
 using CMinus.Compiler.Diagnostics;
 using CMinus.Compiler.Syntax;
-using Microsoft.VisualBasic;
 
 namespace CMinus.Compiler.Binding;
 
@@ -16,7 +9,7 @@ class Binder {
     Dictionary<string, FunctionSymbol> functionsByName;
     List<FunctionDeclarationStmt> functionDeclarationsToBind;
 
-    TypeSymbol currentReturnType;
+    TypeSymbol? currentReturnType;
     int loopDepth;
     DiagnosticBag diagnostics;
     List<BoundFunctionDeclaration> functions;
@@ -36,6 +29,7 @@ class Binder {
         scopes = new();
         functions = new();
         functionsByName = new();
+        BoundNativeFunctions.FillFunctionDic(functionsByName);
         functionDeclarationsToBind = new();
         diagnostics = compilerContext.diagnostics;
         stmtsToBind = compilationUnit.stmts;
@@ -65,7 +59,13 @@ class Binder {
             return;
         }
 
-        var returnType = BindTypeSyntax(functionDeclaration.returnType);
+        TypeSymbol? returnType;
+        if (functionDeclaration.returnType is null) {
+            returnType = BuiltInTypes.Void;
+        }
+        else {
+            returnType = BindTypeSyntax(functionDeclaration.returnType);
+        }
 
         List<TypeSymbol> argTypes = new();
         HashSet<string> seenNames = new();
@@ -185,8 +185,13 @@ class Binder {
 
     BoundStmt BindReturnStmt(ReturnStmt returnStmt) {
         var boundReturnedExpr = BindExpr(returnStmt.returnExpr);
+        if (currentReturnType is null) {
+            ReportError(returnStmt.location, DiagnosticDescriptors.BinderReturnTypeMismatch, "void", boundReturnedExpr.type);
+            return new BoundErrorStmt(returnStmt.location);
+        }
         if (IsValidType(boundReturnedExpr.type) && !currentReturnType.IsSameType(boundReturnedExpr.type)) {
             ReportError(returnStmt.location, DiagnosticDescriptors.BinderReturnTypeMismatch, currentReturnType, boundReturnedExpr.type);
+            return new BoundErrorStmt(returnStmt.location);
         }
         return new BoundReturnStmt(boundReturnedExpr, returnStmt.location);
     }

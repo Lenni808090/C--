@@ -285,9 +285,15 @@ class Parser {
 
         Expect(TokenType.CloseParentheses, "Expected Close Parentheses after Params");
 
-        Expect(TokenType.Arrow, "Arrow Expected After Params for Function Return Type");
+        TypeSyntax? returnType;
+        if (Current.TokenType == TokenType.Arrow) {
+            NextToken();
+            returnType = ParseType();
+        }
+        else {
+            returnType = null;
+        }
 
-        var returnType = ParseType();
 
         var body = (BlockStmt)ParseBlockStmt();
 

@@ -216,6 +216,19 @@ sealed class IrBranch : Terminator {
     }
 }
 
+enum FunctionKind {
+    User,
+    Native,
+}
+
+class FunctionRef {
+    public FunctionKind functionKind;
+    public int functionInd;
+
+    public FunctionRef(FunctionKind functionKind, int functionInd) {
+        this.fun
+    }
+}
 
 
 enum IrBinaryOPKind {

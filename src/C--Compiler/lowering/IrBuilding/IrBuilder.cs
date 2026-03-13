@@ -324,6 +324,9 @@ class IrBuilder {
         foreach (BoundExpr arg in callExpr.args) {
             argRegs.Add(BuildExpr(arg));
         }
+        if (callExpr.callee.isNative) {
+
+        }
         int functionInd = symbolToInd[callExpr.callee];
         return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd);
     }
@@ -493,6 +496,10 @@ class IrBuilder {
         int dstReg = AllocVReg();
         Emit(new IrUnary(dstReg, srcReg, op));
         return dstReg;
+    }
+
+    int EmitNativeCall(int argCount int[] argRegs int nativeFunctionIndex) {
+
     }
 
     int EmitCall(int argCount, int[] argRegs, int functionIndex) {

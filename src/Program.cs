@@ -13,141 +13,7 @@ class Program {
     static void Main() {
         string code = @"
                         meth Main() -> int {
-                            side: int = 8;
-                            mut grid: int[][] = new int[side][];
-                            seed: int = InitializeGrid(grid, side);
-                            folded: int = FoldGrid(grid, side, 0);
-                            mutated: int = StripeMutations(grid, side);
-                            cross: int = CrossCheck(grid, side);
-                            return seed + folded + mutated + cross;
-                        }
-
-                        meth InitializeGrid(grid: int[][], side: int) -> int {
-                            mut checksum: int = 0;
-                            mut row: int = 0;
-                            while (row < side) {
-                                current: int[] = new int[side];
-                                grid[row] = current;
-
-                                mut col: int = 0;
-                                while (col < side) {
-                                    checksum += current[col];
-                                    current[col] = ((row + 1) * (col + 3)) + (row * row) - col;
-                                    current[col] += row;
-                                    current[col] *= 2;
-                                    current[col] -= col;
-                                    current[col] %= 97;
-
-                                    if (((row + col) % 3) == 0) {
-                                        current[col] += row + col;
-                                    }
-                                    else {
-                                        current[col] += 1;
-                                    }
-
-                                    if ((col % 2) == 0) {
-                                        current[col] += current[col] % 5;
-                                    }
-
-                                    checksum += current[col];
-                                    col = col + 1;
-                                }
-
-                                row = row + 1;
-                            }
-
-                            return checksum;
-                        }
-
-                        meth FoldGrid(grid: int[][], side: int, row: int) -> int {
-                            if (row == side) {
-                                return 0;
-                            }
-
-                            return FoldRow(grid[row], side, row, 0) + FoldGrid(grid, side, row + 1);
-                        }
-
-                        meth FoldRow(rowData: int[], side: int, row: int, col: int) -> int {
-                            if (col == side) {
-                                return 0;
-                            }
-
-                            mut value: int = rowData[col];
-
-                            if ((col % 2) == 0) {
-                                value = value + row;
-                            }
-                            else {
-                                value = value - col;
-                            }
-
-                            if (col > 0) {
-                                value = value + rowData[col - 1];
-                            }
-
-                            return value + FoldRow(rowData, side, row, col + 1);
-                        }
-
-                        meth StripeMutations(grid: int[][], side: int) -> int {
-                            mut score: int = 0;
-
-                            for (mut row: int = 0; row < side; row = row + 1) {
-                                for (mut col: int = 0; col < side; col = col + 1) {
-                                    if ((row % 2) == 0) {
-                                        grid[row][col] += row + col;
-                                    }
-                                    else {
-                                        grid[row][col] -= row;
-                                    }
-
-                                    if ((col % 3) == 1) {
-                                        score += grid[row][col];
-                                        continue;
-                                    }
-
-                                    if ((row == side - 1) && (col == side - 1)) {
-                                        score += grid[row][col];
-                                        break;
-                                    }
-
-                                    score += grid[row][col] + grid[row][side - col - 1];
-                                }
-                            }
-
-                            return score;
-                        }
-
-                        meth CrossCheck(grid: int[][], side: int) -> int {
-                            mut total: int = 0;
-                            mut row: int = 1;
-
-                            while (row < side) {
-                                mut col: int = 0;
-                                while (col < side) {
-                                    grid[row][col] += grid[row - 1][side - col - 1] % 7;
-
-                                    if ((grid[row][col] % 2) == 0) {
-                                        total += grid[row][col];
-                                    }
-                                    else {
-                                        total += grid[row - 1][col];
-                                    }
-
-                                    col = col + 1;
-                                }
-
-                                row = row + 1;
-                            }
-
-                            return total + SumDiagonal(grid, side, 0);
-                        }
-
-                        meth SumDiagonal(grid: int[][], side: int, row: int) -> int {
-                            if (row == side) {
-                                return 0;
-                            }
-
-                            return grid[row][row] + grid[row][side - row - 1] + SumDiagonal(grid, side, row + 1);
+                            print_int('2');
                         }
 
 ";
@@ -235,7 +101,7 @@ class Program {
                     PrintSyntaxParameters(f.@params, indent + "|  ");
                     Console.Write(indent);
                     Console.WriteLine("+--ReturnType");
-                    PrintSyntaxType(f.returnType, indent + "|  ", false);
+                    PrintSyntaxType(f.returnType is null ? new IdentifierTypeSyntax(new Token("void", TokenType.Identifier, new SourceLocation())) : f.returnType, indent + "|  ", false);
                     Console.Write(indent);
                     Console.WriteLine("+--Body");
                     PrintSyntaxStmt(f.functionBody, indent + "   ", true);

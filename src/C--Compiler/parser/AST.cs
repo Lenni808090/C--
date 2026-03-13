@@ -95,10 +95,10 @@ sealed class FunctionDeclarationStmt : Stmt {
 
     public ParameterSyntax[] @params;
 
-    public TypeSyntax returnType;
+    public TypeSyntax? returnType;
     public BlockStmt functionBody;
 
-    public FunctionDeclarationStmt(Token functionName, ParameterSyntax[] @params, TypeSyntax returnType, BlockStmt functionBody) {
+    public FunctionDeclarationStmt(Token functionName, ParameterSyntax[] @params, TypeSyntax? returnType, BlockStmt functionBody) {
         this.functionName = functionName;
         this.@params = @params;
         this.returnType = returnType;

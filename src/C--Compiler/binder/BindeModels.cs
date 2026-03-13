@@ -257,11 +257,13 @@ sealed class LocalSymbol {
 
 sealed class FunctionSymbol {
     public string name;
+    public bool isNative;
     public TypeSymbol returnType;
     public int argCount;
     public TypeSymbol[] argTypes;
 
-    public FunctionSymbol(string name, TypeSymbol returnType, TypeSymbol[] argTypes) {
+    public FunctionSymbol(string name, TypeSymbol returnType, TypeSymbol[] argTypes, bool isNative = false) {
+        this.isNative = isNative;
         this.name = name;
         this.returnType = returnType;
         argCount = argTypes.Length;
@@ -349,5 +351,7 @@ static class BuiltInTypes {
     public static readonly PrimitiveSymbolType Int = new("int");
     public static readonly PrimitiveSymbolType Char = new("char");
     public static readonly PrimitiveSymbolType Bool = new("bool");
+
+    public static readonly PrimitiveSymbolType Void = new("void");
     public static readonly ErrorSymbolType Error = new();
 }
