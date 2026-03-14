@@ -5,7 +5,40 @@ namespace CMinus.Compiler.Lowering;
 class StackMapAnalyser {
 
 
-    RefUseDef GetUseRef(IrInstr irInstr, IrFunction irFunction) {
+
+
+
+
+
+    RefUseDef GetRefUseDefTerminator(Terminator terminator, IrFunction irFunction) {
+        var regIsRef = irFunction.regIsRef;
+
+        bool[] usedRegs = new bool[irFunction.maxVReg];
+        bool[] usedLocals = new bool[irFunction.localCount];
+        bool[] definedRegs = new bool[irFunction.maxVReg];
+        bool[] definedLocals = new bool[irFunction.localCount];
+
+        switch (terminator) {
+            case IrGoto: {
+                    break;
+                }
+            case IrBranch branch: {
+                    usedRegs[branch.condReg] = regIsRef[branch.condReg];
+                    break;
+                }
+            case IrReturn @return: {
+                    usedRegs[@return.returnReg] = regIsRef[@return.returnReg];
+                    break;
+                }
+            default: {
+                    throw new Exception("unknown terminator in stack analyser");
+                }
+        }
+
+        return new RefUseDef(usedRegs, usedLocals, definedRegs, definedLocals);
+    }
+
+    RefUseDef GetRefUseInstr(IrInstr irInstr, IrFunction irFunction) {
         var regIsRef = irFunction.regIsRef;
         var localIsRef = irFunction.localIsRef;
         bool[] usedRegs = new bool[irFunction.maxVReg];
@@ -21,6 +54,9 @@ class StackMapAnalyser {
                     }
                     break;
                 }
+            case IrLoadConst: {
+                    break;
+                }
             case IrLoadLocal loadLocal: {
                     if (localIsRef[loadLocal.localIndex]) {
                         usedLocals[loadLocal.localIndex] = true;
@@ -29,29 +65,28 @@ class StackMapAnalyser {
                     break;
                 }
             case IrNewArray newArray: {
-                    definedRegs[newArray.dstReg] = true;
+                    definedRegs[newArray.dstReg] = regIsRef[newArray.dstReg];
                     break;
                 }
             case IrArrayLength arrayLength: {
-                    usedRegs[arrayLength.arrayReg] = true;
+                    usedRegs[arrayLength.arrayReg] = regIsRef[arrayLength.arrayReg];
                     break;
                 }
             case IrStoreElement storeElement: {
-                    usedRegs[storeElement.arrayReg] = true;
+                    usedRegs[storeElement.arrayReg] = regIsRef[storeElement.arrayReg];
+                    usedRegs[storeElement.srcReg] = regIsRef[storeElement.srcReg];
                     break;
                 }
             case IrLoadElement loadElement: {
                     if (regIsRef[loadElement.dstReg]) {
                         definedRegs[loadElement.dstReg] = true;
                     }
-                    usedRegs[loadElement.arrayReg] = true;
+                    usedRegs[loadElement.arrayReg] = regIsRef[loadElement.arrayReg];
                     break;
                 }
             case IrMove move: {
-                    if (regIsRef[move.srcReg]) {
-                        definedRegs[move.dstReg] = true;
-                        usedRegs[move.srcReg] = true;
-                    }
+                    usedRegs[move.srcReg] = regIsRef[move.srcReg];
+                    definedRegs[move.dstReg] = regIsRef[move.dstReg];
                     break;
                 }
             case IrBinaryOp binaryOp: {
@@ -60,14 +95,15 @@ class StackMapAnalyser {
                     break;
                 }
             case IrUnary unary: {
-                    if (regIsRef[unary.operandReg]) {
-                        definedRegs[unary.dstReg] = true;
-                        usedRegs[unary.operandReg] = true;
-                    }
+                    definedRegs[unary.dstReg] = regIsRef[unary.dstReg];
+                    usedRegs[unary.operandReg] = regIsRef[unary.operandReg];
                     break;
                 }
             case IrCall call: {
                     definedRegs[call.dstReg] = regIsRef[call.dstReg];
+                    foreach (int reg in call.argRegs) {
+                        usedRegs[reg] = regIsRef[reg];
+                    }
                     break;
                 }
             default: {
