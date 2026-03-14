@@ -20,7 +20,7 @@ class ControlFlowAnalyser {
         foreach (IrFunction irFunction in irCompiledUnit.irFunctions) {
             irFunctions.Add(AnalyseFunction(irFunction));
         }
-        return new IrCompiledUnit(irFunctions.ToArray(), irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.constants);
+        return new IrCompiledUnit(irFunctions.ToArray(), irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.constants, irCompiledUnit.nativeFunctionNames);
     }
 
     public IrFunction AnalyseFunction(IrFunction irFunction) {

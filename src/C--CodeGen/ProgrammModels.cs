@@ -5,13 +5,16 @@ class CompiledProgram {
 
     public Value[] constants;
     public int entryFuncInd;
+
+    public string[] nativeFunctionNames;
     public RuntimeTypeDesc[] typeTable;
 
-    public CompiledProgram(CompiledFunction[] compiledFunctions, Value[] constants, int entryFuncInd, RuntimeTypeDesc[] typeTable) {
+    public CompiledProgram(CompiledFunction[] compiledFunctions, Value[] constants, int entryFuncInd, RuntimeTypeDesc[] typeTable, string[] nativeFunctionNames) {
         this.constants = constants;
         this.compiledFunctions = compiledFunctions;
         this.entryFuncInd = entryFuncInd;
         this.typeTable = typeTable;
+        this.nativeFunctionNames = nativeFunctionNames;
     }
 }
 

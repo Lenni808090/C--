@@ -1,14 +1,51 @@
 # Ignore everything by default
 /*
 
-# Keep only source folder and this file
+# Keep source/config files that are authored
 !/src/
 !/src/**
 !/native-jit/
 !/native-jit/**
+!/.gitignore
+!/README.md
+!/C--.sln
+!/C--.csproj
+!/.editorconfig
+!/.clang-format
+!/.clangd
+
+# Ignore generated .NET output
+/bin/
+/obj/
+/.dotnet/
+/.dotnet-cli/
+/.vs/
+/.idea/
+/.vscode/
+/.cache/
+/output.cmm
+/compile_commands.json
+*.user
+*.suo
+*.iml
 
 # Ignore generated native build output and IDE metadata inside native-jit
 /native-jit/build/
+/native-jit/**/build/
+/native-jit/**/cmake-build-*/
+/native-jit/**/CMakeFiles/
+/native-jit/**/.cmake/
+/native-jit/**/Testing/
+/native-jit/**/CMakeCache.txt
+/native-jit/**/CMakePresets.json
+/native-jit/**/CTestTestfile.cmake
+/native-jit/**/build.ninja
+/native-jit/**/.ninja_deps
+/native-jit/**/.ninja_log
+/native-jit/**/cmake_install.cmake
+/native-jit/**/install_manifest.txt
+/native-jit/**/Makefile
+/native-jit/**/compile_commands.json
 /native-jit/.idea/
 /native-jit/editor/cmake-build-debug-wsl/
 /native-jit/cmm_runtime
@@ -18,8 +55,42 @@
 !/native-jit/editor/CMakeLists.txt
 
 /native-jit/*.exe
+/native-jit/*.dll
+/native-jit/*.so
+/native-jit/*.dylib
+/native-jit/*.a
+/native-jit/*.lib
+/native-jit/*.out
 /native-jit/*.obj
+/native-jit/*.o
+/native-jit/*.d
+/native-jit/*.pch
 /native-jit/*.pdb
-.idea/
-*.iml
-!/.gitignore
+/native-jit/*.ilk
+/native-jit/*.exp
+/native-jit/*.idb
+/native-jit/*.gcda
+/native-jit/*.gcno
+/native-jit/*.gcov
+/native-jit/*.stackdump
+/native-jit/*.tmp
+/native-jit/**/a.out
+/native-jit/**/*.exe
+/native-jit/**/*.dll
+/native-jit/**/*.so
+/native-jit/**/*.dylib
+/native-jit/**/*.a
+/native-jit/**/*.lib
+/native-jit/**/*.out
+/native-jit/**/*.obj
+/native-jit/**/*.o
+/native-jit/**/*.d
+/native-jit/**/*.pch
+/native-jit/**/*.pdb
+/native-jit/**/*.ilk
+/native-jit/**/*.exp
+/native-jit/**/*.idb
+/native-jit/**/*.gcda
+/native-jit/**/*.gcno
+/native-jit/**/*.gcov
+/native-jit/**/*.stackdump

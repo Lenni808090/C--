@@ -20,7 +20,7 @@ class CodeGenerator {
             compiledFunctions.Add(GenerateFunction(irFunction));
         }
 
-        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable);
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames);
     }
 
     public CompiledFunction GenerateFunction(IrFunction irFunction) {

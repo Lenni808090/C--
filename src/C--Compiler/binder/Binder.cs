@@ -8,7 +8,7 @@ class Binder {
 
     Dictionary<string, FunctionSymbol> functionsByName;
     List<FunctionDeclarationStmt> functionDeclarationsToBind;
-
+    List<FunctionSymbol> usedNativeFunctions;
     TypeSymbol? currentReturnType;
     int loopDepth;
     DiagnosticBag diagnostics;
@@ -30,6 +30,7 @@ class Binder {
         functions = new();
         functionsByName = new();
         BoundNativeFunctions.FillFunctionDic(functionsByName);
+        usedNativeFunctions = new();
         functionDeclarationsToBind = new();
         diagnostics = compilerContext.diagnostics;
         stmtsToBind = compilationUnit.stmts;
@@ -97,7 +98,7 @@ class Binder {
         if (mainFunc is null) {
             mainFunc = CreateErrorMainFunction();
         }
-        return new BoundCompiledUnit(mainFunc, functions.ToArray());
+        return new BoundCompiledUnit(mainFunc, functions.ToArray(), usedNativeFunctions.ToArray());
     }
 
 
@@ -111,7 +112,6 @@ class Binder {
             ReportError(functionDeclaration.location, DiagnosticDescriptors.BinderFunctionResolutionFailed, name);
             functionSymbol = CreateErrorFunctionSymbol(name);
         }
-
         currentReturnType = functionSymbol.returnType;
 
         var paramSymbols = AddParams(functionDeclaration);
@@ -391,6 +391,10 @@ class Binder {
 
         if (hasError) {
             return new BoundErrorExpr(callExpr.location);
+        }
+
+        if (functionSymbol.isNative) {
+            usedNativeFunctions.Add(functionSymbol);
         }
 
         return new BoundCallExpr(args.ToArray(), functionSymbol, functionSymbol.returnType, callExpr.location);

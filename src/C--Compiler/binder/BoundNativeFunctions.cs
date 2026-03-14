@@ -1,7 +1,9 @@
+using System.Runtime.InteropServices;
 using CMinus.Compiler.Binding;
 
+
 class BoundNativeFunctions {
-    static readonly FunctionSymbol[] NativeFunctions = {
+    public static readonly FunctionSymbol[] NativeFunctions = {
         new("print_int",   BuiltInTypes.Void, new[] {BuiltInTypes.Int}, true),
         new("print_bool",   BuiltInTypes.Void, new[] {BuiltInTypes.Bool}, true),
         new("print_char",BuiltInTypes.Void, new[] {BuiltInTypes.Char}, true),

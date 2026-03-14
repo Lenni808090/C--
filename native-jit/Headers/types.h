@@ -1,19 +1,11 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include "basetypes.h"
 #include "arena.h"
 
-#include <stdint.h>
-#include  <stdbool.h>
+#include <stdbool.h>
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef int8_t i8;
-typedef int16_t i16;
-typedef int32_t i32;
-typedef int64_t i64;
 
 typedef enum {
     VAL_INT,
@@ -51,6 +43,21 @@ typedef struct {
     u32 bytecodeCount;
     u8* bytecode;
 } Function;
+typedef void (*NativeFn)(Value* registers, u16 argCount, u16* argRegs);
+
+typedef enum {
+    FuncNative,
+    FuncUser,
+}FunctionKind;
+
+typedef struct {
+    FunctionKind kind;
+    union {
+        NativeFn nativeFn;
+        Function userFun;
+    };
+} RuntimeFunction;
+
 
 typedef struct {
     Arena arena;
@@ -58,9 +65,11 @@ typedef struct {
     u16 functionCount;
     u16 typeTableLength;
     u16 constantCount;
+    u16 nativeFunctionCount;
     Function* functions;
     RuntimeTypeDesc* typeTable;
     Value* constants;
+    char** nativeFunctionNames;
 } Program;
 
 

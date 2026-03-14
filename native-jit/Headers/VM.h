@@ -65,6 +65,7 @@ typedef struct {
 
 typedef struct {
     Program* program;
+    RuntimeFunction* runtimeFunctions;
     CallFrame frames[MAX_CALLS_DEPTH];
     Heap heap;
     i32 depth;
@@ -78,7 +79,7 @@ u32 AllocateArrayObject(Vm* vm,i32 length, i32 typeId);
 Value DefaultValueForType(RuntimeTypeDesc* type);
 RuntimeTypeDesc* GetTypeDesc(Vm* vm,int id);
 void SetArrayDefaultValues(Vm* vm, ArrayObject* arrayObject);
-void VmInit(Vm* vm, const Program* program);
+void VmInit(Vm* vm, Program* program);
 void VmFree(Vm* vm);
 Value VmRun(Vm* vm);
 

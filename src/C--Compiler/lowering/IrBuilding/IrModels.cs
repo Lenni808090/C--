@@ -1,6 +1,7 @@
 namespace CMinus.Compiler.Lowering;
 
 using CMinus.Compiler;
+using CMinus.Compiler.Binding;
 
 abstract class IrInstr;
 abstract class Terminator;
@@ -8,13 +9,15 @@ abstract class Terminator;
 sealed class IrCompiledUnit {
     public IrFunction[] irFunctions;
     public int mainFunctionInd;
-    public CMinus.CodeGen.RuntimeTypeDesc[] typeTable;
-    public CMinus.CodeGen.Value[] constants;
+    public CodeGen.RuntimeTypeDesc[] typeTable;
+    public CodeGen.Value[] constants;
 
-    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, CMinus.CodeGen.RuntimeTypeDesc[] typeTable, CMinus.CodeGen.Value[] constants) {
+    public string[] nativeFunctionNames;
+    public IrCompiledUnit(IrFunction[] irFunctions, int mainFunctionInd, CodeGen.RuntimeTypeDesc[] typeTable, CodeGen.Value[] constants, string[] nativeFunctionNames) {
         this.irFunctions = irFunctions;
         this.mainFunctionInd = mainFunctionInd;
         this.typeTable = typeTable;
+        this.nativeFunctionNames = nativeFunctionNames;
         this.constants = constants;
     }
 }
@@ -216,19 +219,6 @@ sealed class IrBranch : Terminator {
     }
 }
 
-enum FunctionKind {
-    User,
-    Native,
-}
-
-class FunctionRef {
-    public FunctionKind functionKind;
-    public int functionInd;
-
-    public FunctionRef(FunctionKind functionKind, int functionInd) {
-        this.fun
-    }
-}
 
 
 enum IrBinaryOPKind {

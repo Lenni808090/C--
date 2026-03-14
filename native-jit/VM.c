@@ -4,6 +4,7 @@
 
 #include "Headers/VM.h"
 
+#include "Headers/natives.h"
 #include "Headers/value.h"
 
 #include <stdio.h>
@@ -128,10 +129,35 @@ u32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
 
     return AllocHeapObject(&vm->heap, (HeapObject *)arrayObject);
 }
-void VmInit(Vm *vm, const Program *program) {
+void VmInit(Vm *vm, Program *program) {
     vm->program = program;
     vm->running = 1;
-    const CallFrame entryFrame = CreateFrame(&program->functions[program->entryFunctionIndex], 0, false);
+
+
+    NativeFn* resolved = resolveNativeFunctions(program);
+    u16 nativeCount = program->nativeFunctionCount;
+    vm->runtimeFunctions = malloc(sizeof(RuntimeFunction) * (nativeCount + program->functionCount));
+    if (vm->runtimeFunctions == NULL) {
+        fprintf(stderr, "unable to alloc runtime func");
+        exit(1);
+    }
+
+    for (u16 i = 0; i < nativeCount; i++) {
+        vm->runtimeFunctions[i].kind = FuncNative;
+        vm->runtimeFunctions[i].nativeFn = resolved[i];
+    }
+
+    for (u16 i = 0; i < program->functionCount; i++) {
+        vm->runtimeFunctions[i + nativeCount].kind = FuncUser;
+        vm->runtimeFunctions[i + nativeCount].userFun = program->functions[i];
+    }
+
+    if (vm->runtimeFunctions[program->entryFunctionIndex].kind == FuncNative) {
+        fprintf(stderr, "entry function was a native function");
+        exit(1);
+    }
+
+    const CallFrame entryFrame = CreateFrame(&vm->runtimeFunctions[program->entryFunctionIndex].userFun, 0, false);
     vm->frames[0] = entryFrame;
     vm->depth = 0;
     Heap heap;
@@ -144,6 +170,7 @@ void VmFree(Vm *vm) {
         free(vm->frames[i].regs);
         free(vm->frames[i].locals);
     }
+    free(vm->runtimeFunctions);
     FreeHeap(&vm->heap);
 }
 
@@ -168,7 +195,7 @@ void CallFunction(Vm *vm, u16 dstReg, i32 functionIndex, u16 *argRegs, u16 argCo
         fprintf(stderr, "max frame stack reached");
         exit(1);
     }
-    CallFrame callFrame = CreateFrame(&vm->program->functions[functionIndex], dstReg, true);
+    CallFrame callFrame = CreateFrame(&vm->runtimeFunctions[functionIndex].userFun, dstReg, true);
     Value *callerRegs = vm->frames[vm->depth].regs;
     for (u16 i = 0; i < argCount; i++) {
         const Value param = callerRegs[argRegs[i]];
@@ -272,6 +299,10 @@ Value VmRun(Vm *vm) {
 
                 Value resValue = {.type = VAL_INT};
 
+                if (AsInt(frame->regs[rightReg]) == 0) {
+                    fprintf(stderr, "tried to divide by 0");
+                    exit(1);
+                }
                 resValue.rawData = AsInt(frame->regs[leftReg]) / AsInt(frame->regs[rightReg]);
 
                 frame->regs[resReg] = resValue;
@@ -428,8 +459,12 @@ Value VmRun(Vm *vm) {
                     u16 argReg = ReadU16(frame);
                     argRegs[i] = argReg;
                 }
+                if (vm->runtimeFunctions[functionIndex].kind == FuncUser) {
+                    CallFunction(vm, dstReg, functionIndex, argRegs, argCount);
+                }else {
+                    vm->runtimeFunctions[functionIndex].nativeFn(frame->regs, argCount, argRegs);
+                }
 
-                CallFunction(vm, dstReg, functionIndex, argRegs, argCount);
                 break;
             }
 

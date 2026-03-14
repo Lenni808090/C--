@@ -8,6 +8,8 @@ class IrBuilder {
     RuntimeTypeInterner runtimeTypeInterner;
     ConstantInterner constantInterner;
 
+    List<string> nativeFunctionNames;
+
     Dictionary<FunctionSymbol, int> symbolToInd;
     Dictionary<LocalSymbol, int> localSlots;
     BasicBlock currentBlock;
@@ -25,43 +27,57 @@ class IrBuilder {
         runtimeTypeInterner = new();
         constantInterner = new();
         localSlots = new();
+        nativeFunctionNames = new();
         this.boundCompiledUnit = boundCompiledUnit;
         currentBlock = MakeNewBlock();
     }
 
     public IrCompiledUnit BuildCompiledUnit() {
         var functionsToBuild = boundCompiledUnit.functions;
+        var nativeFunctions = boundCompiledUnit.usedNativeFunctions;
+
         List<IrFunction> builtFunctions = new();
 
         int mainFunctionInd = -1;
 
-        fillSymbolToInd(functionsToBuild);
+        fillSymbolToRef(functionsToBuild, nativeFunctions);
 
         for (int i = 0; i < functionsToBuild.Length; i++) {
             var function = functionsToBuild[i];
 
             if (ReferenceEquals(function, boundCompiledUnit.mainFunction)) {
-                mainFunctionInd = i;
+                mainFunctionInd = symbolToInd[function.functionSymbol];
             }
 
             builtFunctions.Add(BuildFunction(function));
         }
 
-        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd, runtimeTypeInterner.BuildTypeTable(), constantInterner.Build());
+        return new IrCompiledUnit(builtFunctions.ToArray(), mainFunctionInd, runtimeTypeInterner.BuildTypeTable(), constantInterner.Build(), nativeFunctionNames.ToArray());
     }
 
-    public void fillSymbolToInd(BoundFunctionDeclaration[] functionDeclarations) {
+    public void fillSymbolToRef(BoundFunctionDeclaration[] functionDeclarations, FunctionSymbol[] nativeFuncitons) {
+        int nativeCount = nativeFuncitons.Length;
+        for (int i = 0; i < nativeCount; i++) {
+            var native = nativeFuncitons[i];
+            nativeFunctionNames.Add(native.name);
+            symbolToInd[native] = i;
+        }
+
         for (int i = 0; i < functionDeclarations.Length; i++) {
             var function = functionDeclarations[i];
-            symbolToInd[function.functionSymbol] = i;
+            symbolToInd[function.functionSymbol] = i + nativeCount;
         }
     }
+
 
     public IrFunction BuildFunction(BoundFunctionDeclaration functionDeclaration) {
         StartFunction(functionDeclaration);
 
         var boundStmt = functionDeclaration.functionBody;
         BuildStmt(boundStmt);
+        if (functionDeclaration.functionSymbol.returnType == BuiltInTypes.Void && currentBlock.terminator is null) {
+            TerminateReturn(AllocVReg());
+        }
         var irFunc = new IrFunction(basicBlocks.ToArray(), nextLocalSlot, maxVReg, functionDeclaration.functionSymbol.argCount);
 
         return irFunc;
@@ -327,7 +343,8 @@ class IrBuilder {
         if (callExpr.callee.isNative) {
 
         }
-        int functionInd = symbolToInd[callExpr.callee];
+        var functionInd = symbolToInd[callExpr.callee];
+
         return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd);
     }
 
@@ -496,10 +513,6 @@ class IrBuilder {
         int dstReg = AllocVReg();
         Emit(new IrUnary(dstReg, srcReg, op));
         return dstReg;
-    }
-
-    int EmitNativeCall(int argCount int[] argRegs int nativeFunctionIndex) {
-
     }
 
     int EmitCall(int argCount, int[] argRegs, int functionIndex) {

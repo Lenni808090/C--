@@ -38,6 +38,7 @@ Program LoadProgam(const char* path) {
     fread(&program.functionCount, sizeof(u16), 1, file);
     fread(&program.typeTableLength, sizeof(u16), 1, file);
     fread(&program.constantCount, sizeof(u16), 1, file);
+    fread(&program.nativeFunctionCount, sizeof(u16), 1, file);
 
     program.typeTable = ArenaAlloc(&program.arena, sizeof(RuntimeTypeDesc) * program.typeTableLength);
 
@@ -90,18 +91,30 @@ Program LoadProgam(const char* path) {
         fread(&bytecodeCount, sizeof(u32), 1, file);
         program.functions[i].bytecodeCount = bytecodeCount;
         program.functions[i].bytecode = ArenaAlloc(&program.arena, bytecodeCount);
-        if (program.functions[i].bytecode == NULL) {
-            fprintf(stderr, "failed to alloc bytecode for function %d", i);
-            exit(1);
-        }
         fread(program.functions[i].bytecode, 1, bytecodeCount, file);
     }
+
+    program.nativeFunctionNames = ArenaAlloc(&program.arena, sizeof(char*) * program.nativeFunctionCount);
+
+    for (u16 i = 0; i < program.nativeFunctionCount; i++) {
+        u16 nameLength;
+        fread(&nameLength, sizeof(u16), 1, file);
+        program.nativeFunctionNames[i] = ArenaAlloc(&program.arena, nameLength + 1);
+        fread(program.nativeFunctionNames[i], sizeof(char), nameLength, file);
+        program.nativeFunctionNames[i][nameLength] = '\0';
+    }
+
 
     printf("version: %d\n", version);
     printf("entry: %d\n", program.entryFunctionIndex);
     printf("functions: %d\n", program.functionCount);
     printf("types: %d\n", program.typeTableLength);
     printf("constants: %d\n", program.constantCount);
+    printf("native functions %d\n", program.nativeFunctionCount);
+
+    for (u16 i = 0; i < program.nativeFunctionCount; i++) {
+        printf("native[%d]: name=%s\n", i, program.nativeFunctionNames[i]);
+    }
 
     for (u16 i = 0; i < program.typeTableLength; i++) {
         printf("type[%d]: kind=%d elementType=%d\n", i, program.typeTable[i].kind, program.typeTable[i].elementTypeId);
@@ -119,6 +132,7 @@ Program LoadProgam(const char* path) {
                program.functions[i].maxRegCount,
                program.functions[i].bytecodeCount);
     }
+
 
     fclose(file);
     return program;

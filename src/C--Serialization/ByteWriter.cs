@@ -25,6 +25,7 @@ class ByteWriter {
         writer.Write((ushort)compiledProgram.compiledFunctions.Length);
         writer.Write((ushort)compiledProgram.typeTable.Length);
         writer.Write((ushort)compiledProgram.constants.Length);
+        writer.Write((ushort)compiledProgram.nativeFunctionNames.Length);
 
 
         //type table
@@ -62,5 +63,12 @@ class ByteWriter {
             writer.Write((uint)function.bytecode.Length);
             writer.Write(function.bytecode);
         }
+
+        foreach (string name in compiledProgram.nativeFunctionNames) {
+            byte[] nameBytes = Encoding.UTF8.GetBytes(name);
+            writer.Write((ushort)nameBytes.Length);
+            writer.Write(nameBytes);
+        }
+
     }
 }

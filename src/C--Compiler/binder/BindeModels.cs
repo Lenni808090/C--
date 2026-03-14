@@ -1,7 +1,6 @@
 namespace CMinus.Compiler.Binding;
 
 using CMinus.Compiler;
-using CMinus.Compiler.Syntax;
 
 
 abstract class BoundStmt {
@@ -31,9 +30,12 @@ sealed class BoundCompiledUnit {
     public BoundFunctionDeclaration mainFunction;
     public BoundFunctionDeclaration[] functions;
 
-    public BoundCompiledUnit(BoundFunctionDeclaration mainFunction, BoundFunctionDeclaration[] functions) {
+    public FunctionSymbol[] usedNativeFunctions;
+
+    public BoundCompiledUnit(BoundFunctionDeclaration mainFunction, BoundFunctionDeclaration[] functions, FunctionSymbol[] usedNativeFunctions) {
         this.mainFunction = mainFunction;
         this.functions = functions;
+        this.usedNativeFunctions = usedNativeFunctions;
     }
 }
 

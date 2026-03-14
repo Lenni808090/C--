@@ -1,0 +1,8 @@
+root = true
+
+[*.cs]
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_members_in_object_initializers = true
+dotnet_style_operator_placement_when_wrapping = end_of_line
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = true
