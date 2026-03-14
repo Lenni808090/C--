@@ -1,1 +1,1 @@
-A Simple Programming Langugae currently written in C# 
+A Simple Programming Langugae currently written in C# and C
