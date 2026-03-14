@@ -1,14 +1,124 @@
-using System.Reflection.Emit;
-
 namespace CMinus.Compiler.Lowering;
 
 class StackMapAnalyser {
 
 
+    Dictionary<int, BlockLiveness> BlockAnalyseFunction(IrFunction function) {
+        Dictionary<int, BlockLiveness> live = new();
+        Dictionary<int, BlockRefUseDef> useDefs = new();
+        Dictionary<int, BasicBlock> idToBlock = new();
+
+        foreach (BasicBlock block in function.basicBlocks) {
+            idToBlock[block.blockId] = block;
+            useDefs[block.blockId] = BuildBlockRefUse(block, function);
+            live[block.blockId] = new BlockLiveness(function.maxVReg, function.localCount);
+        }
+
+        bool changed = true;
+
+        while (changed) {
+            changed = false;
+            for (int i = function.basicBlocks.Length - 1; i >= 0; i--) {
+                BasicBlock block = function.basicBlocks[i];
+                BlockLiveness liveness = live[block.blockId];
+                BlockRefUseDef blockUseDef = useDefs[block.blockId];
+
+                bool[] newLiveOutRegs = new bool[function.maxVReg];
+                bool[] newLiveOutLocals = new bool[function.localCount];
+
+                foreach (BasicBlock succ in getSuccesors(block, idToBlock)) {
+                    OrInto(newLiveOutRegs, live[succ.blockId].liveInRegs);
+                    OrInto(newLiveOutLocals, live[succ.blockId].liveInLocals);
+                }
+
+                bool[] newLiveInRegs = new bool[function.maxVReg];
+                bool[] newLiveInLocals = new bool[function.localCount];
+
+                //works because only regs or locals that are not defined inside a block are added to used
+                CopyInto(newLiveInRegs, blockUseDef.usedRegs);
+                CopyInto(newLiveInLocals, blockUseDef.usedLocals);
+
+                OrInto(newLiveInRegs, Subtract(newLiveOutRegs, blockUseDef.definedRegs));
+                OrInto(newLiveInLocals, Subtract(newLiveOutLocals, blockUseDef.definedLocals));
+
+                if (!IsEqual(newLiveInLocals, liveness.liveInLocals) || !IsEqual(newLiveInRegs, liveness.liveInRegs) || !IsEqual(newLiveOutLocals, liveness.liveOutLocals) || !IsEqual(newLiveOutRegs, liveness.liveOutRegs)) {
+                    liveness.liveInLocals = newLiveInLocals;
+                    liveness.liveInRegs = newLiveInRegs;
+                    liveness.liveOutLocals = newLiveOutLocals;
+                    liveness.liveOutRegs = newLiveOutRegs;
+
+                    changed = true;
+                }
+
+            }
+        }
+
+        return live;
+    }
 
 
+    List<BasicBlock> getSuccesors(BasicBlock block, Dictionary<int, BasicBlock> idToBlock) {
+        List<BasicBlock> result = new();
+        switch (block.terminator) {
+            case IrGoto @goto: {
+                    result.Add(idToBlock[@goto.basicBlockId]);
+                    break;
+                }
+            case IrBranch branch: {
+                    result.Add(idToBlock[branch.thenBlockId]);
+                    result.Add(idToBlock[branch.elseBlockId]);
+                    break;
+                }
+            case IrReturn: {
+                    break;
+                }
+            default: {
+                    throw new Exception("unkown terminator in get succesor");
+                }
+        }
+        return result;
+    }
+
+    BlockRefUseDef BuildBlockRefUse(BasicBlock block, IrFunction function) {
+        var blockUseRef = new BlockRefUseDef(function.maxVReg, function.localCount);
+
+        foreach (IrInstr instr in block.irInstrs) {
+            RefUseDef res = GetRefUseInstr(instr, function);
+            MergeIntoBlockUseDef(blockUseRef, res);
+        }
+
+        if (block.terminator is not null) {
+            var res = GetRefUseDefTerminator(block.terminator, function);
+            MergeIntoBlockUseDef(blockUseRef, res);
+        }
+
+        return blockUseRef;
+    }
 
 
+    void MergeIntoBlockUseDef(BlockRefUseDef block, RefUseDef instr) {
+        // when the block uses the reg and didnt define it set true
+        for (int i = 0; i < block.usedRegs.Length; i++) {
+            if (instr.usedRegs[i] && !block.definedRegs[i]) {
+                block.usedRegs[i] = true;
+            }
+            // if the instruction defined it the block has defined it
+            if (instr.definedRegs[i]) {
+                block.definedRegs[i] = true;
+            }
+        }
+
+        //same logic as above for locals
+        for (int i = 0; i < block.usedLocals.Length; i++) {
+            if (instr.usedLocals[i] && !block.definedLocals[i]) {
+                block.usedLocals[i] = true;
+            }
+
+            if (instr.definedLocals[i]) {
+                block.definedLocals[i] = true;
+            }
+        }
+    }
 
     RefUseDef GetRefUseDefTerminator(Terminator terminator, IrFunction irFunction) {
         var regIsRef = irFunction.regIsRef;
@@ -113,18 +223,76 @@ class StackMapAnalyser {
 
         return new RefUseDef(usedRegs, usedLocals, definedRegs, definedLocals);
     }
+
+
+    void OrInto(bool[] left, bool[] right) {
+        for (int i = 0; i < left.Length; i++) {
+            left[i] |= right[i];
+        }
+    }
+
+    bool[] Subtract(bool[] left, bool[] right) {
+        for (int i = 0; i < left.Length; i++) {
+            left[i] = left[i] && !right[i];
+        }
+
+        return left;
+    }
+
+    void CopyInto(bool[] left, bool[] right) {
+        for (int i = 0; i < left.Length; i++) {
+            left[i] = right[i];
+        }
+    }
+
+    bool IsEqual(bool[] left, bool[] right) {
+        for (int i = 0; i < left.Length; i++) {
+            if (left[i] != right[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 struct RefUseDef {
-    bool[] usedRegs;
-    bool[] usedLocals;
-    bool[] definedRegs;
-    bool[] definedLocals;
+    public bool[] usedRegs;
+    public bool[] usedLocals;
+    public bool[] definedRegs;
+    public bool[] definedLocals;
 
     public RefUseDef(bool[] usedRegs, bool[] usedLocals, bool[] definedRegs, bool[] definedLocals) {
         this.usedLocals = usedLocals;
         this.usedRegs = usedRegs;
         this.definedLocals = definedLocals;
         this.definedRegs = definedRegs;
+    }
+}
+
+struct BlockRefUseDef {
+    public bool[] usedRegs;
+    public bool[] usedLocals;
+    public bool[] definedRegs;
+    public bool[] definedLocals;
+
+    public BlockRefUseDef(int regCount, int localCount) {
+        usedRegs = new bool[regCount];
+        definedRegs = new bool[regCount];
+        usedLocals = new bool[localCount];
+        definedLocals = new bool[localCount];
+    }
+}
+
+struct BlockLiveness {
+    public bool[] liveInRegs;
+    public bool[] liveInLocals;
+    public bool[] liveOutRegs;
+    public bool[] liveOutLocals;
+
+    public BlockLiveness(int regCount, int localCount) {
+        liveInRegs = new bool[regCount];
+        liveInLocals = new bool[localCount];
+        liveOutRegs = new bool[regCount];
+        liveOutLocals = new bool[localCount];
     }
 }
