@@ -75,7 +75,7 @@ class CodeGenerator {
                     EmitUnary(unary);
                     break;
                 }
-            case IrCallInstr call: {
+            case IrCall call: {
                     EmitCall(call);
                     break;
                 }
@@ -210,7 +210,7 @@ class CodeGenerator {
         }
     }
 
-    void EmitCall(IrCallInstr irCallInstr) {
+    void EmitCall(IrCall irCallInstr) {
         ushort dst = (ushort)irCallInstr.dstReg;
         ushort[] argRegs = irCallInstr.argRegs.Select(a => (ushort)a).ToArray();
         ushort argCount = (ushort)irCallInstr.argCount;

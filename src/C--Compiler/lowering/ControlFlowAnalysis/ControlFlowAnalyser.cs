@@ -76,7 +76,7 @@ class ControlFlowAnalyser {
             }
         }
         idToBlock.Clear();
-        return new IrFunction(reached.ToArray(), irFunction.localCount, irFunction.maxVReg, irFunction.paramCount);
+        return new IrFunction(reached.ToArray(), irFunction.localCount, irFunction.maxVReg, irFunction.paramCount, irFunction.localIsRef, irFunction.regIsRef);
     }
 
     void FillIdToBlock(IrFunction irFunction) {

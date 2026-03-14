@@ -4,6 +4,8 @@ namespace CMinus.Compiler.Lowering;
 
 class IrBuilder {
     List<BasicBlock> basicBlocks;
+    List<bool> regisRef;
+    List<bool> localIsRef;
     Stack<LoopTarget> loopTarget;
     RuntimeTypeInterner runtimeTypeInterner;
     ConstantInterner constantInterner;
@@ -27,6 +29,8 @@ class IrBuilder {
         runtimeTypeInterner = new();
         constantInterner = new();
         localSlots = new();
+        localIsRef = new();
+        regisRef = new();
         nativeFunctionNames = new();
         this.boundCompiledUnit = boundCompiledUnit;
         currentBlock = MakeNewBlock();
@@ -76,9 +80,9 @@ class IrBuilder {
         var boundStmt = functionDeclaration.functionBody;
         BuildStmt(boundStmt);
         if (functionDeclaration.functionSymbol.returnType == BuiltInTypes.Void && currentBlock.terminator is null) {
-            TerminateReturn(AllocVReg());
+            TerminateReturn(AllocVReg(false));
         }
-        var irFunc = new IrFunction(basicBlocks.ToArray(), nextLocalSlot, maxVReg, functionDeclaration.functionSymbol.argCount);
+        var irFunc = new IrFunction(basicBlocks.ToArray(), nextLocalSlot, maxVReg, functionDeclaration.functionSymbol.argCount, localIsRef.ToArray(), regisRef.ToArray());
 
         return irFunc;
     }
@@ -131,6 +135,7 @@ class IrBuilder {
     void BuildVarDeclarationStmt(BoundVarDeclarationStmt v) {
         int localIndex = nextLocalSlot++;
         localSlots[v.localSymbol] = localIndex;
+        localIsRef.Add(IsReferenceType(v.localSymbol.typeSymbol));
         int srcReg = BuildExpr(v.initializer);
         EmitStoreLocal(srcReg, localIndex);
     }
@@ -304,7 +309,7 @@ class IrBuilder {
 
     int BuildNameExpr(BoundNameExpr nameExpr) {
         int localInd = localSlots[nameExpr.localSymbol];
-        return EmitLoadLocal(localInd);
+        return EmitLoadLocal(localInd, IsReferenceType(nameExpr.localSymbol.typeSymbol));
     }
 
     int BuildBinaryExpr(BoundBinaryExpr binaryExpr) {
@@ -340,12 +345,9 @@ class IrBuilder {
         foreach (BoundExpr arg in callExpr.args) {
             argRegs.Add(BuildExpr(arg));
         }
-        if (callExpr.callee.isNative) {
-
-        }
         var functionInd = symbolToInd[callExpr.callee];
 
-        return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd);
+        return EmitCall(callExpr.argCount, argRegs.ToArray(), functionInd, IsReferenceType(callExpr.type));
     }
 
     int BuildArrayCreationExpr(BoundArrayCreationExpr arrayCreationExpr) {
@@ -357,7 +359,8 @@ class IrBuilder {
     int BuildIndexExpr(BoundIndexExpr indexExpr) {
         int arrayReg = BuildExpr(indexExpr.target);
         int indexReg = BuildExpr(indexExpr.index);
-        return EmitLoadElement(arrayReg, indexReg);
+        //we use type of the whole expr whichj is the inner one
+        return EmitLoadElement(arrayReg, indexReg, IsReferenceType(indexExpr.type));
     }
 
     int BuildIndexAssignmentExpr(BoundIndexAssignmentExpr expr) {
@@ -370,7 +373,7 @@ class IrBuilder {
             return valueReg;
         }
 
-        int oldElementReg = EmitLoadElement(arrayReg, indexReg);
+        int oldElementReg = EmitLoadElement(arrayReg, indexReg, IsReferenceType(expr.value.type));
         int rhsReg = BuildExpr(expr.value);
         int resReg = EmitBinary(MapBinaryOp(expr.op!.operatorKind), oldElementReg, rhsReg);
         EmitStoreElement(resReg, arrayReg, indexReg);
@@ -380,7 +383,7 @@ class IrBuilder {
 
 
     int BuildLogicalOrExpr(BoundBinaryExpr binaryExpr) {
-        int tempIndex = AllocTempLocalInd();
+        int tempIndex = AllocTempLocalInd(false);
 
         int leftReg = BuildExpr(binaryExpr.leftBoundExpr);
 
@@ -401,13 +404,13 @@ class IrBuilder {
 
         SwitchCurrentBlock(mergeBlock);
 
-        int resReg = EmitLoadLocal(tempIndex);
+        int resReg = EmitLoadLocal(tempIndex, false);
 
         return resReg;
     }
 
     int BuildLogicalAndExpr(BoundBinaryExpr binaryExpr) {
-        int tempIndex = AllocTempLocalInd();
+        int tempIndex = AllocTempLocalInd(false);
 
         int leftReg = BuildExpr(binaryExpr.leftBoundExpr);
 
@@ -428,7 +431,7 @@ class IrBuilder {
 
         SwitchCurrentBlock(mergeBlock);
 
-        int resReg = EmitLoadLocal(tempIndex);
+        int resReg = EmitLoadLocal(tempIndex, false);
 
         return resReg;
     }
@@ -479,12 +482,13 @@ class IrBuilder {
         }
     }
 
-    int AllocTempLocalInd() {
+    int AllocTempLocalInd(bool isRef) {
+        localIsRef.Add(isRef);
         return nextLocalSlot++;
     }
 
     int EmitLoadConst(int constIndex, long value) {
-        int dstReg = AllocVReg();
+        int dstReg = AllocVReg(false);
         Emit(new IrLoadConst(constIndex, dstReg));
         return dstReg;
     }
@@ -493,8 +497,8 @@ class IrBuilder {
         Emit(new IrStoreLocal(srcReg, localIndex));
     }
 
-    int EmitLoadLocal(int localIndex) {
-        int dstReg = AllocVReg();
+    int EmitLoadLocal(int localIndex, bool isRef) {
+        int dstReg = AllocVReg(isRef);
         Emit(new IrLoadLocal(dstReg, localIndex));
         return dstReg;
     }
@@ -504,25 +508,25 @@ class IrBuilder {
         return dstReg;
     }
     int EmitBinary(IrBinaryOPKind op, int leftReg, int rightReg) {
-        int dstReg = AllocVReg();
+        int dstReg = AllocVReg(false);
         Emit(new IrBinaryOp(op, dstReg, leftReg, rightReg));
         return dstReg;
     }
 
     int EmitUnary(IrUnaryOpKind op, int srcReg) {
-        int dstReg = AllocVReg();
+        int dstReg = AllocVReg(false);
         Emit(new IrUnary(dstReg, srcReg, op));
         return dstReg;
     }
 
-    int EmitCall(int argCount, int[] argRegs, int functionIndex) {
-        int dstReg = AllocVReg();
-        Emit(new IrCallInstr(dstReg, argCount, argRegs, functionIndex));
+    int EmitCall(int argCount, int[] argRegs, int functionIndex, bool isRef) {
+        int dstReg = AllocVReg(isRef);
+        Emit(new IrCall(dstReg, argCount, argRegs, functionIndex));
         return dstReg;
     }
 
     int EmitNewArray(int typeId, int lengthReg) {
-        int dstReg = AllocVReg();
+        int dstReg = AllocVReg(true);
         Emit(new IrNewArray(dstReg, typeId, lengthReg));
         return dstReg;
     }
@@ -531,8 +535,8 @@ class IrBuilder {
         Emit(new IrStoreElement(srcReg, arrayReg, indexReg));
     }
 
-    int EmitLoadElement(int arrayReg, int indexReg) {
-        int dstReg = AllocVReg();
+    int EmitLoadElement(int arrayReg, int indexReg, bool isRef) {
+        int dstReg = AllocVReg(isRef);
         Emit(new IrLoadElement(dstReg, arrayReg, indexReg));
         return dstReg;
     }
@@ -557,6 +561,9 @@ class IrBuilder {
     void StartFunction(BoundFunctionDeclaration functionDeclaration) {
         basicBlocks.Clear();
         loopTarget.Clear();
+        regisRef.Clear();
+        localIsRef.Clear();
+
         localSlots = new();
         nextBlockId = 0;
         nextLocalSlot = 0;
@@ -565,6 +572,7 @@ class IrBuilder {
 
         foreach (var param in functionDeclaration.paramSymbols) {
             localSlots[param] = nextLocalSlot++;
+            localIsRef.Add(IsReferenceType(param.typeSymbol));
         }
 
         currentBlock = MakeNewBlock();
@@ -613,7 +621,13 @@ class IrBuilder {
         };
     }
 
+    bool IsReferenceType(TypeSymbol typeSymbol) {
+        if (typeSymbol is ArraySymbolType arraySymbol) {
+            return true;
+        }
 
+        return false;
+    }
     IrUnaryOpKind MapUnaryOp(BoundUnaryOperatorKind kind) {
         return kind switch {
             BoundUnaryOperatorKind.LogicalNot => IrUnaryOpKind.Not,
@@ -622,11 +636,12 @@ class IrBuilder {
             _ => throw new Exception("Unsupported unary operator: " + kind),
         };
     }
-    int AllocVReg() {
+    int AllocVReg(bool isRef) {
         int reg = nextVReg++;
         if (nextVReg > maxVReg) {
             maxVReg = nextVReg;
         }
+        regisRef.Add(isRef);
         return reg;
     }
 }

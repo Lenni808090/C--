@@ -26,14 +26,18 @@ sealed class IrFunction {
     public BasicBlock[] basicBlocks;
     public int localCount;
 
+    public bool[] localIsRef;
+    public bool[] regIsRef;
     public int paramCount;
     public int maxVReg;
 
-    public IrFunction(BasicBlock[] basicBlocks, int localCount, int maxVReg, int paramCount) {
+    public IrFunction(BasicBlock[] basicBlocks, int localCount, int maxVReg, int paramCount, bool[] localIsRef, bool[] regIsRef) {
         this.basicBlocks = basicBlocks;
         this.localCount = localCount;
         this.maxVReg = maxVReg;
         this.paramCount = paramCount;
+        this.localIsRef = localIsRef;
+        this.regIsRef = regIsRef;
     }
 }
 
@@ -180,14 +184,14 @@ sealed class IrUnary : IrInstr {
 }
 
 
-sealed class IrCallInstr : IrInstr {
+sealed class IrCall : IrInstr {
     public int dstReg;
     public int argCount;
 
     public int functionIndex;
     public int[] argRegs;
 
-    public IrCallInstr(int dstReg, int argCount, int[] argRegs, int functionIndex) {
+    public IrCall(int dstReg, int argCount, int[] argRegs, int functionIndex) {
         this.dstReg = dstReg;
         this.functionIndex = functionIndex;
         this.argCount = argCount;

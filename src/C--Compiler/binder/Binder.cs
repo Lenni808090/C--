@@ -8,7 +8,7 @@ class Binder {
 
     Dictionary<string, FunctionSymbol> functionsByName;
     List<FunctionDeclarationStmt> functionDeclarationsToBind;
-    List<FunctionSymbol> usedNativeFunctions;
+    HashSet<FunctionSymbol> usedNativeFunctions;
     TypeSymbol? currentReturnType;
     int loopDepth;
     DiagnosticBag diagnostics;

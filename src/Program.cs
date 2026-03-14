@@ -546,8 +546,10 @@ class Program {
         }
 
         Console.WriteLine();
+        int nativeCount = program.nativeFunctionNames.Length;
         for (int i = 0; i < program.compiledFunctions.Length; i++) {
-            Console.WriteLine($"=== FUNCTION {i} (entry={i == program.entryFuncInd}) ===");
+            int globalIndex = i + nativeCount;
+            Console.WriteLine($"=== FUNCTION {i} (global={globalIndex}, entry={globalIndex == program.entryFuncInd}) ===");
             PrintBytecode(program.compiledFunctions[i], constants);
             Console.WriteLine();
         }
@@ -701,9 +703,13 @@ class Program {
 
     static void PrintIrCompiledUnit(IrCompiledUnit irCompiledUnit) {
         Console.WriteLine("=== IR BLOCKS ===");
+        int nativeCount = irCompiledUnit.nativeFunctionNames.Length;
         for (int functionIndex = 0; functionIndex < irCompiledUnit.irFunctions.Length; functionIndex++) {
             IrFunction irFunction = irCompiledUnit.irFunctions[functionIndex];
-            Console.WriteLine($"Function {functionIndex} (entry={functionIndex == irCompiledUnit.mainFunctionInd}, locals={irFunction.localCount}, params={irFunction.paramCount}, maxRegs={irFunction.maxVReg})");
+            int globalIndex = functionIndex + nativeCount;
+            Console.WriteLine($"Function {functionIndex} (global={globalIndex}, entry={globalIndex == irCompiledUnit.mainFunctionInd}, locals={irFunction.localCount}, params={irFunction.paramCount}, maxRegs={irFunction.maxVReg})");
+            Console.WriteLine($"  localIsRef: [{string.Join(", ", irFunction.localIsRef.Select(static b => b ? "ref" : "val"))}]");
+            Console.WriteLine($"  regIsRef:   [{string.Join(", ", irFunction.regIsRef.Select(static b => b ? "ref" : "val"))}]");
             foreach (BasicBlock block in irFunction.basicBlocks) {
                 Console.WriteLine($"block {block.blockId} (unreachable={block.isUnreachable})");
 
@@ -727,7 +733,7 @@ class Program {
                         case IrUnary u:
                             Console.WriteLine($"  unary {u.irUnaryOp} r{u.dstReg} <- r{u.operandReg}");
                             break;
-                        case IrCallInstr c:
+                        case IrCall c:
                             Console.WriteLine($"  call r{c.dstReg} <- fn[{c.functionIndex}]({string.Join(", ", c.argRegs.Select(static r => $"r{r}"))})");
                             break;
                         case IrNewArray a:

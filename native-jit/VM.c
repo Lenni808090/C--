@@ -191,7 +191,7 @@ static i32 ReadI32(CallFrame *frame) {
 }
 
 void CallFunction(Vm *vm, u16 dstReg, i32 functionIndex, u16 *argRegs, u16 argCount) {
-    if (vm->depth >= MAX_CALLS_DEPTH) {
+    if (vm->depth >= MAX_CALLS_DEPTH - 1) {
         fprintf(stderr, "max frame stack reached");
         exit(1);
     }
