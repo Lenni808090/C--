@@ -5,26 +5,27 @@ namespace CMinus.CodeGen;
 class CodeGenerator {
     FunctionBuilder functionBuilder;
     IrCompiledUnit irCompiledUnit;
-
-    Dictionary<(int, int), StackMap> posToStack;
-
+    StackBuilder stackBuilder;
     Dictionary<int, Label> blockLabels;
-    public CodeGenerator(IrCompiledUnit irCompiledUnit) {
+    public CodeGenerator(IrCompiledUnit irCompiledUnit, FunctionStackMap[] functionStacks) {
         blockLabels = new();
+        stackBuilder = new(functionStacks);
         functionBuilder = new();
         this.irCompiledUnit = irCompiledUnit;
     }
 
     public CompiledProgram GenerateProgramm() {
         List<CompiledFunction> compiledFunctions = new();
-        foreach (IrFunction irFunction in irCompiledUnit.irFunctions) {
-            compiledFunctions.Add(GenerateFunction(irFunction));
+        for (int i = 0; i < irCompiledUnit.irFunctions.Length; i++) {
+            var irFunction = irCompiledUnit.irFunctions[i];
+            compiledFunctions.Add(GenerateFunction(irFunction, i));
         }
-
-        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames);
+        var stackMap = stackBuilder.GetByteoffsetStackMap();
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames, stackMap);
     }
 
-    public CompiledFunction GenerateFunction(IrFunction irFunction) {
+    public CompiledFunction GenerateFunction(IrFunction irFunction, int functionIndex) {
+        StartFunction(functionIndex);
 
         foreach (BasicBlock basicBlock in irFunction.basicBlocks) {
             blockLabels.Add(basicBlock.blockId, functionBuilder.Emitter.NewLabel());
@@ -34,16 +35,17 @@ class CodeGenerator {
             EmitBlock(block);
         }
 
+        stackBuilder.BuildFunctionByteoffsetStackMap();
         int localCount = irFunction.localCount;
-        blockLabels.Clear();
-
         return functionBuilder.BuildAndReset(localCount, irFunction.paramCount, irFunction.maxVReg);
     }
 
     void EmitBlock(BasicBlock basicBlock) {
         functionBuilder.Emitter.DefineLabel(blockLabels[basicBlock.blockId]);
-        foreach (IrInstr instr in basicBlock.irInstrs) {
-            EmitInstr(instr);
+
+        for (int i = 0; i < basicBlock.irInstrs.Count(); i++) {
+            var instr = basicBlock.irInstrs[i];
+            EmitInstr(instr, basicBlock.blockId, i);
         }
 
         if (basicBlock.terminator is null) {
@@ -54,7 +56,9 @@ class CodeGenerator {
     }
 
 
-    void EmitInstr(IrInstr instr) {
+    void EmitInstr(IrInstr instr, int blockId, int instrIndex) {
+        stackBuilder.TryRecordByteoffsetStackMap(blockId, instrIndex, functionBuilder.Emitter.pos);
+
         switch (instr) {
             case IrLoadConst loadConst: {
                     EmitLoadConst(loadConst);
@@ -250,6 +254,12 @@ class CodeGenerator {
 
         functionBuilder.Emitter.EmitJumpIfFalse((ushort)branch.condReg, elseLabel);
         functionBuilder.Emitter.EmitJump(thenLabel);
+    }
+
+    void StartFunction(int functionIndex) {
+        blockLabels.Clear();
+        stackBuilder.Reset();
+        stackBuilder.FillPosToStack(functionIndex);
     }
 
 }
