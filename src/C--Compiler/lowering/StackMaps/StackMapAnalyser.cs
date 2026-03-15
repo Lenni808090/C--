@@ -3,6 +3,113 @@ namespace CMinus.Compiler.Lowering;
 class StackMapAnalyser {
 
 
+    FunctionStackMap[] AnalyseCompiledProgramm(IrCompiledUnit compiledUnit) {
+        List<FunctionStackMap> functionStacks = new();
+
+        foreach (IrFunction function in compiledUnit.irFunctions) {
+            FunctionStackMap stackMap = GetFunctionStackMap(function);
+            functionStacks.Add(stackMap);
+        }
+
+        return functionStacks.ToArray();
+    }
+
+
+    FunctionStackMap GetFunctionStackMap(IrFunction function) {
+        List<StackMap> maps = new();
+        var blockLive = BlockAnalyseFunction(function);
+
+        foreach (BasicBlock block in function.basicBlocks) {
+            var blockInstrLiveness = GetBlockInstrLiveness(blockLive[block.blockId], block, function);
+
+            for (int i = 0; i < blockInstrLiveness.instrLivenesses.Length; i++) {
+                IrInstr instr = block.irInstrs[i];
+                if (!IsSafePoint(instr)) {
+                    continue;
+                }
+
+                InstrLiveness instrLive = blockInstrLiveness.instrLivenesses[i];
+                maps.Add(new StackMap(block.blockId, i, (bool[])instrLive.liveInRegs.Clone(), (bool[])instrLive.liveInLocals.Clone()));
+            }
+        }
+        return new FunctionStackMap(maps.ToArray());
+    }
+
+    bool IsSafePoint(IrInstr irInstr) {
+        if (irInstr is IrCall) {
+            return true;
+        }
+
+        if (irInstr is IrNewArray) {
+            return true;
+        }
+
+        return false;
+    }
+
+    BlockInstrLiveness GetBlockInstrLiveness(BlockLiveness blockLiveness, BasicBlock block, IrFunction function) {
+        BlockInstrLiveness blockInstrLiveness = new BlockInstrLiveness();
+        InstrLiveness[] instrLivenesses = new InstrLiveness[block.irInstrs.Count()];
+        InstrLiveness prevInstr;
+        if (block.terminator is null) {
+            throw new Exception("no terminmator in block in stack analysing");
+        }
+
+        blockInstrLiveness.terminator = prevInstr = GetTerminatorLiveness(block.terminator, blockLiveness, function);
+
+        var instrs = block.irInstrs;
+        for (int i = instrs.Count() - 1; i >= 0; i--) {
+            IrInstr instr = instrs[i];
+            RefUseDef refUse = GetRefUseInstr(instr, function);
+
+            bool[] liveOutRegs = new bool[function.maxVReg];
+            bool[] liveOutLocals = new bool[function.localCount];
+
+            CopyInto(liveOutRegs, prevInstr.liveInRegs);
+            CopyInto(liveOutLocals, prevInstr.liveInLocals);
+
+            bool[] liveInRegs = new bool[function.maxVReg];
+            bool[] liveInLocals = new bool[function.localCount];
+
+            CopyInto(liveInRegs, refUse.usedRegs);
+            CopyInto(liveInLocals, refUse.usedLocals);
+
+            OrInto(liveInRegs, Subtract(liveOutRegs, refUse.definedRegs));
+            OrInto(liveInLocals, Subtract(liveOutLocals, refUse.definedLocals));
+
+            var instrLive = new InstrLiveness(liveInRegs, liveInLocals, liveOutRegs, liveOutLocals);
+            instrLivenesses[i] = instrLive;
+            prevInstr = instrLive;
+        }
+
+        blockInstrLiveness.instrLivenesses = instrLivenesses;
+
+        return blockInstrLiveness;
+    }
+
+    InstrLiveness GetTerminatorLiveness(Terminator terminator, BlockLiveness blockLiveness, IrFunction function) {
+        RefUseDef refUse = GetRefUseDefTerminator(terminator, function);
+
+        bool[] liveOutRegs = new bool[function.maxVReg];
+        bool[] liveOutLocals = new bool[function.localCount];
+
+        CopyInto(liveOutRegs, blockLiveness.liveOutRegs);
+        CopyInto(liveOutLocals, blockLiveness.liveOutLocals);
+
+        bool[] liveInRegs = new bool[function.maxVReg];
+        bool[] liveInLocals = new bool[function.localCount];
+
+        CopyInto(liveInLocals, refUse.usedLocals);
+        CopyInto(liveInRegs, refUse.usedRegs);
+
+        OrInto(liveInLocals, Subtract(liveOutLocals, refUse.definedLocals));
+        OrInto(liveInRegs, Subtract(liveOutRegs, refUse.definedRegs));
+
+
+        InstrLiveness terLive = new InstrLiveness(liveInRegs, liveInLocals, liveOutRegs, liveOutLocals);
+        return terLive;
+    }
+
     Dictionary<int, BlockLiveness> BlockAnalyseFunction(IrFunction function) {
         Dictionary<int, BlockLiveness> live = new();
         Dictionary<int, BlockRefUseDef> useDefs = new();
@@ -232,11 +339,13 @@ class StackMapAnalyser {
     }
 
     bool[] Subtract(bool[] left, bool[] right) {
-        for (int i = 0; i < left.Length; i++) {
-            left[i] = left[i] && !right[i];
+        bool[] left2 = (bool[])left.Clone();
+
+        for (int i = 0; i < left2.Length; i++) {
+            left2[i] = left[i] && !right[i];
         }
 
-        return left;
+        return left2;
     }
 
     void CopyInto(bool[] left, bool[] right) {
@@ -294,5 +403,51 @@ struct BlockLiveness {
         liveInLocals = new bool[localCount];
         liveOutRegs = new bool[regCount];
         liveOutLocals = new bool[localCount];
+    }
+}
+
+struct InstrLiveness {
+    public bool[] liveInRegs;
+    public bool[] liveInLocals;
+    public bool[] liveOutRegs;
+    public bool[] liveOutLocals;
+
+    public InstrLiveness(bool[] liveInRegs, bool[] liveInLocals, bool[] liveOutRegs, bool[] liveOutLocals) {
+        this.liveInRegs = liveInRegs;
+        this.liveInLocals = liveInLocals;
+        this.liveOutRegs = liveOutRegs;
+        this.liveOutLocals = liveOutLocals;
+    }
+}
+
+struct BlockInstrLiveness {
+    public InstrLiveness[] instrLivenesses;
+    public InstrLiveness terminator;
+    public BlockInstrLiveness(InstrLiveness[] instrLivenesses, InstrLiveness terminator) {
+        this.instrLivenesses = instrLivenesses;
+        this.terminator = terminator;
+    }
+
+}
+
+struct StackMap {
+    public int blockId;
+    public int instrIndex;
+    public bool[] liveRegs;
+    public bool[] liveLocals;
+
+    public StackMap(int blockId, int instrIndex, bool[] liveRegs, bool[] liveLocals) {
+        this.blockId = blockId;
+        this.instrIndex = instrIndex;
+        this.liveRegs = liveRegs;
+        this.liveLocals = liveLocals;
+    }
+}
+
+class FunctionStackMap {
+    public StackMap[] stackMaps;
+
+    public FunctionStackMap(StackMap[] stackMaps) {
+        this.stackMaps = stackMaps;
     }
 }

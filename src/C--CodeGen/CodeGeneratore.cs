@@ -6,6 +6,7 @@ class CodeGenerator {
     FunctionBuilder functionBuilder;
     IrCompiledUnit irCompiledUnit;
 
+    Dictionary<(int, int), StackMap> posToStack;
 
     Dictionary<int, Label> blockLabels;
     public CodeGenerator(IrCompiledUnit irCompiledUnit) {
