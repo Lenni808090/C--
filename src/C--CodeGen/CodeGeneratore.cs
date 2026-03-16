@@ -35,9 +35,9 @@ class CodeGenerator {
             EmitBlock(block);
         }
 
-        stackBuilder.BuildFunctionByteoffsetStackMap();
-        int localCount = irFunction.localCount;
-        return functionBuilder.BuildAndReset(localCount, irFunction.paramCount, irFunction.maxVReg);
+
+        stackBuilder.BuildFunctionByteoffsetStackMap(irFunction.maxVReg, irFunction.localCount);
+        return functionBuilder.BuildAndReset(irFunction.localCount, irFunction.paramCount, irFunction.maxVReg);
     }
 
     void EmitBlock(BasicBlock basicBlock) {

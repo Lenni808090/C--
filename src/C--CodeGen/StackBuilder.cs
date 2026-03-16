@@ -30,8 +30,8 @@ class StackBuilder {
         }
     }
 
-    public FuncByteoffsetStackMap BuildFunctionByteoffsetStackMap() {
-        var funcStackMap = new FuncByteoffsetStackMap(byteoffsetStacks.ToArray());
+    public FuncByteoffsetStackMap BuildFunctionByteoffsetStackMap(int regWordCount, int localWordCount) {
+        var funcStackMap = new FuncByteoffsetStackMap(byteoffsetStacks.ToArray(), regWordCount, localWordCount);
         funcByteoffsetStackMaps.Add(funcStackMap);
         return funcStackMap;
     }
@@ -48,11 +48,16 @@ class StackBuilder {
 
 class FuncByteoffsetStackMap {
     public ByteoffsetStackMap[] byteoffsetStackMaps;
+    public int regWordCount;
+    public int localWordCount;
 
-    public FuncByteoffsetStackMap(ByteoffsetStackMap[] byteoffsetStackMaps) {
+    public FuncByteoffsetStackMap(ByteoffsetStackMap[] byteoffsetStackMaps, int regWordCount, int localWordCount) {
         this.byteoffsetStackMaps = byteoffsetStackMaps;
+        this.regWordCount = regWordCount;
+        this.localWordCount = localWordCount;
     }
 }
+
 
 struct ByteoffsetStackMap {
     public int byteoffset;
@@ -66,6 +71,8 @@ struct ByteoffsetStackMap {
     }
 
     static ulong[] PackBitMask(bool[] bits) {
+        //+63 because 3 / 64 gives 0 because of int rounding u need + 63 to get 1 
+        // and with 63 + 63 u get 127 / 64 which is stil one.
         int wordCount = (bits.Length + 63) / 64;
         ulong[] words = new ulong[wordCount];
 
@@ -75,7 +82,9 @@ struct ByteoffsetStackMap {
             }
 
             int wordIndex = i / 64;
+            //wraps arround 64
             int bitIndex = i % 64;
+            //combines the two bits;
             words[wordIndex] |= 1UL << bitIndex;
         }
 

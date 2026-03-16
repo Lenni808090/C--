@@ -70,5 +70,21 @@ class ByteWriter {
             writer.Write(nameBytes);
         }
 
+        foreach (FuncByteoffsetStackMap funcByteoffsetStackMap in compiledProgram.stackMap) {
+            writer.Write((int)funcByteoffsetStackMap.byteoffsetStackMaps.Length);
+            writer.Write((ushort)funcByteoffsetStackMap.regWordCount);
+            writer.Write((ushort)funcByteoffsetStackMap.localWordCount);
+
+            foreach (ByteoffsetStackMap byteoffsetStackMap in funcByteoffsetStackMap.byteoffsetStackMaps) {
+                writer.Write((int)byteoffsetStackMap.byteoffset);
+                foreach (ulong word in byteoffsetStackMap.liveRegMaskWords) {
+                    writer.Write(word);
+                }
+                foreach (ulong word in byteoffsetStackMap.liveLocalMaskWords) {
+                    writer.Write(word);
+                }
+            }
+        }
+
     }
 }
