@@ -21,7 +21,6 @@ class Program {
                             string[3] = 'l';
                             string[4] = 'o';
                             print_string(string, strLen);
-                            x: int = 19 / 0;
                             return 0;
                         }
 
@@ -83,7 +82,10 @@ class Program {
             return;
         }
 
-        CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit);
+        StackMapAnalyser stackMapAnalyser = new();
+        FunctionStackMap[] functionStackMaps = stackMapAnalyser.AnalyseCompiledProgramm(irCompiledUnit);
+
+        CodeGenerator codeGenerator = new CodeGenerator(irCompiledUnit, functionStackMaps);
         CompiledProgram compiledProgram = codeGenerator.GenerateProgramm();
 
         Console.WriteLine();

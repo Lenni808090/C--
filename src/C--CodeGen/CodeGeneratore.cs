@@ -35,9 +35,12 @@ class CodeGenerator {
             EmitBlock(block);
         }
 
-
-        stackBuilder.BuildFunctionByteoffsetStackMap(irFunction.maxVReg, irFunction.localCount);
+        stackBuilder.BuildFunctionByteoffsetStackMap(GetWordCount(irFunction.maxVReg), GetWordCount(irFunction.localCount));
         return functionBuilder.BuildAndReset(irFunction.localCount, irFunction.paramCount, irFunction.maxVReg);
+    }
+
+    static int GetWordCount(int bitCount) {
+        return (bitCount + 63) / 64;
     }
 
     void EmitBlock(BasicBlock basicBlock) {

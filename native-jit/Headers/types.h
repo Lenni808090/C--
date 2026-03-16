@@ -58,6 +58,18 @@ typedef struct {
     };
 } RuntimeFunction;
 
+typedef struct {
+    i32 byteoffset;
+    u64* liveRegs;
+    u64* liveLocals;
+} StackMap;
+
+typedef struct {
+    i32 stackMapCount;
+    u16 regWordCount;
+    u16 localWordCount;
+    StackMap* stackMaps;
+} FunctionStackMap;
 
 typedef struct {
     Arena arena;
@@ -68,6 +80,7 @@ typedef struct {
     u16 nativeFunctionCount;
     Function* functions;
     RuntimeTypeDesc* typeTable;
+    FunctionStackMap* functionStackMaps;
     Value* constants;
     char** nativeFunctionNames;
 } Program;

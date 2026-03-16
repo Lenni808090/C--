@@ -3,7 +3,7 @@ namespace CMinus.Compiler.Lowering;
 class StackMapAnalyser {
 
 
-    FunctionStackMap[] AnalyseCompiledProgramm(IrCompiledUnit compiledUnit) {
+    public FunctionStackMap[] AnalyseCompiledProgramm(IrCompiledUnit compiledUnit) {
         List<FunctionStackMap> functionStacks = new();
 
         foreach (IrFunction function in compiledUnit.irFunctions) {
@@ -153,6 +153,7 @@ class StackMapAnalyser {
                     liveness.liveInRegs = newLiveInRegs;
                     liveness.liveOutLocals = newLiveOutLocals;
                     liveness.liveOutRegs = newLiveOutRegs;
+                    live[block.blockId] = liveness;
 
                     changed = true;
                 }

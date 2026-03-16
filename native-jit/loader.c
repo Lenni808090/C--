@@ -104,6 +104,26 @@ Program LoadProgam(const char* path) {
         program.nativeFunctionNames[i][nameLength] = '\0';
     }
 
+    program.functionStackMaps = ArenaAlloc(&program.arena, sizeof(FunctionStackMap) * program.functionCount);
+    for (u16 i = 0; i < program.functionCount; i++) {
+        FunctionStackMap functionStackMap;
+        fread(&functionStackMap.stackMapCount, sizeof(i32), 1,file);
+        fread(&functionStackMap.regWordCount, sizeof(u16), 1, file);
+        fread(&functionStackMap.localWordCount, sizeof(u16), 1, file);
+        functionStackMap.stackMaps = ArenaAlloc(&program.arena, sizeof(StackMap) * functionStackMap.stackMapCount);
+        for (i32 j = 0; j < functionStackMap.stackMapCount; j++) {
+            StackMap stackMap;
+            fread(&stackMap.byteoffset, sizeof(i32), 1, file);
+
+            stackMap.liveRegs = ArenaAlloc(&program.arena, sizeof(u64) * functionStackMap.regWordCount);
+            fread(stackMap.liveRegs, sizeof(u64), functionStackMap.regWordCount, file);
+
+            stackMap.liveLocals = ArenaAlloc(&program.arena, sizeof(u64) * functionStackMap.localWordCount);
+            fread(stackMap.liveLocals, sizeof(u64), functionStackMap.localWordCount, file);
+            functionStackMap.stackMaps[j] = stackMap;
+        }
+        program.functionStackMaps[i] = functionStackMap;
+    }
 
     printf("version: %d\n", version);
     printf("entry: %d\n", program.entryFunctionIndex);
@@ -133,7 +153,22 @@ Program LoadProgam(const char* path) {
                program.functions[i].bytecodeCount);
     }
 
-
+    for (u16 i = 0; i < program.functionCount; i++) {
+        FunctionStackMap sm = program.functionStackMaps[i];
+        printf("stackmap[%d]: entries=%d regWords=%d localWords=%d\n", i, sm.stackMapCount, sm.regWordCount, sm.localWordCount);
+        for (i32 j = 0; j < sm.stackMapCount; j++) {
+            StackMap entry = sm.stackMaps[j];
+            printf("  offset=%d regs=", entry.byteoffset);
+            for (u16 w = 0; w < sm.regWordCount; w++) {
+                printf("%016" PRIx64, entry.liveRegs[w]);
+            }
+            printf(" locals=");
+            for (u16 w = 0; w < sm.localWordCount; w++) {
+                printf("%016" PRIx64, entry.liveLocals[w]);
+            }
+            printf("\n");
+        }
+    }
     fclose(file);
     return program;
 }
