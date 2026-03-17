@@ -4,6 +4,8 @@
 
 #include "Headers/value.h"
 
+#include "Headers/Heap.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -22,11 +24,11 @@ i32 AsInt(Value value) {
     return (i32)value.rawData;
 }
 
-u32 AsHeapReference(Value value) {
+ObjHeader* AsHeapPointer(Value value) {
     if (value.type != VAL_HEAPREF) {
-        fprintf(stderr, "run time expected a heapref");
+        fprintf(stderr, "run time expected a heap pointer value");
         exit(1);
     }
-    return (u32)value.rawData;
+    return (ObjHeader*)(uintptr_t)value.rawData;
 }
 

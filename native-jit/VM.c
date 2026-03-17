@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-CallFrame CreateFrame(const Function *function, const u16 returnReg, const bool hasReturnReg) {
+CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool hasReturnReg) {
     CallFrame callFrame;
     callFrame.function = function;
     callFrame.instructionPointer = 0;
@@ -37,16 +37,16 @@ CallFrame CreateFrame(const Function *function, const u16 returnReg, const bool 
     return callFrame;
 }
 
-RuntimeTypeDesc *GetTypeDesc(Vm *vm, int id) {
+RuntimeTypeDesc* GetTypeDesc(Vm* vm, int id) {
     if (id < 0 || id >= vm->program->typeTableLength) {
         fprintf(stderr, "unkown type Id");
         exit(1);
     }
 
-    RuntimeTypeDesc *type = &vm->program->typeTable[id];
+    RuntimeTypeDesc* type = &vm->program->typeTable[id];
     return type;
 }
-Value DefaultValueForType(RuntimeTypeDesc *type) {
+Value DefaultValueForType(RuntimeTypeDesc* type) {
     switch (type->kind) {
         case TYPE_INT: {
             Value val = {.type = VAL_INT, .rawData = 0};
@@ -75,64 +75,57 @@ Value DefaultValueForType(RuntimeTypeDesc *type) {
     }
 }
 
-ArrayObject *GetArrayObject(Vm *vm, Value arrayValue) {
+ArrayObject* GetArrayObject(Vm* vm, Value arrayValue) {
     if (arrayValue.type == VAL_NULL) {
         fprintf(stderr, "array reference is null");
         exit(1);
     }
 
-    u32 heapRef = AsHeapReference(arrayValue);
-    HeapObject *arrayObj = GetHeapObject(&vm->heap, heapRef);
-    if (arrayObj->heapObjectKind != ArrayObjectKind) {
+    ArrayObject* arrayObj = (ArrayObject*)AsHeapPointer(arrayValue);
+    RuntimeTypeDesc* arrayType = GetTypeDesc(vm, arrayObj->header.typeId);
+    if (arrayType->kind != TYPE_ARRAY || !arrayType->hasElementTypeId) {
         fprintf(stderr, "not pointing to an arrray bud");
         exit(1);
     }
 
-    return (ArrayObject *)arrayObj;
+    return arrayObj;
 }
 
-void SetArrayDefaultValues(Vm *vm, ArrayObject* arrayObject) {
-    RuntimeTypeDesc *elementType = GetTypeDesc(vm, arrayObject->elementTypeId);
-    Value defaultVal = DefaultValueForType(elementType);
-
+void SetArrayDefaultValues(ArrayObject* arrayObject, Value defaultValue) {
     for (u32 i = 0; i < arrayObject->length; i++) {
-        arrayObject->elements[i] = defaultVal;
+        arrayObject->elements[i] = defaultValue;
     }
 }
 
-u32 AllocateArrayObject(Vm *vm, i32 length, i32 typeId) {
-    HeapObject heapObject = {.heapObjectKind = ArrayObjectKind};
-
-    RuntimeTypeDesc *arrayType = GetTypeDesc(vm, typeId);
+ArrayObject* AllocateArrayObject(Vm* vm, i32 length, i32 typeId) {
+    RuntimeTypeDesc* arrayType = GetTypeDesc(vm, typeId);
 
     if (arrayType->kind != TYPE_ARRAY || arrayType->hasElementTypeId == false) {
         fprintf(stderr, "allocating an array requires array type descriptor");
         exit(1);
     }
 
-    ArrayObject* arrayObject = malloc(sizeof(ArrayObject));
+    u32 size = AlignSize(sizeof(ArrayObject) + (sizeof(Value) * length));
+    ObjHeader objHeader = {.typeId = typeId, .size = size, .mark = false};
+
+    ArrayObject* arrayObject = (ArrayObject*)AllocHeapObject(&vm->heap, size);
     if (arrayObject == NULL) {
         fprintf(stderr, "unable to alloc arrayObject");
         exit(1);
     }
-    arrayObject->base = heapObject;
-    arrayObject->elementTypeId = arrayType->elementTypeId;
+
+    arrayObject->header = objHeader;
     arrayObject->length = (u32)length;
-    arrayObject->kind = arrayType->kind;
-    arrayObject->elements = calloc(arrayObject->length, sizeof(Value));
-    if (arrayObject->elements == NULL) {
-        fprintf(stderr, "unable to alloc elements for array");
-        exit(1);
-    }
 
-    SetArrayDefaultValues(vm, arrayObject);
+    RuntimeTypeDesc* elementType = GetTypeDesc(vm, arrayType->elementTypeId);
+    Value defVal = DefaultValueForType(elementType);
+    SetArrayDefaultValues(arrayObject, defVal);
 
-    return AllocHeapObject(&vm->heap, (HeapObject *)arrayObject);
+    return arrayObject;
 }
-void VmInit(Vm *vm, Program *program) {
+void VmInit(Vm* vm, Program* program) {
     vm->program = program;
     vm->running = 1;
-
 
     NativeFn* resolved = resolveNativeFunctions(program);
     u16 nativeCount = program->nativeFunctionCount;
@@ -161,11 +154,11 @@ void VmInit(Vm *vm, Program *program) {
     vm->frames[0] = entryFrame;
     vm->depth = 0;
     Heap heap;
-    InitHeap(&heap, 256);
+    InitHeap(&heap);
     vm->heap = heap;
 }
 
-void VmFree(Vm *vm) {
+void VmFree(Vm* vm) {
     for (i32 i = 0; i <= vm->depth; i++) {
         free(vm->frames[i].regs);
         free(vm->frames[i].locals);
@@ -174,14 +167,14 @@ void VmFree(Vm *vm) {
     FreeHeap(&vm->heap);
 }
 
-static u16 ReadU16(CallFrame *frame) {
+static u16 ReadU16(CallFrame* frame) {
     const u16 value = (u16)(frame->function->bytecode[frame->instructionPointer] |
                             (frame->function->bytecode[frame->instructionPointer + 1] << 8));
     frame->instructionPointer += 2;
     return value;
 }
 
-static i32 ReadI32(CallFrame *frame) {
+static i32 ReadI32(CallFrame* frame) {
     const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
                             (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
                             (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
@@ -190,13 +183,13 @@ static i32 ReadI32(CallFrame *frame) {
     return value;
 }
 
-void CallFunction(Vm *vm, u16 dstReg, i32 functionIndex, u16 *argRegs, u16 argCount) {
+void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount) {
     if (vm->depth >= MAX_CALLS_DEPTH - 1) {
         fprintf(stderr, "max frame stack reached");
         exit(1);
     }
     CallFrame callFrame = CreateFrame(&vm->runtimeFunctions[functionIndex].userFun, dstReg, true);
-    Value *callerRegs = vm->frames[vm->depth].regs;
+    Value* callerRegs = vm->frames[vm->depth].regs;
     for (u16 i = 0; i < argCount; i++) {
         const Value param = callerRegs[argRegs[i]];
         callFrame.locals[i] = param;
@@ -205,9 +198,9 @@ void CallFunction(Vm *vm, u16 dstReg, i32 functionIndex, u16 *argRegs, u16 argCo
     vm->frames[vm->depth] = callFrame;
 }
 
-Value VmRun(Vm *vm) {
+Value VmRun(Vm* vm) {
     while (vm->running) {
-        CallFrame *frame = &vm->frames[vm->depth];
+        CallFrame* frame = &vm->frames[vm->depth];
         const u8 opCode = frame->function->bytecode[frame->instructionPointer++];
 
         switch (opCode) {
@@ -248,7 +241,7 @@ Value VmRun(Vm *vm) {
                     free(frame->locals);
                     vm->depth--;
 
-                    CallFrame *callerFrame = &vm->frames[vm->depth];
+                    CallFrame* callerFrame = &vm->frames[vm->depth];
                     callerFrame->regs[returnReg] = returnedVal;
                 }
                 break;
@@ -461,8 +454,8 @@ Value VmRun(Vm *vm) {
                 }
                 if (vm->runtimeFunctions[functionIndex].kind == FuncUser) {
                     CallFunction(vm, dstReg, functionIndex, argRegs, argCount);
-                }else {
-                    vm->runtimeFunctions[functionIndex].nativeFn(frame->regs, argCount, argRegs);
+                } else {
+                    frame->regs[dstReg] = vm->runtimeFunctions[functionIndex].nativeFn(frame->regs, argCount, argRegs);
                 }
 
                 break;
@@ -488,7 +481,7 @@ Value VmRun(Vm *vm) {
                     exit(1);
                 }
 
-                Value val = {.type = VAL_HEAPREF, .rawData = AllocateArrayObject(vm, length, typeId)};
+                Value val = {.type = VAL_HEAPREF, .rawData = (i64)(intptr_t)AllocateArrayObject(vm, length, typeId)};
                 frame->regs[dstReg] = val;
                 break;
             }

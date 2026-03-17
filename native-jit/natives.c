@@ -9,29 +9,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void native_print_int(Value* registers,u16 argCount, u16* argRegs) {
+static Value native_print_int(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     printf("%" PRId64, registers[argRegs[0]].rawData);
+    return (Value){.type = VAL_NULL, .rawData = 0};
 }
 
 
-static void native_print_bool(Value* registers,u16 argCount, u16* argRegs) {
+static Value native_print_bool(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     printf("%s", registers[argRegs[0]].rawData == 0 ? "false" : "true");
+    return (Value){.type = VAL_NULL, .rawData = 0};
 }
 
 
-static void native_print_char(Value* registers,u16 argCount, u16* argRegs) {
+static Value native_print_char(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     printf("%c", (char)registers[argRegs[0]].rawData);
+    return (Value){.type = VAL_NULL, .rawData = 0};
 }
 
 
-static void native_print_newline(Value* registers,u16 argCount, u16* argRegs) {
+static Value native_print_newline(Value* registers,u16 argCount, u16* argRegs) {
     (void)registers;
     (void)argCount;
     (void)argRegs;
     printf("\n");
+    return (Value){.type = VAL_NULL, .rawData = 0};
 }
 
 static const NativeEntry nativeRegistry[] = {

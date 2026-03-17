@@ -24,8 +24,7 @@ void* ArenaAlloc(Arena* arena, size_t size) {
     size_t aligned = ALIGN_UP(size);
 
     if (arena->current + aligned > arena->end) {
-        fprintf(stderr, "arena out of memory: requested %zu, remaining %zu\n",
-        size, (size_t)(arena->end - arena->current));
+        fprintf(stderr, "arena out of memory: requested %zu, remaining %zu\n", size, (size_t)(arena->end - arena->current));
         exit(1);
     }
 

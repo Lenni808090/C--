@@ -6,7 +6,6 @@
 
 #include <stdbool.h>
 
-
 typedef enum {
     VAL_INT,
     VAL_BOOL,
@@ -43,12 +42,13 @@ typedef struct {
     u32 bytecodeCount;
     u8* bytecode;
 } Function;
-typedef void (*NativeFn)(Value* registers, u16 argCount, u16* argRegs);
+
+typedef Value (*NativeFn)(Value* registers, u16 argCount, u16* argRegs);
 
 typedef enum {
     FuncNative,
     FuncUser,
-}FunctionKind;
+} FunctionKind;
 
 typedef struct {
     FunctionKind kind;
@@ -84,6 +84,5 @@ typedef struct {
     Value* constants;
     char** nativeFunctionNames;
 } Program;
-
 
 #endif

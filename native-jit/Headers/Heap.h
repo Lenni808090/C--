@@ -8,31 +8,27 @@
 
 #include "types.h"
 
-typedef enum {
-    ArrayObjectKind,
-} HeapObjectKind;
 
 typedef struct {
-    HeapObjectKind heapObjectKind;
-}HeapObject;
+    i32 typeId;
+    u32 size;
+    bool mark;
+} ObjHeader;
 
 typedef struct {
-    HeapObject base;
-    RuntimeType kind;
-    i32 elementTypeId;
+    ObjHeader header;
     u32 length;
-    Value* elements;
-}ArrayObject;
+    Value elements[];
+} ArrayObject;
 
 typedef struct {
-    HeapObject** objects;
-    u32 heapLength;
-    u32 capacity;
+    u8* start;
+    u8* end;
+    u8* current;
 } Heap;
 
-void InitHeap(Heap* heap, u32 capacity);
-u32 AllocHeapObject(Heap* heap, HeapObject* heapObject);
-HeapObject* GetHeapObject(Heap* heap,u32 id);
+void InitHeap(Heap* heap);
+ObjHeader* AllocHeapObject(Heap* heap,u32 size);
 void FreeHeap(Heap* heap);
-
+u32 AlignSize(u32 size);
 #endif // HEAP_H
