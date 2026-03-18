@@ -1,9 +1,9 @@
-using System.Runtime.InteropServices;
 using System.Text;
 using CMinus.CodeGen;
 namespace CMinus.Serialization;
 
 class ByteWriter {
+    const uint NoElementTypeId = 0x7FFFFFFF;
     byte[] magicNumber = new byte[] { 0x43, 0x4D, 0x4D, 0x00 };
 
     CompiledProgram compiledProgram;
@@ -21,7 +21,7 @@ class ByteWriter {
         // metadata
         writer.Write(magicNumber);
         writer.Write(currentVersion);
-        writer.Write((ushort)compiledProgram.entryFuncInd);
+        writer.Write(compiledProgram.entryFuncInd);
         writer.Write((ushort)compiledProgram.compiledFunctions.Length);
         writer.Write((ushort)compiledProgram.typeTable.Length);
         writer.Write((ushort)compiledProgram.constants.Length);
@@ -33,10 +33,10 @@ class ByteWriter {
             writer.Write((byte)runtimeType.Kind);
 
             if (runtimeType.ElementTypeId is null) {
-                writer.Write((int)0x7FFFFFFF);
+                writer.Write(NoElementTypeId);
             }
             else {
-                writer.Write((int)runtimeType.ElementTypeId);
+                writer.Write(runtimeType.ElementTypeId.Value);
             }
 
             if (runtimeType.Name is null) {
@@ -71,12 +71,12 @@ class ByteWriter {
         }
 
         foreach (FuncByteoffsetStackMap funcByteoffsetStackMap in compiledProgram.stackMap) {
-            writer.Write((int)funcByteoffsetStackMap.byteoffsetStackMaps.Length);
-            writer.Write((ushort)funcByteoffsetStackMap.regWordCount);
-            writer.Write((ushort)funcByteoffsetStackMap.localWordCount);
+            writer.Write((uint)funcByteoffsetStackMap.byteoffsetStackMaps.Length);
+            writer.Write(funcByteoffsetStackMap.regWordCount);
+            writer.Write(funcByteoffsetStackMap.localWordCount);
 
             foreach (ByteoffsetStackMap byteoffsetStackMap in funcByteoffsetStackMap.byteoffsetStackMaps) {
-                writer.Write((int)byteoffsetStackMap.byteoffset);
+                writer.Write(byteoffsetStackMap.byteoffset);
                 foreach (ulong word in byteoffsetStackMap.liveRegMaskWords) {
                     writer.Write(word);
                 }

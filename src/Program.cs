@@ -415,6 +415,14 @@ class Program {
             ip += 4;
             return value;
         }
+        uint ReadU32() {
+            if (ip + sizeof(uint) > code.Length) {
+                throw new InvalidOperationException($"Truncated bytecode while reading u32 at offset {ip}.");
+            }
+            uint value = BitConverter.ToUInt32(code, ip);
+            ip += 4;
+            return value;
+        }
 
         while (ip < code.Length) {
             int start = ip;
@@ -485,7 +493,7 @@ class Program {
                     }
                 case OpCode.CALL: {
                         ushort dst = ReadU16();
-                        int functionIndex = ReadI32();
+                        uint functionIndex = ReadU32();
                         ushort argCount = ReadU16();
                         Console.Write($" r{dst}, fn[{functionIndex}], argc={argCount}");
                         for (int i = 0; i < argCount; i++) {
@@ -497,7 +505,7 @@ class Program {
                     }
                 case OpCode.NEW_ARRAY: {
                         ushort dst = ReadU16();
-                        int typeId = ReadI32();
+                        uint typeId = ReadU32();
                         ushort lengthReg = ReadU16();
                         Console.WriteLine($" r{dst}, type[{typeId}], r{lengthReg}");
                         break;

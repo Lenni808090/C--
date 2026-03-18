@@ -20,18 +20,18 @@ sealed class RuntimeTypeInterner {
         RuntimeTypeDesc desc;
         switch (typeSymbol) {
             case PrimitiveSymbolType primitive: {
-                    int nextTypeId = types.Count;
+                    uint nextTypeId = (uint)types.Count;
                     desc = new RuntimeTypeDesc(nextTypeId, MapPrimitiveKind(primitive));
                     break;
                 }
             case ArraySymbolType array: {
-                    int elementTypeId = Intern(array.elementType);
-                    int nextTypeId = types.Count;
+                    uint elementTypeId = (uint)Intern(array.elementType);
+                    uint nextTypeId = (uint)types.Count;
                     desc = new RuntimeTypeDesc(nextTypeId, RuntimeTypeKind.Array, elementTypeId);
                     break;
                 }
             case NamedTypeSymbol named: {
-                    int nextTypeId = types.Count;
+                    uint nextTypeId = (uint)types.Count;
                     desc = new RuntimeTypeDesc(nextTypeId, RuntimeTypeKind.Object, name: named.name);
                     break;
                 }
@@ -40,7 +40,7 @@ sealed class RuntimeTypeInterner {
                 }
         }
 
-        int typeId = desc.TypeId;
+        int typeId = (int)desc.TypeId;
         keyToId[key] = typeId;
         types.Add(desc);
         return typeId;

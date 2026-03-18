@@ -21,7 +21,7 @@ class CodeGenerator {
             compiledFunctions.Add(GenerateFunction(irFunction, i));
         }
         var stackMap = stackBuilder.GetByteoffsetStackMap();
-        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames, stackMap);
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, (ushort)irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames, stackMap);
     }
 
     public CompiledFunction GenerateFunction(IrFunction irFunction, int functionIndex) {
@@ -39,8 +39,8 @@ class CodeGenerator {
         return functionBuilder.BuildAndReset(irFunction.localCount, irFunction.paramCount, irFunction.maxVReg);
     }
 
-    static int GetWordCount(int bitCount) {
-        return (bitCount + 63) / 64;
+    static ushort GetWordCount(int bitCount) {
+        return (ushort)((bitCount + 63) / 64);
     }
 
     void EmitBlock(BasicBlock basicBlock) {
@@ -60,7 +60,7 @@ class CodeGenerator {
 
 
     void EmitInstr(IrInstr instr, int blockId, int instrIndex) {
-        stackBuilder.TryRecordByteoffsetStackMap(blockId, instrIndex, functionBuilder.Emitter.pos);
+        stackBuilder.TryRecordByteoffsetStackMap(blockId, instrIndex, (uint)functionBuilder.Emitter.pos);
 
         switch (instr) {
             case IrLoadConst loadConst: {
@@ -222,13 +222,13 @@ class CodeGenerator {
         ushort dst = (ushort)irCallInstr.dstReg;
         ushort[] argRegs = irCallInstr.argRegs.Select(a => (ushort)a).ToArray();
         ushort argCount = (ushort)irCallInstr.argCount;
-        ushort functionIndex = (ushort)irCallInstr.functionIndex;
+        uint functionIndex = (uint)irCallInstr.functionIndex;
 
         functionBuilder.Emitter.EmitCall(dst, functionIndex, argCount, argRegs);
     }
 
     void EmitNewArray(IrNewArray newArray) {
-        functionBuilder.Emitter.EmitNewArray((ushort)newArray.dstReg, newArray.typeId, (ushort)newArray.lengthReg);
+        functionBuilder.Emitter.EmitNewArray((ushort)newArray.dstReg, (uint)newArray.typeId, (ushort)newArray.lengthReg);
     }
 
     void EmitStoreElement(IrStoreElement storeElement) {

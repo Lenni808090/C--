@@ -23,14 +23,14 @@ class StackBuilder {
         }
     }
 
-    public void TryRecordByteoffsetStackMap(int blockId, int instrIndex, int offset) {
+    public void TryRecordByteoffsetStackMap(int blockId, int instrIndex, uint offset) {
         if (posToStack.TryGetValue((blockId, instrIndex), out StackMap stackMap)) {
             var byteoffset = new ByteoffsetStackMap(offset, stackMap.liveRegs, stackMap.liveLocals);
             byteoffsetStacks.Add(byteoffset);
         }
     }
 
-    public FuncByteoffsetStackMap BuildFunctionByteoffsetStackMap(int regWordCount, int localWordCount) {
+    public FuncByteoffsetStackMap BuildFunctionByteoffsetStackMap(ushort regWordCount, ushort localWordCount) {
         var funcStackMap = new FuncByteoffsetStackMap(byteoffsetStacks.ToArray(), regWordCount, localWordCount);
         funcByteoffsetStackMaps.Add(funcStackMap);
         return funcStackMap;
@@ -48,10 +48,10 @@ class StackBuilder {
 
 class FuncByteoffsetStackMap {
     public ByteoffsetStackMap[] byteoffsetStackMaps;
-    public int regWordCount;
-    public int localWordCount;
+    public ushort regWordCount;
+    public ushort localWordCount;
 
-    public FuncByteoffsetStackMap(ByteoffsetStackMap[] byteoffsetStackMaps, int regWordCount, int localWordCount) {
+    public FuncByteoffsetStackMap(ByteoffsetStackMap[] byteoffsetStackMaps, ushort regWordCount, ushort localWordCount) {
         this.byteoffsetStackMaps = byteoffsetStackMaps;
         this.regWordCount = regWordCount;
         this.localWordCount = localWordCount;
@@ -60,11 +60,11 @@ class FuncByteoffsetStackMap {
 
 
 struct ByteoffsetStackMap {
-    public int byteoffset;
+    public uint byteoffset;
     public ulong[] liveRegMaskWords;
     public ulong[] liveLocalMaskWords;
 
-    public ByteoffsetStackMap(int byteoffset, bool[] liveRegs, bool[] liveLocals) {
+    public ByteoffsetStackMap(uint byteoffset, bool[] liveRegs, bool[] liveLocals) {
         this.byteoffset = byteoffset;
         liveRegMaskWords = PackBitMask(liveRegs);
         liveLocalMaskWords = PackBitMask(liveLocals);

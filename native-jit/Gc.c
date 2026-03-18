@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 void MarkAndSweep(Vm* vm) {
-
+    (void)vm;
 }
 
 u32 GetInstrInd(CallFrame* frame, FunctionStackMap* functionStack) {
@@ -20,8 +20,8 @@ u32 GetInstrInd(CallFrame* frame, FunctionStackMap* functionStack) {
     u32 low = 0;
     u32 high = functionStack->stackMapCount;
 
-    while (low <= high) {
-        u32 foundInd = (high + low) / 2;
+    while (low < high) {
+        u32 foundInd = low + ((high - low) / 2);
         u32 byteoffset = functionStack->stackMaps[foundInd].byteoffset;
 
         if (byteoffset == frame->bytecodeOffset) {
@@ -31,7 +31,7 @@ u32 GetInstrInd(CallFrame* frame, FunctionStackMap* functionStack) {
         if (byteoffset < frame->bytecodeOffset) {
             low = foundInd + 1;
         } else {
-            high = foundInd - 1;
+            high = foundInd;
         }
     }
 

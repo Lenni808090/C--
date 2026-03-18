@@ -4,13 +4,13 @@ class CompiledProgram {
     public CompiledFunction[] compiledFunctions;
 
     public Value[] constants;
-    public int entryFuncInd;
+    public ushort entryFuncInd;
 
     public FuncByteoffsetStackMap[] stackMap;
     public string[] nativeFunctionNames;
     public RuntimeTypeDesc[] typeTable;
 
-    public CompiledProgram(CompiledFunction[] compiledFunctions, Value[] constants, int entryFuncInd, RuntimeTypeDesc[] typeTable, string[] nativeFunctionNames, FuncByteoffsetStackMap[] stackMap) {
+    public CompiledProgram(CompiledFunction[] compiledFunctions, Value[] constants, ushort entryFuncInd, RuntimeTypeDesc[] typeTable, string[] nativeFunctionNames, FuncByteoffsetStackMap[] stackMap) {
         this.constants = constants;
         this.compiledFunctions = compiledFunctions;
         this.entryFuncInd = entryFuncInd;

@@ -49,14 +49,18 @@ class Emitter {
         var bytes = BitConverter.GetBytes(value);
         emittedBytecode.AddRange(bytes);
     }
+    public void EmitU32(uint value) {
+        var bytes = BitConverter.GetBytes(value);
+        emittedBytecode.AddRange(bytes);
+    }
     public void EmitU16(ushort value) {
         byte[] conValue = BitConverter.GetBytes(value);
         emittedBytecode.AddRange(conValue);
     }
-    public void EmitCall(ushort dstReg, int functionIndex, ushort argCount, ushort[] argRegs) {
+    public void EmitCall(ushort dstReg, uint functionIndex, ushort argCount, ushort[] argRegs) {
         EmitOp(OpCode.CALL);
         EmitU16(dstReg);
-        EmitI32(functionIndex);
+        EmitU32(functionIndex);
         EmitU16(argCount);
         foreach (ushort argReg in argRegs) {
             EmitU16(argReg);
@@ -80,10 +84,10 @@ class Emitter {
         EmitU16(localIndex);
     }
 
-    public void EmitNewArray(ushort dstReg, int typeId, ushort lengthReg) {
+    public void EmitNewArray(ushort dstReg, uint typeId, ushort lengthReg) {
         EmitOp(OpCode.NEW_ARRAY);
         EmitU16(dstReg);
-        EmitI32(typeId);
+        EmitU32(typeId);
         EmitU16(lengthReg);
     }
 
