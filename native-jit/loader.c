@@ -5,6 +5,7 @@
 
 #include <inttypes.h>
 static const u8 MAGIC_NUMBER[] = {0x43, 0x4D, 0x4D, 0x00};
+static const u32 NO_ELEMENT_TYPE_ID = 0x7FFFFFFFu;
 
 Program LoadProgam(const char* path) {
     FILE* file = fopen(path, "rb");
@@ -47,16 +48,16 @@ Program LoadProgam(const char* path) {
         fread(&kind, sizeof(u8), 1, file);
         program.typeTable[i].kind = kind;
 
-        i32 elementTypeId;
-        fread(&elementTypeId, sizeof(i32), 1, file);
+        u32 elementTypeId;
+        fread(&elementTypeId, sizeof(u32), 1, file);
 
-        if (elementTypeId == 0x7FFFFFFF) {
+        if (elementTypeId == NO_ELEMENT_TYPE_ID) {
             program.typeTable[i].hasElementTypeId = false;
+            program.typeTable[i].elementTypeId = 0;
         } else {
             program.typeTable[i].hasElementTypeId = true;
+            program.typeTable[i].elementTypeId = elementTypeId;
         }
-
-        program.typeTable[i].elementTypeId = elementTypeId;
 
         u16 nameLength;
         fread(&nameLength, sizeof(u16), 1, file);
@@ -107,13 +108,13 @@ Program LoadProgam(const char* path) {
     program.functionStackMaps = ArenaAlloc(&program.arena, sizeof(FunctionStackMap) * program.functionCount);
     for (u16 i = 0; i < program.functionCount; i++) {
         FunctionStackMap functionStackMap;
-        fread(&functionStackMap.stackMapCount, sizeof(i32), 1,file);
+        fread(&functionStackMap.stackMapCount, sizeof(u32), 1,file);
         fread(&functionStackMap.regWordCount, sizeof(u16), 1, file);
         fread(&functionStackMap.localWordCount, sizeof(u16), 1, file);
         functionStackMap.stackMaps = ArenaAlloc(&program.arena, sizeof(StackMap) * functionStackMap.stackMapCount);
-        for (i32 j = 0; j < functionStackMap.stackMapCount; j++) {
+        for (u32 j = 0; j < functionStackMap.stackMapCount; j++) {
             StackMap stackMap;
-            fread(&stackMap.byteoffset, sizeof(i32), 1, file);
+            fread(&stackMap.byteoffset, sizeof(u32), 1, file);
 
             stackMap.liveRegs = ArenaAlloc(&program.arena, sizeof(u64) * functionStackMap.regWordCount);
             fread(stackMap.liveRegs, sizeof(u64), functionStackMap.regWordCount, file);
@@ -137,7 +138,7 @@ Program LoadProgam(const char* path) {
     }
 
     for (u16 i = 0; i < program.typeTableLength; i++) {
-        printf("type[%d]: kind=%d elementType=%d\n", i, program.typeTable[i].kind, program.typeTable[i].elementTypeId);
+        printf("type[%d]: kind=%d elementType=%" PRIu32 "\n", i, program.typeTable[i].kind, program.typeTable[i].elementTypeId);
     }
 
     for (u16 i = 0; i < program.constantCount; i++) {
@@ -155,10 +156,10 @@ Program LoadProgam(const char* path) {
 
     for (u16 i = 0; i < program.functionCount; i++) {
         FunctionStackMap sm = program.functionStackMaps[i];
-        printf("stackmap[%d]: entries=%d regWords=%d localWords=%d\n", i, sm.stackMapCount, sm.regWordCount, sm.localWordCount);
-        for (i32 j = 0; j < sm.stackMapCount; j++) {
+        printf("stackmap[%d]: entries=%" PRIu32 " regWords=%d localWords=%d\n", i, sm.stackMapCount, sm.regWordCount, sm.localWordCount);
+        for (u32 j = 0; j < sm.stackMapCount; j++) {
             StackMap entry = sm.stackMaps[j];
-            printf("  offset=%d regs=", entry.byteoffset);
+            printf("  offset=%" PRIu32 " regs=", entry.byteoffset);
             for (u16 w = 0; w < sm.regWordCount; w++) {
                 printf("%016" PRIx64, entry.liveRegs[w]);
             }

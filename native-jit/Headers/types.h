@@ -29,7 +29,7 @@ typedef struct {
 
 typedef struct {
     RuntimeType kind;
-    i32 elementTypeId;
+    u32 elementTypeId;
     bool hasElementTypeId;
     u16 nameLength;
     char* name;
@@ -59,13 +59,13 @@ typedef struct {
 } RuntimeFunction;
 
 typedef struct {
-    i32 byteoffset;
+    u32 byteoffset;
     u64* liveRegs;
     u64* liveLocals;
 } StackMap;
 
 typedef struct {
-    i32 stackMapCount;
+    u32 stackMapCount;
     u16 regWordCount;
     u16 localWordCount;
     StackMap* stackMaps;

@@ -4,6 +4,7 @@
 
 #include "Headers/VM.h"
 
+#include "Headers/Gc.h"
 #include "Headers/natives.h"
 #include "Headers/value.h"
 
@@ -15,6 +16,7 @@ CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool 
     CallFrame callFrame;
     callFrame.function = function;
     callFrame.instructionPointer = 0;
+    callFrame.bytecodeOffset = 0;
     callFrame.returnReg = returnReg;
     callFrame.hasReturnReg = hasReturnReg;
 
@@ -37,8 +39,8 @@ CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool 
     return callFrame;
 }
 
-RuntimeTypeDesc* GetTypeDesc(Vm* vm, int id) {
-    if (id < 0 || id >= vm->program->typeTableLength) {
+RuntimeTypeDesc* GetTypeDesc(Vm* vm, u32 id) {
+    if (id >= vm->program->typeTableLength) {
         fprintf(stderr, "unkown type Id");
         exit(1);
     }
@@ -97,7 +99,7 @@ void SetArrayDefaultValues(ArrayObject* arrayObject, Value defaultValue) {
     }
 }
 
-ArrayObject* AllocateArrayObject(Vm* vm, i32 length, i32 typeId) {
+ArrayObject* AllocateArrayObject(Vm* vm, i32 length, u32 typeId) {
     RuntimeTypeDesc* arrayType = GetTypeDesc(vm, typeId);
 
     if (arrayType->kind != TYPE_ARRAY || arrayType->hasElementTypeId == false) {
@@ -110,8 +112,12 @@ ArrayObject* AllocateArrayObject(Vm* vm, i32 length, i32 typeId) {
 
     ArrayObject* arrayObject = (ArrayObject*)AllocHeapObject(&vm->heap, size);
     if (arrayObject == NULL) {
-        fprintf(stderr, "unable to alloc arrayObject");
-        exit(1);
+        MarkAndSweep(vm);
+        arrayObject = (ArrayObject*)AllocHeapObject(&vm->heap, size);
+        if (arrayObject == NULL) {
+            fprintf(stderr, "out of memory after GC");
+            exit(1);
+        }
     }
 
     arrayObject->header = objHeader;
@@ -183,7 +189,16 @@ static i32 ReadI32(CallFrame* frame) {
     return value;
 }
 
-void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCount) {
+static u32 ReadU32(CallFrame* frame) {
+    const u32 value = (u32)(frame->function->bytecode[frame->instructionPointer] |
+                            (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
+                            (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
+                            (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+    frame->instructionPointer += 4;
+    return value;
+}
+
+void CallFunction(Vm* vm, u16 dstReg, u32 functionIndex, u16* argRegs, u16 argCount) {
     if (vm->depth >= MAX_CALLS_DEPTH - 1) {
         fprintf(stderr, "max frame stack reached");
         exit(1);
@@ -201,7 +216,7 @@ void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCo
 Value VmRun(Vm* vm) {
     while (vm->running) {
         CallFrame* frame = &vm->frames[vm->depth];
-        u32 byteoffset = frame->instructionPointer;
+        frame->bytecodeOffset = frame->instructionPointer;
         const u8 opCode = frame->function->bytecode[frame->instructionPointer++];
 
         switch (opCode) {
@@ -446,7 +461,7 @@ Value VmRun(Vm* vm) {
 
             case CALL: {
                 const u16 dstReg = ReadU16(frame);
-                const i32 functionIndex = ReadI32(frame);
+                const u32 functionIndex = ReadU32(frame);
                 const u16 argCount = ReadU16(frame);
                 u16 argRegs[argCount];
                 for (u16 i = 0; i < argCount; i++) {
@@ -472,7 +487,7 @@ Value VmRun(Vm* vm) {
 
             case NEW_ARRAY: {
                 u16 dstReg = ReadU16(frame);
-                i32 typeId = ReadI32(frame);
+                u32 typeId = ReadU32(frame);
                 u16 lengthReg = ReadU16(frame);
 
                 i32 length = AsInt(frame->regs[lengthReg]);

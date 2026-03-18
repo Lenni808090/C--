@@ -17,6 +17,8 @@ add_executable(cmm_runtime
         ../Headers/arena.h
         ../natives.c
         ../Headers/natives.h
+        ../Gc.c
+        ../Headers/Gc.h
 )
 
 target_compile_options(cmm_runtime PRIVATE

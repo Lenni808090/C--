@@ -10,7 +10,7 @@
 
 
 typedef struct {
-    i32 typeId;
+    u32 typeId;
     u32 size;
     bool mark;
 } ObjHeader;

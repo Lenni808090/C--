@@ -4,6 +4,8 @@
 
 #include "Headers/Heap.h"
 
+#include "Headers/Gc.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -25,8 +27,7 @@ ObjHeader* AllocHeapObject(Heap* heap, u32 size) {
     u32 aligned = AlignSize(size);
 
     if (heap->current + aligned > heap->end) {
-        fprintf(stderr,"heap has no more space");
-        exit(1);
+        return NULL;
     }
 
     ObjHeader* point = (ObjHeader*)heap->current;
