@@ -201,6 +201,7 @@ void CallFunction(Vm* vm, u16 dstReg, i32 functionIndex, u16* argRegs, u16 argCo
 Value VmRun(Vm* vm) {
     while (vm->running) {
         CallFrame* frame = &vm->frames[vm->depth];
+        u32 byteoffset = frame->instructionPointer;
         const u8 opCode = frame->function->bytecode[frame->instructionPointer++];
 
         switch (opCode) {
