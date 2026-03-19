@@ -93,20 +93,7 @@ Program LoadProgam(const char* path) {
         program.functions[i].bytecodeCount = bytecodeCount;
         program.functions[i].bytecode = ArenaAlloc(&program.arena, bytecodeCount);
         fread(program.functions[i].bytecode, 1, bytecodeCount, file);
-    }
 
-    program.nativeFunctionNames = ArenaAlloc(&program.arena, sizeof(char*) * program.nativeFunctionCount);
-
-    for (u16 i = 0; i < program.nativeFunctionCount; i++) {
-        u16 nameLength;
-        fread(&nameLength, sizeof(u16), 1, file);
-        program.nativeFunctionNames[i] = ArenaAlloc(&program.arena, nameLength + 1);
-        fread(program.nativeFunctionNames[i], sizeof(char), nameLength, file);
-        program.nativeFunctionNames[i][nameLength] = '\0';
-    }
-
-    program.functionStackMaps = ArenaAlloc(&program.arena, sizeof(FunctionStackMap) * program.functionCount);
-    for (u16 i = 0; i < program.functionCount; i++) {
         FunctionStackMap functionStackMap;
         fread(&functionStackMap.stackMapCount, sizeof(u32), 1,file);
         fread(&functionStackMap.regWordCount, sizeof(u16), 1, file);
@@ -123,7 +110,17 @@ Program LoadProgam(const char* path) {
             fread(stackMap.liveLocals, sizeof(u64), functionStackMap.localWordCount, file);
             functionStackMap.stackMaps[j] = stackMap;
         }
-        program.functionStackMaps[i] = functionStackMap;
+        program.functions[i].functionStackMap = functionStackMap;
+    }
+
+    program.nativeFunctionNames = ArenaAlloc(&program.arena, sizeof(char*) * program.nativeFunctionCount);
+
+    for (u16 i = 0; i < program.nativeFunctionCount; i++) {
+        u16 nameLength;
+        fread(&nameLength, sizeof(u16), 1, file);
+        program.nativeFunctionNames[i] = ArenaAlloc(&program.arena, nameLength + 1);
+        fread(program.nativeFunctionNames[i], sizeof(char), nameLength, file);
+        program.nativeFunctionNames[i][nameLength] = '\0';
     }
 
     printf("version: %d\n", version);
@@ -155,7 +152,7 @@ Program LoadProgam(const char* path) {
     }
 
     for (u16 i = 0; i < program.functionCount; i++) {
-        FunctionStackMap sm = program.functionStackMaps[i];
+        FunctionStackMap sm = program.functions[i].functionStackMap;
         printf("stackmap[%d]: entries=%" PRIu32 " regWords=%d localWords=%d\n", i, sm.stackMapCount, sm.regWordCount, sm.localWordCount);
         for (u32 j = 0; j < sm.stackMapCount; j++) {
             StackMap entry = sm.stackMaps[j];

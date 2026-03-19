@@ -55,7 +55,7 @@ enum OpCodes {
 
 
 typedef struct {
-    const Function* function;
+    Function* function;
     u32 instructionPointer;
     u32 bytecodeOffset;
     Value* regs;
@@ -74,7 +74,7 @@ typedef struct {
 } Vm;
 
 void CallFunction(Vm* vm,u16 dstReg, u32 functionIndex, u16* argRegs, u16 argCount);
-CallFrame CreateFrame(const Function* function, u16 returnReg, bool hasReturnReg);
+CallFrame CreateFrame(Function* function,u16 returnReg, bool hasReturnReg);
 ArrayObject* GetArrayObject(Vm* vm, Value arrayValue);
 ArrayObject* AllocateArrayObject(Vm* vm,i32 length, u32 typeId);
 Value DefaultValueForType(RuntimeTypeDesc* type);

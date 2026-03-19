@@ -62,15 +62,7 @@ class ByteWriter {
             writer.Write((ushort)function.maxRegCount);
             writer.Write((uint)function.bytecode.Length);
             writer.Write(function.bytecode);
-        }
-
-        foreach (string name in compiledProgram.nativeFunctionNames) {
-            byte[] nameBytes = Encoding.UTF8.GetBytes(name);
-            writer.Write((ushort)nameBytes.Length);
-            writer.Write(nameBytes);
-        }
-
-        foreach (FuncByteoffsetStackMap funcByteoffsetStackMap in compiledProgram.stackMap) {
+            FuncByteoffsetStackMap funcByteoffsetStackMap = function.functionStackMap;
             writer.Write((uint)funcByteoffsetStackMap.byteoffsetStackMaps.Length);
             writer.Write(funcByteoffsetStackMap.regWordCount);
             writer.Write(funcByteoffsetStackMap.localWordCount);
@@ -84,6 +76,12 @@ class ByteWriter {
                     writer.Write(word);
                 }
             }
+        }
+
+        foreach (string name in compiledProgram.nativeFunctionNames) {
+            byte[] nameBytes = Encoding.UTF8.GetBytes(name);
+            writer.Write((ushort)nameBytes.Length);
+            writer.Write(nameBytes);
         }
 
     }

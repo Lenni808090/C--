@@ -7,5 +7,10 @@
 #include "VM.h"
 
 void MarkAndSweep(Vm* vm);
-u32 GetInstrInd(CallFrame* frame, FunctionStackMap* functionStack);
+void MarkReg(u16 reg, CallFrame* frame,Vm* vm);
+void MarkLocal(u16 local, CallFrame* frame,Vm* vm);
+void MarkValue(Value val, Vm* vm);
+void TraceObject(ObjHeader* obj, Vm* vm);
+StackMap GetStackMap(CallFrame* frame, FunctionStackMap* functionStack);
+
 #endif // GC_H

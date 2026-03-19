@@ -8,10 +8,100 @@
 #include <stdlib.h>
 
 void MarkAndSweep(Vm* vm) {
-    (void)vm;
+    for (i32 i = vm->depth;i >= 0; i--) {
+        CallFrame* frame = &vm->frames[i];
+        FunctionStackMap* functionStackMap= &frame->function->functionStackMap;
+        StackMap stackMap = GetStackMap(frame, functionStackMap);
+        for (u16 r = 0; r < functionStackMap->regWordCount; r++) {
+            u64 mask = stackMap.liveRegs[r];
+            while (mask != 0) {
+                u16 bitPos = __builtin_ctzll(mask);
+                u16 reg = r * 64 + bitPos;
+                MarkReg(reg, frame, vm);
+                //funny trick.
+                //for example. 0b100 is 4,
+                //take - 1 and that's 0b011
+                //now if u do &= everything at and below the lowest 1 gets set to 0;
+                mask &= mask - 1;
+            }
+        }
+
+        for (u16 l = 0; l < functionStackMap->localWordCount; l++) {
+            u64 mask = stackMap.liveLocals[l];
+            while (mask != 0) {
+                u16 bitPos = __builtin_ctzll(mask);
+                u16 local = l * 64 + bitPos;
+                MarkLocal(local, frame, vm);
+                mask &= mask - 1;
+            }
+        }
+    }
+
+    u8* scan = vm->heap.start;
+    u8* sweepMax = vm->heap.current;
+    u32 deadSpace = 0;
+    while (scan < sweepMax) {
+        ObjHeader* currObject = (ObjHeader*)scan;
+        if (currObject->mark) {
+            currObject->mark = false;
+        }else {
+            deadSpace += currObject->size;
+        }
+        scan += currObject->size;
+    }
+
+    printf("%d", deadSpace);
 }
 
-u32 GetInstrInd(CallFrame* frame, FunctionStackMap* functionStack) {
+void MarkReg(u16 reg, CallFrame* frame,Vm* vm) {
+    Value regVal = frame->regs[reg];
+    MarkValue(regVal, vm);
+}
+
+void MarkLocal(u16 local, CallFrame* frame,Vm* vm) {
+    Value localVal = frame->locals[local];
+    MarkValue(localVal, vm);
+}
+
+void MarkValue(Value val, Vm* vm){
+    if (val.type != VAL_HEAPREF){
+        return;
+    }
+
+    ObjHeader* objHeader = (ObjHeader*)(intptr_t)val.rawData;
+    if (objHeader->mark){
+        return;
+    }
+
+    objHeader->mark = true;
+    TraceObject(objHeader, vm);
+}
+
+void TraceObject(ObjHeader* obj, Vm* vm) {
+    RuntimeTypeDesc* type = GetTypeDesc(vm, obj->typeId);
+    switch (type->kind) {
+        case TYPE_ARRAY: {
+            RuntimeTypeDesc* elementType = GetTypeDesc(vm, type->elementTypeId);
+
+            if (elementType->kind != TYPE_ARRAY && elementType->kind != TYPE_OBJECT) {
+                break;
+            }
+
+            ArrayObject* arrayObject = (ArrayObject*)obj;
+            for (u32 i = 0; i < arrayObject->length; i++) {
+                MarkValue(arrayObject->elements[i], vm);
+            }
+            break;
+        }
+
+        default: {
+            fprintf(stderr, "unkown object top trace");
+            exit(1);
+        }
+    }
+}
+
+StackMap GetStackMap(CallFrame* frame, FunctionStackMap* functionStack) {
     if (functionStack->stackMapCount == 0) {
         fprintf(stderr, "no stack maps available for frame");
         exit(1);
@@ -21,11 +111,12 @@ u32 GetInstrInd(CallFrame* frame, FunctionStackMap* functionStack) {
     u32 high = functionStack->stackMapCount;
 
     while (low < high) {
+                        // makes it so no overlflow happens
         u32 foundInd = low + ((high - low) / 2);
         u32 byteoffset = functionStack->stackMaps[foundInd].byteoffset;
 
         if (byteoffset == frame->bytecodeOffset) {
-            return foundInd;
+            return functionStack->stackMaps[foundInd];
         }
 
         if (byteoffset < frame->bytecodeOffset) {

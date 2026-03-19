@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-CallFrame CreateFrame(const Function* function, const u16 returnReg, const bool hasReturnReg) {
+CallFrame CreateFrame(Function* function,const u16 returnReg, const bool hasReturnReg) {
     CallFrame callFrame;
     callFrame.function = function;
     callFrame.instructionPointer = 0;

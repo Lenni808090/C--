@@ -36,11 +36,25 @@ typedef struct {
 } RuntimeTypeDesc;
 
 typedef struct {
+    u32 byteoffset;
+    u64* liveRegs;
+    u64* liveLocals;
+} StackMap;
+
+typedef struct {
+    u32 stackMapCount;
+    u16 regWordCount;
+    u16 localWordCount;
+    StackMap* stackMaps;
+} FunctionStackMap;
+
+typedef struct {
     u16 localCount;
     u16 paramCount;
     u16 maxRegCount;
     u32 bytecodeCount;
     u8* bytecode;
+    FunctionStackMap functionStackMap;
 } Function;
 
 typedef Value (*NativeFn)(Value* registers, u16 argCount, u16* argRegs);
@@ -59,19 +73,6 @@ typedef struct {
 } RuntimeFunction;
 
 typedef struct {
-    u32 byteoffset;
-    u64* liveRegs;
-    u64* liveLocals;
-} StackMap;
-
-typedef struct {
-    u32 stackMapCount;
-    u16 regWordCount;
-    u16 localWordCount;
-    StackMap* stackMaps;
-} FunctionStackMap;
-
-typedef struct {
     Arena arena;
     u16 entryFunctionIndex;
     u16 functionCount;
@@ -80,7 +81,6 @@ typedef struct {
     u16 nativeFunctionCount;
     Function* functions;
     RuntimeTypeDesc* typeTable;
-    FunctionStackMap* functionStackMaps;
     Value* constants;
     char** nativeFunctionNames;
 } Program;

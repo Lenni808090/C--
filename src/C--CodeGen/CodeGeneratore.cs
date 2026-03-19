@@ -20,8 +20,7 @@ class CodeGenerator {
             var irFunction = irCompiledUnit.irFunctions[i];
             compiledFunctions.Add(GenerateFunction(irFunction, i));
         }
-        var stackMap = stackBuilder.GetByteoffsetStackMap();
-        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, (ushort)irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames, stackMap);
+        return new CompiledProgram(compiledFunctions.ToArray(), irCompiledUnit.constants, (ushort)irCompiledUnit.mainFunctionInd, irCompiledUnit.typeTable, irCompiledUnit.nativeFunctionNames);
     }
 
     public CompiledFunction GenerateFunction(IrFunction irFunction, int functionIndex) {
@@ -35,8 +34,8 @@ class CodeGenerator {
             EmitBlock(block);
         }
 
-        stackBuilder.BuildFunctionByteoffsetStackMap(GetWordCount(irFunction.maxVReg), GetWordCount(irFunction.localCount));
-        return functionBuilder.BuildAndReset(irFunction.localCount, irFunction.paramCount, irFunction.maxVReg);
+        FuncByteoffsetStackMap functionStackMap = stackBuilder.BuildFunctionByteoffsetStackMap(GetWordCount(irFunction.maxVReg), GetWordCount(irFunction.localCount));
+        return functionBuilder.BuildAndReset(irFunction.localCount, irFunction.paramCount, irFunction.maxVReg, functionStackMap);
     }
 
     static ushort GetWordCount(int bitCount) {
