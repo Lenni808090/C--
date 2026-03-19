@@ -12,24 +12,14 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-                        meth Main() -> int {
-                            strLen: int = 5;
-                            string: char[] = new char[strLen];
-                            string[0] = 'h';
-                            string[1] = 'a';
-                            string[2] = 'l';
-                            string[3] = 'l';
-                            string[4] = 'o';
-                            print_string(string, strLen);
-                            return 0;
-                        }
-
-                        meth print_string(string: char[],strLen: int){
-                            for(mut i: int = 0; i < strLen; i += 1){
-                                print_char(string[i]);
-                            }
-                            print_newline();
-                        }
+        meth Main() -> int {
+            alive: int[] = new int[5];
+            for (mut i: int = 0; i < 100; i += 1) {
+                garbage: int[] = new int[100];
+            }
+            print_int(alive[0]);
+            return 0;
+        }
 
 ";
 

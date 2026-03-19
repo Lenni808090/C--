@@ -39,18 +39,39 @@ void MarkAndSweep(Vm* vm) {
 
     u8* scan = vm->heap.start;
     u8* sweepMax = vm->heap.current;
-    u32 deadSpace = 0;
     while (scan < sweepMax) {
         ObjHeader* currObject = (ObjHeader*)scan;
         if (currObject->mark) {
             currObject->mark = false;
-        }else {
-            deadSpace += currObject->size;
+            scan += currObject->size;
+        } else {
+            u32 size = GetDeadSpaceSize(&scan, sweepMax);
+            //creates pointer to heap to not loose it
+            FreeBlock* freed = (FreeBlock*)currObject;
+            freed->base.kind = BlockFree;
+            freed->base.size = size;
+            //is inited as null so this works.
+            freed->next = vm->heap.freeList;
+            vm->heap.freeList = freed;
         }
-        scan += currObject->size;
+    }
+}
+
+u32 GetDeadSpaceSize(u8** scanPointer, u8* endPointer) {
+    u32 totalSize = ((ObjHeader*)*scanPointer)->size;
+    u8* next = *scanPointer + totalSize;
+
+    while (next < endPointer) {
+        ObjHeader* nextObj = (ObjHeader*)next;
+        if (nextObj->mark || nextObj->kind == BlockFree) {
+            break;
+        }
+        totalSize += nextObj->size;
+        next += nextObj->size;
     }
 
-    printf("%d", deadSpace);
+    *scanPointer = next;
+    return totalSize;
 }
 
 void MarkReg(u16 reg, CallFrame* frame,Vm* vm) {

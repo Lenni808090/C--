@@ -35,11 +35,6 @@ class StackBuilder {
         funcByteoffsetStackMaps.Add(funcStackMap);
         return funcStackMap;
     }
-
-    public FuncByteoffsetStackMap[] GetByteoffsetStackMap() {
-        return funcByteoffsetStackMaps.ToArray();
-    }
-
     public void Reset() {
         byteoffsetStacks.Clear();
         posToStack.Clear();

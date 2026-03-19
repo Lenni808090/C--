@@ -64,7 +64,7 @@ typedef struct {
     Value* locals;
 }CallFrame;
 
-typedef struct {
+typedef struct Vm {
     Program* program;
     RuntimeFunction* runtimeFunctions;
     CallFrame frames[MAX_CALLS_DEPTH];

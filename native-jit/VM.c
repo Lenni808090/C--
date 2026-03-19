@@ -110,14 +110,11 @@ ArrayObject* AllocateArrayObject(Vm* vm, i32 length, u32 typeId) {
     u32 size = AlignSize(sizeof(ArrayObject) + (sizeof(Value) * length));
     ObjHeader objHeader = {.typeId = typeId, .size = size, .mark = false};
 
-    ArrayObject* arrayObject = (ArrayObject*)AllocHeapObject(&vm->heap, size);
+    ArrayObject* arrayObject = (ArrayObject*)AllocHeapObject(vm, size);
     if (arrayObject == NULL) {
-        MarkAndSweep(vm);
-        arrayObject = (ArrayObject*)AllocHeapObject(&vm->heap, size);
-        if (arrayObject == NULL) {
-            fprintf(stderr, "out of memory after GC");
-            exit(1);
-        }
+        fprintf(stderr, "failed to alloc arraay");
+        exit(1);
+
     }
 
     arrayObject->header = objHeader;
@@ -159,9 +156,7 @@ void VmInit(Vm* vm, Program* program) {
     const CallFrame entryFrame = CreateFrame(&vm->runtimeFunctions[program->entryFunctionIndex].userFun, 0, false);
     vm->frames[0] = entryFrame;
     vm->depth = 0;
-    Heap heap;
-    InitHeap(&heap);
-    vm->heap = heap;
+    InitHeap(vm);
 }
 
 void VmFree(Vm* vm) {
@@ -170,7 +165,7 @@ void VmFree(Vm* vm) {
         free(vm->frames[i].locals);
     }
     free(vm->runtimeFunctions);
-    FreeHeap(&vm->heap);
+    FreeHeap(vm);
 }
 
 static u16 ReadU16(CallFrame* frame) {

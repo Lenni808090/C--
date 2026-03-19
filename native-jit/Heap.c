@@ -13,7 +13,8 @@
 #define ARENA_ALIGNMENT 8
 #define ALIGN_UP(size) (((size) + (ARENA_ALIGNMENT - 1)) & ~(ARENA_ALIGNMENT - 1))
 
-void InitHeap(Heap* heap) {
+void InitHeap(Vm* vm) {
+    Heap* heap = &vm->heap;
     heap->start = malloc(1024 * 1024);
     if (heap->start == NULL) {
         fprintf(stderr, "unable to alloc heap");
@@ -21,25 +22,81 @@ void InitHeap(Heap* heap) {
     }
     heap->current = heap-> start;
     heap->end = heap->start + 1024 * 1024;
+    heap->freeList = NULL;
 }
 
-ObjHeader* AllocHeapObject(Heap* heap, u32 size) {
+ObjHeader* AllocHeapObject(Vm* vm, u32 size) {
     u32 aligned = AlignSize(size);
+    ObjHeader* point;
 
-    if (heap->current + aligned > heap->end) {
+    point = TryBumpAlloc(vm, aligned);
+    if (point) {
+        return point;
+    }
+
+    point = TryFeeListAlloc(vm, aligned);
+    if (point) {
+        return point;
+    }
+
+    MarkAndSweep(vm);
+
+    point = TryBumpAlloc(vm, aligned);
+    if (point) {
+        return point;
+    }
+
+    return TryFeeListAlloc(vm, aligned);
+}
+
+ObjHeader* TryBumpAlloc(Vm* vm, u32 alignedSize) {
+    Heap* heap = &vm->heap;
+    ObjHeader* point = (ObjHeader*)heap->current;
+
+    if (heap->current + alignedSize > heap->end) {
+       return NULL;
+    }
+
+    heap->current += alignedSize;
+
+    return point;
+}
+
+ObjHeader* TryFeeListAlloc(Vm* vm, u32 size) {
+    Heap* heap = &vm->heap;
+    if (heap->freeList == NULL) {
         return NULL;
     }
 
-    ObjHeader* point = (ObjHeader*)heap->current;
-    heap->current += aligned;
+    FreeBlock* prev = NULL;
+    FreeBlock* currBlock = heap->freeList;
 
-    return point;
+    while (true) {
+        if (currBlock->base.size >= size) {
+            // if i am on the first block and it fits reset the first one and dont get null pointered bang
+            if (prev == NULL) {
+                heap->freeList = currBlock->next;
+            }else {
+                prev->next = currBlock->next;
+            }
+            return (u8*)currBlock;
+        }
+
+        if (currBlock->next == NULL) {
+            return NULL;
+        }
+
+        prev = currBlock;
+        currBlock = currBlock->next;
+    }
 }
 
 u32 AlignSize(u32 size) {
     return ALIGN_UP(size);
 }
-void FreeHeap(Heap* heap) {
+
+void FreeHeap(Vm* vm) {
+    Heap* heap = &vm->heap;
     free(heap->start);
 }
 
