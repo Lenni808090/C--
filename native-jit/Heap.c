@@ -79,7 +79,7 @@ ObjHeader* TryFeeListAlloc(Vm* vm, u32 size) {
             }else {
                 prev->next = currBlock->next;
             }
-            return (u8*)currBlock;
+            return (ObjHeader*)currBlock;
         }
 
         if (currBlock->next == NULL) {

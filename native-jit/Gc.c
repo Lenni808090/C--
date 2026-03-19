@@ -39,6 +39,7 @@ void MarkAndSweep(Vm* vm) {
 
     u8* scan = vm->heap.start;
     u8* sweepMax = vm->heap.current;
+    vm->heap.freeList = NULL;
     while (scan < sweepMax) {
         ObjHeader* currObject = (ObjHeader*)scan;
         if (currObject->mark) {
@@ -50,7 +51,6 @@ void MarkAndSweep(Vm* vm) {
             FreeBlock* freed = (FreeBlock*)currObject;
             freed->base.kind = BlockFree;
             freed->base.size = size;
-            //is inited as null so this works.
             freed->next = vm->heap.freeList;
             vm->heap.freeList = freed;
         }

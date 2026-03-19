@@ -14,8 +14,10 @@ class Program {
         string code = @"
         meth Main() -> int {
             alive: int[] = new int[5];
-            for (mut i: int = 0; i < 100; i += 1) {
+            for (mut i: int = 0; i < 10000; i += 1) {
                 garbage: int[] = new int[100];
+                print_int(i);
+                print_newline();
             }
             print_int(alive[0]);
             return 0;
