@@ -1,7 +1,0 @@
-CompileFlags:
-    Add:
-        - -std=c17
-        - -Wall
-        - -Wextra
-        - -Werror
-        - -Inative-jit

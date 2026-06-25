@@ -9,24 +9,31 @@
 #include <stdlib.h>
 #include <string.h>
 
+static Value CreateNullValue(void) {
+    Value value;
+    value.type = VAL_NULL;
+    value.rawData = 0;
+    return value;
+}
+
 static Value native_print_int(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     printf("%" PRId64, registers[argRegs[0]].rawData);
-    return (Value){.type = VAL_NULL, .rawData = 0};
+    return CreateNullValue();
 }
 
 
 static Value native_print_bool(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     printf("%s", registers[argRegs[0]].rawData == 0 ? "false" : "true");
-    return (Value){.type = VAL_NULL, .rawData = 0};
+    return CreateNullValue();
 }
 
 
 static Value native_print_char(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     printf("%c", (char)registers[argRegs[0]].rawData);
-    return (Value){.type = VAL_NULL, .rawData = 0};
+    return CreateNullValue();
 }
 
 
@@ -35,16 +42,16 @@ static Value native_print_newline(Value* registers,u16 argCount, u16* argRegs) {
     (void)argCount;
     (void)argRegs;
     printf("\n");
-    return (Value){.type = VAL_NULL, .rawData = 0};
+    return CreateNullValue();
 }
 
 static const NativeEntry nativeRegistry[] = {
-    {.name = "print_int", .fn  = native_print_int},
-    {.name = "print_bool", .fn = native_print_bool},
-    {.name = "print_char", .fn = native_print_char},
-    {.name = "print_newline", .fn = native_print_newline},
+    {"print_int", native_print_int},
+    {"print_bool", native_print_bool},
+    {"print_char", native_print_char},
+    {"print_newline", native_print_newline},
 };
-static const u16 nativeFunctionCount = sizeof(nativeRegistry) / sizeof(NativeEntry);
+static const u16 nativeFunctionCount = (u16)(sizeof(nativeRegistry) / sizeof(nativeRegistry[0]));
 
 NativeFn*  resolveNativeFunctions(Program* program) {
     NativeFn* resolved = malloc(sizeof(NativeFn) * program->nativeFunctionCount);

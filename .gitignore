@@ -8,11 +8,11 @@
 !/native-jit/**
 !/.gitignore
 !/README.md
+!/ROADMAP.md
 !/C--.sln
 !/C--.csproj
+!/CMakeLists.txt
 !/.editorconfig
-!/.clang-format
-!/.clangd
 
 # Ignore generated .NET output
 /bin/
@@ -50,9 +50,8 @@
 /native-jit/editor/cmake-build-debug-wsl/
 /native-jit/cmm_runtime
 
-# Keep authored editor config
-!/native-jit/editor/
-!/native-jit/editor/CMakeLists.txt
+# Keep authored native CMake config
+!/native-jit/CMakeLists.txt
 
 /native-jit/*.exe
 /native-jit/*.dll

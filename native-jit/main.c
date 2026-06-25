@@ -4,8 +4,9 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-int main(void) {
-    Program program = LoadProgam("/mnt/c/Users/leona/source/repos/C--/output.cmm");
+int main(int argc, char** argv) {
+    const char* programPath = argc > 1 ? argv[1] : "output.cmm";
+    Program program = LoadProgam(programPath);
     Vm vm;
 
     VmInit(&vm, &program);
@@ -15,6 +16,6 @@ int main(void) {
     VmFree(&vm);
     FreeProgram(&program);
 
-    fprintf(stdout, "returned value %" PRId64 ,  finalVal.rawData);
+    fprintf(stdout, "returned value %" PRId64, finalVal.rawData);
     return 0;
 }

@@ -7,6 +7,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
+static u16 CountTrailingZeros64(u64 value) {
+#ifdef _MSC_VER
+    unsigned long index;
+    _BitScanForward64(&index, value);
+    return (u16)index;
+#else
+    return (u16)__builtin_ctzll(value);
+#endif
+}
+
 void MarkAndSweep(Vm* vm) {
     for (i32 i = vm->depth;i >= 0; i--) {
         CallFrame* frame = &vm->frames[i];
@@ -15,7 +29,7 @@ void MarkAndSweep(Vm* vm) {
         for (u16 r = 0; r < functionStackMap->regWordCount; r++) {
             u64 mask = stackMap.liveRegs[r];
             while (mask != 0) {
-                u16 bitPos = __builtin_ctzll(mask);
+                u16 bitPos = CountTrailingZeros64(mask);
                 u16 reg = r * 64 + bitPos;
                 MarkReg(reg, frame, vm);
                 //funny trick.
@@ -29,7 +43,7 @@ void MarkAndSweep(Vm* vm) {
         for (u16 l = 0; l < functionStackMap->localWordCount; l++) {
             u64 mask = stackMap.liveLocals[l];
             while (mask != 0) {
-                u16 bitPos = __builtin_ctzll(mask);
+                u16 bitPos = CountTrailingZeros64(mask);
                 u16 local = l * 64 + bitPos;
                 MarkLocal(local, frame, vm);
                 mask &= mask - 1;

@@ -11,6 +11,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
+
+static Value CreateValue(ValueType type, i64 rawData) {
+    Value value;
+    value.type = type;
+    value.rawData = rawData;
+    return value;
+}
+
+static ObjHeader CreateObjHeader(u32 typeId, u32 size) {
+    ObjHeader header;
+    header.typeId = typeId;
+    header.size = size;
+    header.kind = BlockObject;
+    header.mark = false;
+    return header;
+}
 
 CallFrame CreateFrame(Function* function,const u16 returnReg, const bool hasReturnReg) {
     CallFrame callFrame;
@@ -51,24 +68,19 @@ RuntimeTypeDesc* GetTypeDesc(Vm* vm, u32 id) {
 Value DefaultValueForType(RuntimeTypeDesc* type) {
     switch (type->kind) {
         case TYPE_INT: {
-            Value val = {.type = VAL_INT, .rawData = 0};
-            return val;
+            return CreateValue(VAL_INT, 0);
         }
         case TYPE_ARRAY: {
-            Value val = {.type = VAL_NULL, .rawData = 0};
-            return val;
+            return CreateValue(VAL_NULL, 0);
         }
         case TYPE_BOOL: {
-            Value val = {.type = VAL_BOOL, .rawData = 0};
-            return val;
+            return CreateValue(VAL_BOOL, 0);
         }
         case TYPE_CHAR: {
-            Value val = {.type = VAL_CHAR, .rawData = '\0'};
-            return val;
+            return CreateValue(VAL_CHAR, '\0');
         }
         case TYPE_OBJECT: {
-            Value val = {.type = VAL_NULL, .rawData = 0};
-            return val;
+            return CreateValue(VAL_NULL, 0);
         }
         default: {
             fprintf(stderr, "unkown type in default value for type");
@@ -107,8 +119,8 @@ ArrayObject* AllocateArrayObject(Vm* vm, i32 length, u32 typeId) {
         exit(1);
     }
 
-    u32 size = AlignSize(sizeof(ArrayObject) + (sizeof(Value) * length));
-    ObjHeader objHeader = {.typeId = typeId, .size = size, .mark = false};
+    u32 size = AlignSize((u32)(offsetof(ArrayObject, elements) + (sizeof(Value) * (u32)length)));
+    ObjHeader objHeader = CreateObjHeader(typeId, size);
 
     ArrayObject* arrayObject = (ArrayObject*)AllocHeapObject(vm, size);
     if (arrayObject == NULL) {
@@ -262,7 +274,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT};
+                Value resValue = CreateValue(VAL_INT, 0);
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) + AsInt(frame->regs[rightReg]);
 
@@ -275,7 +287,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT};
+                Value resValue = CreateValue(VAL_INT, 0);
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) - AsInt(frame->regs[rightReg]);
 
@@ -288,7 +300,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT};
+                Value resValue = CreateValue(VAL_INT, 0);
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) * AsInt(frame->regs[rightReg]);
 
@@ -301,7 +313,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT};
+                Value resValue = CreateValue(VAL_INT, 0);
 
                 if (AsInt(frame->regs[rightReg]) == 0) {
                     fprintf(stderr, "tried to divide by 0");
@@ -318,7 +330,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT};
+                Value resValue = CreateValue(VAL_INT, 0);
 
                 resValue.rawData = AsInt(frame->regs[leftReg]) % AsInt(frame->regs[rightReg]);
 
@@ -330,7 +342,7 @@ Value VmRun(Vm* vm) {
                 const u16 resReg = ReadU16(frame);
                 const u16 negReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_INT};
+                Value resValue = CreateValue(VAL_INT, 0);
 
                 resValue.rawData = -AsInt(frame->regs[negReg]);
 
@@ -343,7 +355,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) < AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -356,7 +368,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) <= AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -369,7 +381,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) > AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -382,7 +394,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = (AsInt(frame->regs[leftReg]) >= AsInt(frame->regs[rightReg])) ? 1 : 0;
 
@@ -394,7 +406,7 @@ Value VmRun(Vm* vm) {
                 const u16 resReg = ReadU16(frame);
                 const u16 notReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = AsBool(frame->regs[notReg]) ? 0 : 1;
 
@@ -433,7 +445,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = ((frame->regs[leftReg].rawData == frame->regs[rightReg].rawData) && (frame->regs[leftReg].type == frame->regs[rightReg].type)) ? 1 : 0;
 
@@ -446,7 +458,7 @@ Value VmRun(Vm* vm) {
                 const u16 leftReg = ReadU16(frame);
                 const u16 rightReg = ReadU16(frame);
 
-                Value resValue = {.type = VAL_BOOL};
+                Value resValue = CreateValue(VAL_BOOL, 0);
 
                 resValue.rawData = ((frame->regs[leftReg].rawData != frame->regs[rightReg].rawData) || (frame->regs[leftReg].type != frame->regs[rightReg].type)) ? 1 : 0;
 
@@ -458,7 +470,15 @@ Value VmRun(Vm* vm) {
                 const u16 dstReg = ReadU16(frame);
                 const u32 functionIndex = ReadU32(frame);
                 const u16 argCount = ReadU16(frame);
-                u16 argRegs[argCount];
+                u16* argRegs = NULL;
+                if (argCount > 0) {
+                    argRegs = malloc(sizeof(u16) * argCount);
+                    if (argRegs == NULL) {
+                        fprintf(stderr, "unable to alloc call arg regs");
+                        exit(1);
+                    }
+                }
+
                 for (u16 i = 0; i < argCount; i++) {
                     u16 argReg = ReadU16(frame);
                     argRegs[i] = argReg;
@@ -469,6 +489,7 @@ Value VmRun(Vm* vm) {
                     frame->regs[dstReg] = vm->runtimeFunctions[functionIndex].nativeFn(frame->regs, argCount, argRegs);
                 }
 
+                free(argRegs);
                 break;
             }
 
@@ -492,7 +513,7 @@ Value VmRun(Vm* vm) {
                     exit(1);
                 }
 
-                Value val = {.type = VAL_HEAPREF, .rawData = (i64)(intptr_t)AllocateArrayObject(vm, length, typeId)};
+                Value val = CreateValue(VAL_HEAPREF, (i64)(intptr_t)AllocateArrayObject(vm, length, typeId));
                 frame->regs[dstReg] = val;
                 break;
             }
@@ -541,7 +562,7 @@ Value VmRun(Vm* vm) {
 
                 Value arrayValue = frame->regs[arrayReg];
                 ArrayObject* arrayObject = GetArrayObject(vm, arrayValue);
-                Value val = {.type = VAL_INT, .rawData = arrayObject->length};
+                Value val = CreateValue(VAL_INT, arrayObject->length);
                 frame->regs[dstReg] = val;
                 break;
             }
@@ -552,5 +573,5 @@ Value VmRun(Vm* vm) {
             }
         }
     }
-    return (Value){.type = VAL_NULL, .rawData = 0};
+    return CreateValue(VAL_NULL, 0);
 }

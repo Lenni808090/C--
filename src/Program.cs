@@ -12,7 +12,7 @@ namespace CMinus;
 class Program {
     static void Main() {
         string code = @"
-    meth Main() -> int {
+    meth Main(){
         alive: int[] = new int[5];
         alive[0] = 42;
         alive[1] = 99;
@@ -34,7 +34,6 @@ class Program {
         print_newline();
         print_int(alive[4]);
         print_newline();
-        return 0;
     }
 
 ";
