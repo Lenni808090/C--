@@ -181,26 +181,30 @@ void VmFree(Vm* vm) {
 }
 
 static u16 ReadU16(CallFrame* frame) {
-    const u16 value = (u16)(frame->function->bytecode[frame->instructionPointer] |
-                            (frame->function->bytecode[frame->instructionPointer + 1] << 8));
+    const u8* bytes = &frame->function->bytecode[frame->instructionPointer];
+    const u16 value = (u16)((u16)bytes[0] |
+                            ((u16)bytes[1] << 8));
     frame->instructionPointer += 2;
     return value;
 }
 
 static i32 ReadI32(CallFrame* frame) {
-    const i32 value = (i32)(frame->function->bytecode[frame->instructionPointer] |
-                            (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
-                            (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
-                            (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+    const u8* bytes = &frame->function->bytecode[frame->instructionPointer];
+    const u32 raw = (u32)bytes[0] |
+                    ((u32)bytes[1] << 8) |
+                    ((u32)bytes[2] << 16) |
+                    ((u32)bytes[3] << 24);
+    const i32 value = (i32)raw;
     frame->instructionPointer += 4;
     return value;
 }
 
 static u32 ReadU32(CallFrame* frame) {
-    const u32 value = (u32)(frame->function->bytecode[frame->instructionPointer] |
-                            (frame->function->bytecode[frame->instructionPointer + 1] << 8) |
-                            (frame->function->bytecode[frame->instructionPointer + 2] << 16) |
-                            (frame->function->bytecode[frame->instructionPointer + 3] << 24));
+    const u8* bytes = &frame->function->bytecode[frame->instructionPointer];
+    const u32 value = (u32)bytes[0] |
+                      ((u32)bytes[1] << 8) |
+                      ((u32)bytes[2] << 16) |
+                      ((u32)bytes[3] << 24);
     frame->instructionPointer += 4;
     return value;
 }

@@ -1,0 +1,43 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "clang64-debug",
+      "displayName": "clang64 Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-clang64-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
+        "CMM_ENABLE_SANITIZERS": "OFF"
+      },
+      "environment": {
+        "PATH": "C:/msys64/clang64/bin;C:/msys64/usr/bin;$penv{PATH}"
+      }
+    },
+    {
+      "name": "clang64-asan",
+      "displayName": "clang64 ASan UBSan",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build-clang64-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
+        "CMM_ENABLE_SANITIZERS": "ON"
+      },
+      "environment": {
+        "PATH": "C:/msys64/clang64/bin;C:/msys64/usr/bin;$penv{PATH}"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "clang64-debug",
+      "configurePreset": "clang64-debug"
+    },
+    {
+      "name": "clang64-asan",
+      "configurePreset": "clang64-asan"
+    }
+  ]
+}

@@ -29,7 +29,7 @@ Primary target platform is **Windows x64**. The runtime and baseline JIT should 
 - [x] Phase 3.4: Sweep phase with free list
 - [x] Phase 3.5: GC triggering on allocation failure
 - [x] Phase 3.6: GC testing with allocation stress and live-data preservation
-- [ ] Phase 4.1: Executable memory allocation
+- [x] Phase 4.1: Executable memory allocation
 - [ ] Phase 4.2: Assembler / code emitter
 - [ ] Phase 4.3: Value representation for JIT frames
 - [ ] Phase 4.4: Template compilation
@@ -38,7 +38,7 @@ Primary target platform is **Windows x64**. The runtime and baseline JIT should 
 - [ ] Phase 4.7: Patching and linking
 - [ ] Phase 4.8: Interpreter-vs-JIT validation
 
-**You are here:** Phase 4.1.
+**You are here:** Phase 4.2.
 
 ## Phase 1: Interpreter
 
@@ -91,10 +91,10 @@ The first JIT should be deliberately simple. Keep VM registers as frame memory s
 
 ### 4.1 Executable Memory Allocation
 
-Implement a small JIT memory module:
+Implemented a small JIT memory module:
 
-- Add `native-jit/Headers/JitMemory.h`
-- Add `native-jit/JitMemory.c`
+- `native-jit/Headers/JitMemory.h`
+- `native-jit/JitMemory.c`
 - Allocate executable pages with `VirtualAlloc`
 - Free pages with `VirtualFree`
 - Track capacity and current write position
@@ -117,18 +117,36 @@ void EmitBytes(JitCodeBuffer* buffer, const u8* bytes, u32 count);
 u32 GetJitCodeOffset(const JitCodeBuffer* buffer);
 ```
 
-Validation target:
+Validated by:
 
 - Allocate a small code buffer
-- Emit bytes for a trivial function such as `mov rax, 42; ret`
+- Emit bytes for a trivial function: `mov rax, 42; ret`
 - Cast the buffer start to a function pointer
 - Call it and verify it returns `42`
 
 ### 4.2 Assembler / Code Emitter
 
-Add helpers that emit raw x86-64 instruction encodings:
+Add a small x86-64 emitter layer above `JitMemory`.
+
+New files:
+
+- `native-jit/Headers/X64Emitter.h`
+- `native-jit/X64Emitter.c`
+
+Responsibilities:
+
+- Keep raw x64 opcode bytes isolated in one architecture-specific module.
+- Provide named instruction helpers so future JIT code does not write magic bytes directly.
+- Represent semantic concepts such as registers, conditions, and operand sizes with small enums or constants.
+- Continue writing into `JitMemBuffer`; this module should not allocate executable memory itself.
+- Avoid any dependency on C-- bytecode, `Vm`, `Value`, heap objects, GC, or stack maps.
+
+Do not build a bytecode compiler in this phase. The emitter only knows x64 instruction encoding. The future baseline JIT will call into this module later.
+
+Initial API direction:
 
 - `emit_mov_rax_imm64`
+- `emit_mov_reg_imm64`
 - `emit_mov_reg_reg`
 - `emit_add_reg_reg`
 - `emit_sub_reg_reg`
@@ -136,6 +154,27 @@ Add helpers that emit raw x86-64 instruction encodings:
 - `emit_jmp_rel32`
 - `emit_call_rel32` or absolute-call trampoline support
 - `emit_ret`
+
+Start deliberately smaller than this full list:
+
+- First replace the manual `mov rax, 42; ret` byte array with emitter calls.
+- Then generalize from `rax`-only to register-aware helpers.
+- Then add simple arithmetic instructions.
+- Only after arithmetic works should jumps and calls be added.
+
+Design guidance:
+
+- Good abstraction: `EmitMovRegImm64(buffer, X64_RAX, 42)`.
+- Bad abstraction: a giant enum where every raw byte has a name.
+- Good constants: names for meaningful opcode concepts such as REX.W, RET, and MOV-r64-imm64 base opcode.
+- Good enums: x64 registers and condition codes.
+- Raw bytes are allowed inside `X64Emitter.c`; they should not spread into VM or future JIT lowering code.
+
+Validation target:
+
+- Recreate the Phase 4.1 test using only emitter functions: emit a function that returns `42`.
+- Add at least one arithmetic smoke test, such as loading two values into registers, adding them, returning the result.
+- Run the normal debug preset first. Sanitizers are useful for the runtime, but generated executable code should initially be validated without sanitizer instrumentation.
 
 ### 4.3 Value Representation for JIT Frames
 
@@ -234,4 +273,4 @@ These can be interleaved with runtime work, but each affects compiler, bytecode,
 
 ## Next Step
 
-Start with **Phase 4.1: executable memory allocation**. Do not begin with a full JIT compiler. First prove that the runtime can allocate executable memory, write a tiny native function into it, execute it, and free the memory correctly.
+Start with **Phase 4.2: assembler / code emitter**. Create the x64 emitter files and move the working `mov rax, 42; ret` test away from manual byte arrays and into named emitter functions. Do not connect this to bytecode yet.

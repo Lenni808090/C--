@@ -11,7 +11,6 @@
 !/ROADMAP.md
 !/C--.sln
 !/C--.csproj
-!/CMakeLists.txt
 !/.editorconfig
 
 # Ignore generated .NET output
@@ -52,6 +51,7 @@
 
 # Keep authored native CMake config
 !/native-jit/CMakeLists.txt
+!/native-jit/CMakePresets.json
 
 /native-jit/*.exe
 /native-jit/*.dll

@@ -25,11 +25,24 @@ dotnet run --no-build
 Build the native runtime:
 
 ```powershell
-cmake --build cmake-build-debug
+cd native-jit
+$env:PATH='C:\msys64\clang64\bin;C:\msys64\usr\bin;' + $env:PATH
+cmake --preset clang64-debug
+cmake --build --preset clang64-debug
 ```
 
 Run the generated program:
 
 ```powershell
-.\cmake-build-debug\native-jit\cmm_runtime.exe output.cmm
+.\native-jit\cmake-build-clang64-debug\cmm_runtime.exe output.cmm
+```
+
+Build with AddressSanitizer and UndefinedBehaviorSanitizer:
+
+```powershell
+cd native-jit
+$env:PATH='C:\msys64\clang64\bin;C:\msys64\usr\bin;' + $env:PATH
+cmake --preset clang64-asan
+cmake --build --preset clang64-asan
+.\cmake-build-clang64-asan\cmm_runtime.exe ..\output.cmm
 ```
